@@ -3,5 +3,10 @@ name = "blog_os"
 version = "0.1.0"
 authors = ["Rustin-Liu <rustin.liu@gmail.com>"]
 edition = "2018"
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
 
 [dependencies]
