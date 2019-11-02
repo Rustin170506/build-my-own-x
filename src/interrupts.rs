@@ -1,7 +1,7 @@
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use crate::gdt;
 use crate::println;
 use lazy_static::lazy_static;
-use crate::gdt;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
@@ -16,8 +16,9 @@ lazy_static! {
     };
 }
 extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut InterruptStackFrame, _error_code: u64)
-{
+    stack_frame: &mut InterruptStackFrame,
+    _error_code: u64,
+) {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
@@ -25,12 +26,9 @@ pub fn init_idt() {
     IDT.load();
 }
 
-extern "x86-interrupt" fn breakpoint_handler(
-    stack_frame: &mut InterruptStackFrame)
-{
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
-
 
 #[cfg(test)]
 use crate::{serial_print, serial_println};

@@ -2,8 +2,8 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
-use core::panic::PanicInfo;
 use blog_os::serial_print;
+use core::panic::PanicInfo;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -48,7 +48,7 @@ pub fn init_test_idt() {
     TEST_IDT.load();
 }
 
-use blog_os::{exit_qemu, QemuExitCode, serial_println};
+use blog_os::{exit_qemu, serial_println, QemuExitCode};
 use x86_64::structures::idt::InterruptStackFrame;
 
 extern "x86-interrupt" fn test_double_fault_handler(
