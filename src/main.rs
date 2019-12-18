@@ -11,7 +11,21 @@ use core::panic::PanicInfo;
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
-    blog_os::init(); // new
+    blog_os::init();
+
+    let ptr = 0x2031b2 as *mut u32;
+
+    // read from a code page
+    unsafe {
+        let x = *ptr;
+    }
+    println!("read worked");
+
+    // write to a code page
+    unsafe {
+        *ptr = 42;
+    }
+    println!("write worked");
 
     //    // invoke a breakpoint exception
     //    x86_64::instructions::interrupts::int3(); // new
