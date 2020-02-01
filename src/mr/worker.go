@@ -58,6 +58,24 @@ func (worker *MapReduceWorker) Shutdown(_ *struct{}, res *ShutdownReply) error {
 	return nil
 }
 
+// Do the map or reduce work.
+func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error {
+	fmt.Printf("%s: given %v task #%d on file %s (nios: %d)\n",
+		worker.name, task.Phase, task.TaskNumber, task.FileName, task.NumOtherPhase)
+	switch task.Phase {
+	case mapPhase:
+		doMap()
+		break
+	case reducePhase:
+		doReduce()
+		break
+	default:
+		log.Fatal("The unexpected task phase\n")
+	}
+	fmt.Printf("%s: %v task #%d done\n", worker.name, task.Phase, task.TaskNumber)
+	return nil
+}
+
 //
 // main/mrworker.go calls this function.
 //
