@@ -6,18 +6,12 @@ package mr
 // remember to capitalize all names.
 //
 
-//
-// example to show how to declare the arguments
-// and reply for an RPC.
-//
-
-type ExampleArgs struct {
-	X int
+// RegisterArgs is the argument passed when a worker registers with the master.
+type RegisterArgs struct {
+	WorkerName string // the worker's UNIX-domain socket name, i.e. its RPC address.
 }
 
-type ExampleReply struct {
-	Y int
+// ShutdownReply is the argument passed when a worker shutdown.
+type ShutdownReply struct {
+	IsDown bool
 }
-
-// Add your RPC definitions here.
-

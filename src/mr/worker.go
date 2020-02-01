@@ -1,13 +1,20 @@
 package mr
 
-import "fmt"
-import "log"
-import "net/rpc"
-import "hash/fnv"
+import (
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"net/rpc"
+	"os"
+	"strconv"
+	"sync"
+)
 
+const workerCount = 5
 
 //
-// Map functions return a slice of KeyValue.
+// mapF functions return a slice of KeyValue.
 //
 type KeyValue struct {
 	Key   string
@@ -15,70 +22,79 @@ type KeyValue struct {
 }
 
 //
-// use ihash(key) % NReduce to choose the reduce
-// task number for each KeyValue emitted by Map.
+// mapF or Reduce task.
 //
-func ihash(key string) int {
-	h := fnv.New32a()
-	h.Write([]byte(key))
-	return int(h.Sum32() & 0x7fffffff)
+type MapOrReduceTask struct {
+	Phase      jobPhase
+	FileName   string // map file name(only for map phase).
+	TaskNumber int    // this task's index in the current phase.
+	// NumOtherPhase is the total number of tasks in other phase; mappers
+	// need this to compute the number of output bins, and reducers needs
+	// this to know how many input files to collect.
+	NumOtherPhase int
 }
 
+// MapReduceWorker holds the state for a server waiting for DoTask or Shutdown RPCs.
+type MapReduceWorker struct {
+	sync.Mutex
+
+	name     string
+	mapf     func(string, string) []KeyValue
+	reducef  func(string, []string) string
+	listener net.Listener
+}
+
+// Shutdown is called by the master when all work has been completed.
+func (worker *MapReduceWorker) Shutdown(_ *struct{}, res *ShutdownReply) error {
+	debug("Shutdown %s\n", worker.name)
+	worker.Lock()
+	defer worker.Unlock()
+	err := worker.listener.Close()
+	if err == nil {
+		res.IsDown = true
+	} else {
+		res.IsDown = false
+	}
+	return nil
+}
 
 //
 // main/mrworker.go calls this function.
 //
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
-
-	// Your worker implementation here.
-
-	// uncomment to send the Example RPC to the master.
-	// CallExample()
-
+	workerNamePrefix := "mr-socket-worker"
+	for i := 0; i < workerCount; i++ {
+		initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
+	}
 }
 
-//
-// example function to show how to make an RPC call to the master.
-//
-// the RPC argument and reply types are defined in rpc.go.
-//
-func CallExample() {
-
-	// declare an argument structure.
-	args := ExampleArgs{}
-
-	// fill in the argument(s).
-	args.X = 99
-
-	// declare a reply structure.
-	reply := ExampleReply{}
-
-	// send the RPC request, wait for the reply.
-	call("Master.Example", &args, &reply)
-
-	// reply.Y should be 100.
-	fmt.Printf("reply.Y %v\n", reply.Y)
+// init the worker and start it server.
+func initWorker(workerName string, masterAddress string, mapf func(string, string) []KeyValue,
+	reducef func(string, []string) string) {
+	debug("RunWorker %s\n", workerName)
+	worker := new(MapReduceWorker)
+	worker.name = workerName
+	worker.mapf = mapf
+	worker.reducef = reducef
+	rpc.Register(worker)
+	os.Remove(workerName)
+	listener, e := net.Listen("unix", workerName)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	go http.Serve(listener, nil)
+	worker.listener = listener
+	register(masterAddress, workerName)
+	debug("RunWorker %s exit\n", workerName)
 }
 
-//
-// send an RPC request to the master, wait for the response.
-// usually returns true.
-// returns false if something goes wrong.
-//
-func call(rpcname string, args interface{}, reply interface{}) bool {
-	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
-	c, err := rpc.DialHTTP("unix", "mr-socket")
-	if err != nil {
-		log.Fatal("dialing:", err)
+// Tell the master we exist and ready to work.
+func register(masterAddress string, workerName string) {
+	args := new(RegisterArgs)
+	args.WorkerName = workerName
+	ok := call(masterAddress, "Master.WorkerRegister", args, new(struct{}))
+	if ok == false {
+		fmt.Printf("Register: RPC %s register error\n", masterAddress)
 	}
-	defer c.Close()
-
-	err = c.Call(rpcname, args, reply)
-	if err == nil {
-		return true
-	}
-
-	fmt.Println(err)
-	return false
 }
