@@ -12,8 +12,8 @@ import (
 type jobPhase string
 
 const (
-	mapPhase    jobPhase = "mapF"
-	reducePhase          = "Reduce"
+	mapPhase    jobPhase = "Map"
+	reducePhase jobPhase = "Reduce"
 )
 
 // Debugging enabled?
