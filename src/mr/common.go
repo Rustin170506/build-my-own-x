@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"log"
 	"net/rpc"
+	"strconv"
 )
 
 // jobPhase indicates whether a task is scheduled as a map or reduce task.
@@ -55,4 +56,14 @@ func ihash(key string) int {
 	h := fnv.New32a()
 	h.Write([]byte(key))
 	return int(h.Sum32() & 0x7fffffff)
+}
+
+// gen the reduce file name.
+func reduceFileName(mapTask int, reduceTask int) string {
+	return "mrtemp.-" + strconv.Itoa(mapTask) + "-" + strconv.Itoa(reduceTask)
+}
+
+// gen output file name.
+func outputFileName(reduceTask int) string {
+	return "mr-out-" + strconv.Itoa(reduceTask)
 }

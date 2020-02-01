@@ -64,10 +64,10 @@ func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error 
 		worker.name, task.Phase, task.TaskNumber, task.FileName, task.NumOtherPhase)
 	switch task.Phase {
 	case mapPhase:
-		doMap()
+		doMap(task.TaskNumber, task.FileName, task.NumOtherPhase, worker.mapf)
 		break
 	case reducePhase:
-		doReduce()
+		doReduce(task.TaskNumber, outputFileName(task.TaskNumber), task.NumOtherPhase, worker.reducef)
 		break
 	default:
 		log.Fatal("The unexpected task phase\n")
