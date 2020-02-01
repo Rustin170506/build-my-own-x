@@ -2,6 +2,7 @@ package mr
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -48,7 +49,8 @@ func doReduce(reduceTaskNumber int, // which reduce task this is
 	}
 	enc := json.NewEncoder(out)
 	for _, key := range keys {
-		if err = enc.Encode(KeyValue{key, reduceF(key, kvs[key])}); err != nil {
+		s := fmt.Sprintf("%v %v\n", key, reduceF(key, kvs[key]))
+		if err = enc.Encode(s); err != nil {
 			log.Printf("write [key: %s] to file %s failed", key, outFile)
 		}
 	}

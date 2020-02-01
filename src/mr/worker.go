@@ -6,12 +6,14 @@ import (
 	"net"
 	"net/rpc"
 	"os"
-	"runtime"
 	"strconv"
 	"sync"
 )
 
 const workerCount = 5
+
+// @TODO maybe can make it more reasonable.
+var wg sync.WaitGroup
 
 //
 // mapF functions return a slice of KeyValue.
@@ -52,6 +54,7 @@ func (worker *MapReduceWorker) Shutdown(_ *struct{}, res *ShutdownReply) error {
 	err := worker.listener.Close()
 	if err == nil {
 		res.IsDown = true
+		wg.Done()
 	} else {
 		res.IsDown = false
 	}
@@ -78,13 +81,11 @@ func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error 
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	workerNamePrefix := "mr-socket-worker"
+	wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
 		go initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
 	}
-	for {
-		// @TODO we need exit work when the master shutdown.
-		runtime.Gosched()
-	}
+	wg.Wait()
 }
 
 // init the worker and start it server.

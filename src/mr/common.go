@@ -49,7 +49,7 @@ func call(address string, rpcname string, isHttp bool, args interface{}, reply i
 
 	err = client.Call(rpcname, args, reply)
 	if err == nil {
-		log.Printf("RPC: A successful httpCall to %s mame %s\n", address, rpcname)
+		log.Printf("RPC: A successful call to %s name %s\n", address, rpcname)
 		return true
 	}
 

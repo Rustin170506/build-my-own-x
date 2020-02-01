@@ -123,8 +123,8 @@ func (master *Master) killWorkers() bool {
 	master.Lock()
 	defer master.Unlock()
 	isDown := true
-	for _, w := range master.workers {
-		debug("Master: shutdown worker %s\n", w)
+	for i, w := range master.workers {
+		debug("Master: shutdown worker %s index %v workers len %v\n", w, i, len(master.workers))
 		var reply ShutdownReply
 		ok := call(w, "MapReduceWorker.Shutdown", false, new(struct{}), &reply)
 		if ok == false || reply.IsDown == false {
