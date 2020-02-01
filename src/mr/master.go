@@ -10,7 +10,7 @@ import "os"
 import "net/rpc"
 import "net/http"
 
-const MasterSocketName string = "mr-socket-master"
+const MasterSocketName string = "mr-socket-master7"
 
 // Master holds all the state that the master needs to keep track of.
 type Master struct {
@@ -31,14 +31,13 @@ type Master struct {
 func (master *Master) server() {
 	rpc.Register(master)
 	rpc.HandleHTTP()
-	//l, e := net.Listen("tcp", ":1234")
 	os.Remove("mr-socket")
-	l, e := net.Listen("unix", MasterSocketName)
+	listener, e := net.Listen("unix", MasterSocketName)
 	if e != nil {
-		log.Fatal("listen error:", e)
+		log.Fatal("listener error:", e)
 	}
-	go http.Serve(l, nil)
-	master.listener = l
+	go http.Serve(listener, nil)
+	master.listener = listener
 }
 
 //
@@ -72,6 +71,8 @@ func (master *Master) run() bool {
 	isDown := master.killWorkers()
 	if isDown == false {
 		log.Fatal("Can not shutdown all worker\n")
+	} else {
+		log.Print("All worker shutdown\n")
 	}
 	err := master.listener.Close()
 	if err != nil {
@@ -101,8 +102,11 @@ func (master *Master) forwardWorker(ch chan string) {
 		master.Lock()
 		if len(master.workers) > i {
 			// there's a worker that we haven't told process() about.
-			w := master.workers[i]
-			go func() { ch <- w }() // send without holding the lock.
+			worker := master.workers[i]
+			go func() {
+				ch <- worker
+				debug("Forward: worker %s\n", worker)
+			}() // send without holding the lock.
 			i = i + 1
 		} else {
 			// wait for WorkerRegister() to add an entry to workers[]
@@ -122,7 +126,7 @@ func (master *Master) killWorkers() bool {
 	for _, w := range master.workers {
 		debug("Master: shutdown worker %s\n", w)
 		var reply ShutdownReply
-		ok := call(w, "Worker.Shutdown", new(struct{}), &reply)
+		ok := call(w, "MapReduceWorker.Shutdown", new(struct{}), &reply)
 		if ok == false || reply.IsDown == false {
 			fmt.Printf("Master: RPC %s shutdown error\n", w)
 			isDown = false
@@ -140,6 +144,7 @@ func (master *Master) process(phase jobPhase) {
 
 // scheduleWorker will process the work form registerChan.
 func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, registerChan chan string) {
+	log.Printf("Schedule: start %v\n", phase)
 	var numberOfTasks int
 	var numberOfOther int // number of inputs (for reduce) or outputs (for map).
 	switch phase {
@@ -151,7 +156,7 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 		numberOfOther = len(mapFileNames)
 	}
 
-	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", numberOfTasks, phase, numberOfOther)
+	log.Printf("Schedule: %v %v tasks (%d I/Os)\n", numberOfTasks, phase, numberOfOther)
 
 	// All numberOfTasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.
@@ -161,7 +166,7 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 	// process will wait until all worker has done their jobs.
 	var wg sync.WaitGroup
 
-	// RPC call parameter
+	// RPC httpCall parameter
 	var task MapOrReduceTask
 	task.NumOtherPhase = numberOfOther
 	task.Phase = phase
@@ -172,17 +177,20 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 		for i := 0; i < numberOfTasks; i++ {
 			wg.Add(1)
 			taskChan <- i
+			debug("Schedule: push task %v into taskChan\n", i)
 		}
 		// wait all workers have done their job, then close taskChan.
 		wg.Wait()
+		debug("Schedule: %s task all down so close the taskChan\n", phase)
 		close(taskChan)
 	}()
 
 	// assign all task to worker.
 	for i := range taskChan {
+		debug("Schedule: get task %v from taskChan\n", i)
 		// get a worker from register channel.
 		worker := <-registerChan
-
+		debug("Schedule: assign task %v to %v in %v phase\n", i, worker, phase)
 		task.TaskNumber = i
 		if phase == mapPhase {
 			task.FileName = mapFileNames[i]
@@ -191,10 +199,12 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 		// Note: must use parameter.
 		go func(worker string, task MapOrReduceTask) {
 			if call(worker, "MapReduceWorker.DoTask", &task, nil) {
-				// only successful call will call wg.Done().
+				// only successful httpCall will httpCall wg.Done().
 				wg.Done()
 
 				// put idle worker back to register channel.
+				log.Printf("Schedule: worker %s finished %s task %v", worker, phase,
+					task.TaskNumber)
 				registerChan <- worker
 			} else {
 				log.Printf("Schedule: assign %s task %v to %s failed", phase,
@@ -205,5 +215,5 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 			}
 		}(worker, task)
 	}
-	fmt.Printf("Schedule: %v phase done\n", phase)
+	log.Printf("Schedule: %v phase done\n", phase)
 }

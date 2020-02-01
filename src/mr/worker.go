@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"net/rpc"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 )
@@ -60,19 +60,15 @@ func (worker *MapReduceWorker) Shutdown(_ *struct{}, res *ShutdownReply) error {
 
 // Do the map or reduce work.
 func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error {
-	fmt.Printf("%s: given %v task #%d on file %s (nios: %d)\n",
+	log.Printf("%s: given %v task #%d on file %s (nios: %d)\n",
 		worker.name, task.Phase, task.TaskNumber, task.FileName, task.NumOtherPhase)
 	switch task.Phase {
 	case mapPhase:
 		doMap(task.TaskNumber, task.FileName, task.NumOtherPhase, worker.mapf)
-		break
 	case reducePhase:
 		doReduce(task.TaskNumber, outputFileName(task.TaskNumber), task.NumOtherPhase, worker.reducef)
-		break
-	default:
-		log.Fatal("The unexpected task phase\n")
 	}
-	fmt.Printf("%s: %v task #%d done\n", worker.name, task.Phase, task.TaskNumber)
+	log.Printf("%s: %v task #%d done\n", worker.name, task.Phase, task.TaskNumber)
 	return nil
 }
 
@@ -83,7 +79,11 @@ func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	workerNamePrefix := "mr-socket-worker"
 	for i := 0; i < workerCount; i++ {
-		initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
+		go initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
+	}
+	for {
+		// @TODO we need exit work when the master shutdown.
+		runtime.Gosched()
 	}
 }
 
@@ -95,15 +95,23 @@ func initWorker(workerName string, masterAddress string, mapf func(string, strin
 	worker.name = workerName
 	worker.mapf = mapf
 	worker.reducef = reducef
-	rpc.Register(worker)
-	os.Remove(workerName)
+	rpcServer := rpc.NewServer()
+	rpcServer.Register(worker)
+	os.Remove(workerName) // only needed for "unix".
 	listener, e := net.Listen("unix", workerName)
 	if e != nil {
-		log.Fatal("listen error:", e)
+		log.Fatal("RunWorker: worker ", workerName, " error: ", e)
 	}
-	go http.Serve(listener, nil)
 	worker.listener = listener
 	register(masterAddress, workerName)
+	for {
+		conn, err := worker.listener.Accept()
+		if err == nil {
+			go rpcServer.ServeConn(conn)
+		} else {
+			break
+		}
+	}
 	debug("RunWorker %s exit\n", workerName)
 }
 
@@ -111,7 +119,7 @@ func initWorker(workerName string, masterAddress string, mapf func(string, strin
 func register(masterAddress string, workerName string) {
 	args := new(RegisterArgs)
 	args.WorkerName = workerName
-	ok := call(masterAddress, "Master.WorkerRegister", args, new(struct{}))
+	ok := httpCall(masterAddress, "Master.WorkerRegister", args, new(struct{}))
 	if ok == false {
 		fmt.Printf("Register: RPC %s register error\n", masterAddress)
 	}
