@@ -10,7 +10,7 @@ import "os"
 import "net/rpc"
 import "net/http"
 
-const MasterSocketName string = "mr-socket-master7"
+const MasterSocketName string = "mr-socket-master"
 
 // Master holds all the state that the master needs to keep track of.
 type Master struct {
@@ -126,7 +126,7 @@ func (master *Master) killWorkers() bool {
 	for _, w := range master.workers {
 		debug("Master: shutdown worker %s\n", w)
 		var reply ShutdownReply
-		ok := call(w, "MapReduceWorker.Shutdown", new(struct{}), &reply)
+		ok := call(w, "MapReduceWorker.Shutdown", false, new(struct{}), &reply)
 		if ok == false || reply.IsDown == false {
 			fmt.Printf("Master: RPC %s shutdown error\n", w)
 			isDown = false
@@ -198,7 +198,7 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 
 		// Note: must use parameter.
 		go func(worker string, task MapOrReduceTask) {
-			if call(worker, "MapReduceWorker.DoTask", &task, nil) {
+			if call(worker, "MapReduceWorker.DoTask", false, &task, nil) {
 				// only successful httpCall will httpCall wg.Done().
 				wg.Done()
 

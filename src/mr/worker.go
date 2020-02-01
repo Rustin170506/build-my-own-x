@@ -119,7 +119,7 @@ func initWorker(workerName string, masterAddress string, mapf func(string, strin
 func register(masterAddress string, workerName string) {
 	args := new(RegisterArgs)
 	args.WorkerName = workerName
-	ok := httpCall(masterAddress, "Master.WorkerRegister", args, new(struct{}))
+	ok := call(masterAddress, "Master.WorkerRegister", true, args, new(struct{}))
 	if ok == false {
 		fmt.Printf("Register: RPC %s register error\n", masterAddress)
 	}

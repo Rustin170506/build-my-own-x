@@ -27,44 +27,27 @@ func debug(format string, a ...interface{}) (n int, err error) {
 	return
 }
 
-//@TODO need refactor the call helper.
-//
-// send an http RPC request to the address, wait for the response.
-// usually returns true.
-// returns false if something goes wrong.
-//
-func httpCall(address string, rpcname string, args interface{}, reply interface{}) bool {
-	debug("RPC: A httpCall to %s mame %s\n", address, rpcname)
-	c, err := rpc.DialHTTP("unix", address)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-	defer c.Close()
-
-	err = c.Call(rpcname, args, reply)
-	if err == nil {
-		log.Printf("RPC: A successful httpCall to %s mame %s\n", address, rpcname)
-		return true
-	}
-
-	log.Fatal("RPC httpCall failed:", err)
-	return false
-}
-
 //
 // send an RPC request to the address, wait for the response.
 // usually returns true.
 // returns false if something goes wrong.
 //
-func call(address string, rpcname string, args interface{}, reply interface{}) bool {
+func call(address string, rpcname string, isHttp bool, args interface{}, reply interface{}) bool {
 	debug("RPC: A call to %s mame %s\n", address, rpcname)
-	c, err := rpc.Dial("unix", address)
+	var client *rpc.Client
+	var err error
+	if isHttp {
+		client, err = rpc.DialHTTP("unix", address)
+
+	} else {
+		client, err = rpc.Dial("unix", address)
+	}
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	defer c.Close()
+	defer client.Close()
 
-	err = c.Call(rpcname, args, reply)
+	err = client.Call(rpcname, args, reply)
 	if err == nil {
 		log.Printf("RPC: A successful httpCall to %s mame %s\n", address, rpcname)
 		return true
