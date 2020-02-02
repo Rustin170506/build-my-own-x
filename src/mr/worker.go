@@ -76,8 +76,9 @@ func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	workerNamePrefix := "mr-socket-worker"
 	rand.Seed(time.Now().UnixNano())
-	i := rand.Intn(int(time.Now().UnixNano()))
-	worker := initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
+	pid := os.Getpid()
+	i := rand.Int()
+	worker := initWorker(workerNamePrefix+strconv.Itoa(i)+strconv.Itoa(pid), MasterSocketName, mapf, reducef)
 	worker.wg.Wait()
 	err := worker.listener.Close()
 	if err == nil {

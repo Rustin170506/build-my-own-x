@@ -47,6 +47,7 @@ func (master *Master) server() {
 //
 func (master *Master) Done() bool {
 	isDown := master.run()
+	debug("Master: All works down.")
 	return isDown
 }
 
@@ -71,7 +72,7 @@ func (master *Master) run() bool {
 	master.process(reducePhase)
 	isDown := master.killWorkers()
 	if isDown == false {
-		log.Fatal("Can not shutdown all worker\n")
+		log.Print("Can not shutdown all worker\n")
 	} else {
 		log.Print("All worker shutdown\n")
 	}
@@ -79,7 +80,7 @@ func (master *Master) run() bool {
 	if err != nil {
 		log.Fatal("The master rpc close failed\n")
 	} else {
-		log.Fatal("The master rpc close success\n")
+		log.Printf("The master rpc close success\n")
 	}
 	return isDown
 }

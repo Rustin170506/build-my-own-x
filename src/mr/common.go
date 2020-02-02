@@ -68,7 +68,7 @@ func ihash(key string) int {
 
 // gen the reduce file name.
 func reduceFileName(mapTask int, reduceTask int) string {
-	return "mrtmp.-" + strconv.Itoa(mapTask) + "-" + strconv.Itoa(reduceTask)
+	return "mrtmp-" + strconv.Itoa(mapTask) + "-" + strconv.Itoa(reduceTask)
 }
 
 // gen output file name.
