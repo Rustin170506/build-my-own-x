@@ -16,6 +16,11 @@ const (
 	reducePhase jobPhase = "Reduce"
 )
 
+const (
+	prodRpcPath  string = "go_rpc"
+	debugRpcPath string = "debug_rpc"
+)
+
 // Debugging enabled?
 const debugEnabled = true
 
@@ -32,18 +37,11 @@ func debug(format string, a ...interface{}) (n int, err error) {
 // usually returns true.
 // returns false if something goes wrong.
 //
-func call(address string, rpcname string, isHttp bool, args interface{}, reply interface{}) bool {
+func call(address string, rpcname string, path string, args interface{}, reply interface{}) bool {
 	debug("RPC: A call to %s name %s\n", address, rpcname)
-	var client *rpc.Client
-	var err error
-	if isHttp {
-		client, err = rpc.DialHTTP("unix", address)
-
-	} else {
-		client, err = rpc.Dial("unix", address)
-	}
+	client, err := rpc.DialHTTPPath("unix", address, path)
 	if err != nil {
-		log.Printf("dialing: %s\n", err)
+		log.Printf("dialing: %s\n", err) // @TODO need to reconsider the err handle way.
 		return false
 	}
 	defer client.Close()

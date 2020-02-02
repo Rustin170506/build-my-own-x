@@ -29,9 +29,10 @@ type Master struct {
 // start a thread that listens for RPCs from worker.go
 //
 func (master *Master) server() {
-	rpc.Register(master)
-	rpc.HandleHTTP()
-	os.Remove("mr-socket")
+	rpcServer := rpc.NewServer()
+	rpcServer.Register(master)
+	rpcServer.HandleHTTP(MasterSocketName+prodRpcPath, MasterSocketName+debugRpcPath)
+	os.Remove(MasterSocketName)
 	listener, e := net.Listen("unix", MasterSocketName)
 	if e != nil {
 		log.Fatal("listener error:", e)
@@ -128,7 +129,7 @@ func (master *Master) killWorkers() bool {
 	for i, w := range master.workers {
 		debug("Master: shutdown worker %s index %v workers len %v\n", w, i, len(master.workers))
 		var reply ShutdownReply
-		ok := call(w, "MapReduceWorker.Shutdown", false, new(struct{}), &reply)
+		ok := call(w, "MapReduceWorker.Shutdown", w+prodRpcPath, new(struct{}), &reply)
 		if ok == false || reply.IsDown == false {
 			fmt.Printf("Master: RPC %s shutdown error\n", w)
 			isDown = false
@@ -200,7 +201,7 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 
 		// Note: must use parameter.
 		go func(worker string, task MapOrReduceTask) {
-			if call(worker, "MapReduceWorker.DoTask", false, &task, nil) {
+			if call(worker, "MapReduceWorker.DoTask", worker+prodRpcPath, &task, nil) {
 				// only successful httpCall will httpCall wg.Done().
 				wg.Done()
 
