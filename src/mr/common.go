@@ -33,7 +33,7 @@ func debug(format string, a ...interface{}) (n int, err error) {
 // returns false if something goes wrong.
 //
 func call(address string, rpcname string, isHttp bool, args interface{}, reply interface{}) bool {
-	debug("RPC: A call to %s mame %s\n", address, rpcname)
+	debug("RPC: A call to %s name %s\n", address, rpcname)
 	var client *rpc.Client
 	var err error
 	if isHttp {
@@ -43,7 +43,8 @@ func call(address string, rpcname string, isHttp bool, args interface{}, reply i
 		client, err = rpc.Dial("unix", address)
 	}
 	if err != nil {
-		log.Fatal("dialing:", err)
+		log.Printf("dialing: %s\n", err)
+		return false
 	}
 	defer client.Close()
 
@@ -52,8 +53,8 @@ func call(address string, rpcname string, isHttp bool, args interface{}, reply i
 		log.Printf("RPC: A successful call to %s name %s\n", address, rpcname)
 		return true
 	}
-
-	log.Fatal("RPC call failed:", err)
+	log.Printf("RPC: A failed to %s name %s\n", address, rpcname)
+	log.Printf("RPC call failed %s:", err)
 	return false
 }
 

@@ -12,9 +12,6 @@ import (
 	"time"
 )
 
-// @TODO maybe can make it more reasonable.
-var wg sync.WaitGroup
-
 //
 // mapF functions return a slice of KeyValue.
 //
@@ -44,20 +41,16 @@ type MapReduceWorker struct {
 	mapf     func(string, string) []KeyValue
 	reducef  func(string, []string) string
 	listener net.Listener
+	wg       sync.WaitGroup // @TODO need to reconsider the shutdown implement.
 }
 
 // Shutdown is called by the master when all work has been completed.
 func (worker *MapReduceWorker) Shutdown(_ *struct{}, res *ShutdownReply) error {
-	debug("Shutdown %s\n", worker.name)
 	worker.Lock()
 	defer worker.Unlock()
-	err := worker.listener.Close()
-	if err == nil {
-		res.IsDown = true
-		wg.Done()
-	} else {
-		res.IsDown = false
-	}
+	debug("Shutdown: worker  %s\n", worker.name)
+	res.IsDown = true
+	worker.wg.Done()
 	return nil
 }
 
@@ -81,21 +74,29 @@ func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error 
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	workerNamePrefix := "mr-socket-worker"
-	wg.Add(1)
 	rand.Seed(time.Now().UnixNano())
-	i := rand.Int()
-	go initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
-	wg.Wait()
+	i := rand.Intn(int(time.Now().UnixNano()))
+	worker := initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
+	worker.wg.Wait()
+	worker.Lock()
+	err := worker.listener.Close()
+	if err == nil {
+		debug("RunWorker %s exit\n", worker.name)
+	} else {
+		log.Printf("RunWorker: %s exit failed", worker.name)
+	}
+	worker.Unlock()
 }
 
 // init the worker and start it server.
 func initWorker(workerName string, masterAddress string, mapf func(string, string) []KeyValue,
-	reducef func(string, []string) string) {
+	reducef func(string, []string) string) *MapReduceWorker {
 	debug("RunWorker %s\n", workerName)
 	worker := new(MapReduceWorker)
 	worker.name = workerName
 	worker.mapf = mapf
 	worker.reducef = reducef
+	worker.wg.Add(1)
 	rpcServer := rpc.NewServer()
 	rpcServer.Register(worker)
 	os.Remove(workerName) // only needed for "unix".
@@ -105,15 +106,18 @@ func initWorker(workerName string, masterAddress string, mapf func(string, strin
 	}
 	worker.listener = listener
 	register(masterAddress, workerName)
-	for {
-		conn, err := worker.listener.Accept()
-		if err == nil {
-			go rpcServer.ServeConn(conn)
-		} else {
-			break
+	go func() {
+		for {
+			conn, err := worker.listener.Accept()
+			if err == nil {
+				go rpcServer.ServeConn(conn)
+			} else {
+				log.Printf("RunWorker: accept err %s", err)
+				break
+			}
 		}
-	}
-	debug("RunWorker %s exit\n", workerName)
+	}()
+	return worker
 }
 
 // Tell the master we exist and ready to work.

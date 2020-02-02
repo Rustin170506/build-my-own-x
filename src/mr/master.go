@@ -10,7 +10,7 @@ import "os"
 import "net/rpc"
 import "net/http"
 
-const MasterSocketName string = "mr-socket-master"
+const MasterSocketName string = "mr-socket"
 
 // Master holds all the state that the master needs to keep track of.
 type Master struct {
@@ -77,6 +77,8 @@ func (master *Master) run() bool {
 	err := master.listener.Close()
 	if err != nil {
 		log.Fatal("The master rpc close failed\n")
+	} else {
+		log.Fatal("The master rpc close success\n")
 	}
 	return isDown
 }
