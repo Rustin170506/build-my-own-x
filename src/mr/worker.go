@@ -3,14 +3,14 @@ package mr
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/rpc"
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
-
-const workerCount = 5
 
 // @TODO maybe can make it more reasonable.
 var wg sync.WaitGroup
@@ -81,10 +81,10 @@ func (worker *MapReduceWorker) DoTask(task *MapOrReduceTask, _ *struct{}) error 
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	workerNamePrefix := "mr-socket-worker"
-	wg.Add(workerCount)
-	for i := 0; i < workerCount; i++ {
-		go initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
-	}
+	wg.Add(1)
+	rand.Seed(time.Now().UnixNano())
+	i := rand.Int()
+	go initWorker(workerNamePrefix+strconv.Itoa(i), MasterSocketName, mapf, reducef)
 	wg.Wait()
 }
 

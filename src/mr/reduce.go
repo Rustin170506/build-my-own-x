@@ -47,10 +47,8 @@ func doReduce(reduceTaskNumber int, // which reduce task this is
 		log.Printf("create output file %s failed", outFile)
 		return
 	}
-	enc := json.NewEncoder(out)
 	for _, key := range keys {
-		s := fmt.Sprintf("%v %v\n", key, reduceF(key, kvs[key]))
-		if err = enc.Encode(s); err != nil {
+		if _, err = fmt.Fprintf(out, "%v %v\n", key, reduceF(key, kvs[key])); err != nil {
 			log.Printf("write [key: %s] to file %s failed", key, outFile)
 		}
 	}
