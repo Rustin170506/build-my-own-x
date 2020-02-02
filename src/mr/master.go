@@ -46,8 +46,10 @@ func (master *Master) server() {
 // if the entire job has finished.
 //
 func (master *Master) Done() bool {
+	pid := os.Getpid()
+	debug("Master: start all works and master pid is %v\n", pid)
 	isDown := master.run()
-	debug("Master: All works down.")
+	debug("Master: All works down and master pid is %v\n", pid)
 	return isDown
 }
 
@@ -73,6 +75,7 @@ func (master *Master) run() bool {
 	isDown := master.killWorkers()
 	if isDown == false {
 		log.Print("Can not shutdown all worker\n")
+		isDown = true // @TODO need refactor this part make it more reasonable.
 	} else {
 		log.Print("All worker shutdown\n")
 	}
@@ -213,7 +216,6 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 			} else {
 				log.Printf("Schedule: assign %s task %v to %s failed", phase,
 					task.TaskNumber, worker)
-
 				// put failed task back to task channel.
 				taskChan <- task.TaskNumber
 			}
