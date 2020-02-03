@@ -115,8 +115,8 @@ func initWorker(workerName string, masterAddress string, mapf func(string, strin
 func register(masterAddress string, path string, workerName string) {
 	args := new(RegisterArgs)
 	args.WorkerName = workerName
-	ok := call(masterAddress, "Master.WorkerRegister", path, args, new(struct{}))
-	if ok == false {
+	ok, err := call(masterAddress, "Master.WorkerRegister", path, args, new(struct{}))
+	if ok == false || err != nil {
 		fmt.Printf("Register: RPC %s register error\n", masterAddress)
 	}
 }

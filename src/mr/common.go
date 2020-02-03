@@ -37,23 +37,23 @@ func debug(format string, a ...interface{}) (n int, err error) {
 // usually returns true.
 // returns false if something goes wrong.
 //
-func call(address string, rpcname string, path string, args interface{}, reply interface{}) bool {
+func call(address string, rpcname string, path string, args interface{}, reply interface{}) (bool, error) {
 	debug("RPC: A call to %s name %s\n", address, rpcname)
 	client, err := rpc.DialHTTPPath("unix", address, path)
 	if err != nil {
-		log.Printf("dialing: %s\n", err) // @TODO need to reconsider the err handle way.
-		return false
+		log.Printf("dialing: %s\n", err)
+		return false, err
 	}
 	defer client.Close()
 
 	err = client.Call(rpcname, args, reply)
 	if err == nil {
 		log.Printf("RPC: A successful call to %s name %s\n", address, rpcname)
-		return true
+		return true, nil
 	}
 	log.Printf("RPC: A failed to %s name %s\n", address, rpcname)
 	log.Printf("RPC call failed %s:", err)
-	return false
+	return false, nil
 }
 
 //

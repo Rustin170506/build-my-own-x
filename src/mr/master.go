@@ -75,7 +75,6 @@ func (master *Master) run() bool {
 	isDown := master.killWorkers()
 	if isDown == false {
 		log.Print("Can not shutdown all worker\n")
-		isDown = true // @TODO need refactor this part make it more reasonable.
 	} else {
 		log.Print("All worker shutdown\n")
 	}
@@ -133,9 +132,11 @@ func (master *Master) killWorkers() bool {
 	for i, w := range master.workers {
 		debug("Master: shutdown worker %s index %v workers len %v\n", w, i, len(master.workers))
 		var reply ShutdownReply
-		ok := call(w, "MapReduceWorker.Shutdown", w+prodRpcPath, new(struct{}), &reply)
-		if ok == false || reply.IsDown == false {
-			fmt.Printf("Master: RPC %s shutdown error\n", w)
+		ok, err := call(w, "MapReduceWorker.Shutdown", w+prodRpcPath, new(struct{}), &reply)
+		if err != nil {
+			log.Printf("Master: RPC %s shutdown err %s, it seem already deid.\n", w, err)
+		} else if ok == false || reply.IsDown == false {
+			log.Printf("Master: RPC %s shutdown failed\n", w)
 			isDown = false
 		}
 	}
@@ -205,7 +206,8 @@ func scheduleWorker(mapFileNames []string, nReduce int, phase jobPhase, register
 
 		// Note: must use parameter.
 		go func(worker string, task MapOrReduceTask) {
-			if call(worker, "MapReduceWorker.DoTask", worker+prodRpcPath, &task, nil) {
+			ok, err := call(worker, "MapReduceWorker.DoTask", worker+prodRpcPath, &task, nil)
+			if ok && err == nil {
 				// only successful httpCall will httpCall wg.Done().
 				wg.Done()
 
