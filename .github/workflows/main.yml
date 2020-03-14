@@ -1,0 +1,24 @@
+name: 6.824
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+env:
+  GOPROXY: "https://goproxy.cn"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
+      - name: Build and Test mapreduce
+        working-directory: ./src/main
+        run: |
+          sh ./test-mr.sh
