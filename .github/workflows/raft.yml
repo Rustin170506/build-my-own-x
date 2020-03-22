@@ -1,4 +1,4 @@
-name: 6.824
+name: 6.824 raft
 
 on:
   push:
