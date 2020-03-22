@@ -11,4 +11,4 @@ const (
 const Dead int32 = 1
 
 // Heartbeat interval.
-const HeartbeatInterval = 10
+const HeartbeatInterval = 5

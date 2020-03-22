@@ -162,7 +162,7 @@ func (rf *Raft) startLeaderElection() {
 	for {
 		electionTimeout := rand.Intn(200)
 		startTime := time.Now()
-		time.Sleep(time.Duration(electionTimeout) * time.Millisecond)
+		time.Sleep(time.Duration(HeartbeatInterval+electionTimeout) * time.Millisecond)
 		rf.mu.Lock()
 		if atomic.LoadInt32(&rf.dead) == Dead {
 			rf.mu.Unlock()
