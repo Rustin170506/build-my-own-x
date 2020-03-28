@@ -16,18 +16,4 @@ jobs:
           toolchain: nightly
           components: rustfmt
       - name: Check code format
-        run:cargo fmt -- --check
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-      - name: Blog OS
-        run: |
-          cargo xtest --lib
+        run: cargo fmt -- --check
