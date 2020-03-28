@@ -1,7 +1,17 @@
 use crate::gdt;
+use crate::hlt_loop;
+use crate::print;
 use crate::println;
 use lazy_static::lazy_static;
+use pic8259_simple::ChainedPics;
+use spin;
+use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+
+pub const PIC_1_OFFSET: u8 = 32;
+pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
+pub static PICS: spin::Mutex<ChainedPics> =
+    spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
@@ -21,8 +31,6 @@ lazy_static! {
     };
 }
 
-use crate::hlt_loop;
-use crate::print;
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: &mut InterruptStackFrame,
     _error_code: u64,
@@ -77,26 +85,6 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFra
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
-#[cfg(test)]
-use crate::{serial_print, serial_println};
-
-#[test_case]
-fn test_breakpoint_exception() {
-    serial_print!("test_breakpoint_exception...");
-    // invoke a breakpoint exception
-    x86_64::instructions::interrupts::int3();
-    serial_println!("[ok]");
-}
-
-use pic8259_simple::ChainedPics;
-use spin;
-
-pub const PIC_1_OFFSET: u8 = 32;
-pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
-
-pub static PICS: spin::Mutex<ChainedPics> =
-    spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
-
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
@@ -114,8 +102,6 @@ impl InterruptIndex {
     }
 }
 
-use x86_64::structures::idt::PageFaultErrorCode;
-
 extern "x86-interrupt" fn page_fault_handler(
     stack_frame: &mut InterruptStackFrame,
     error_code: PageFaultErrorCode,
@@ -127,4 +113,15 @@ extern "x86-interrupt" fn page_fault_handler(
     println!("Error Code: {:?}", error_code);
     println!("{:#?}", stack_frame);
     hlt_loop();
+}
+
+#[cfg(test)]
+use crate::{serial_print, serial_println};
+
+#[test_case]
+fn test_breakpoint_exception() {
+    serial_print!("test_breakpoint_exception...");
+    // invoke a breakpoint exception
+    x86_64::instructions::interrupts::int3();
+    serial_println!("[ok]");
 }

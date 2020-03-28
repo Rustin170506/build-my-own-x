@@ -10,14 +10,11 @@ use core::panic::PanicInfo;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
-
     blog_os::init();
 
     let ptr = 0x2031b2 as *mut u32;
-
-    // read from a code page
     unsafe {
-        let x = *ptr;
+        let _x = *ptr;
     }
     println!("read worked");
 
@@ -27,22 +24,10 @@ pub extern "C" fn _start() -> ! {
     }
     println!("write worked");
 
-    //    // invoke a breakpoint exception
-    //    x86_64::instructions::interrupts::int3(); // new
-    //
-    //    // trigger a page fault
-    //    unsafe {
-    //        *(0xdeadbeef as *mut u64) = 42;
-    //    };
-
     fn stack_overflow() {
         stack_overflow(); // for each recursion, the return address is pushed
     }
 
-    // trigger a stack overflow
-    // stack_overflow();
-
-    // as before
     #[cfg(test)]
     test_main();
 
