@@ -32,7 +32,7 @@ dependencies = [
  "spin",
  "uart_16550",
  "volatile",
- "x86_64",
+ "x86_64 0.9.6",
 ]
 
 [[package]]
@@ -73,9 +73,9 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "pc-keyboard"
-version = "0.3.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fff50ab09ba31bcebc0669f4e64c0952fae1acdca9e6e0587e68e4e8443808ac"
+checksum = "c48392db76c4e9a69e0b3be356c5f97ebb7b14413c5e4fd0af4755dbf86e2fce"
 
 [[package]]
 name = "pic8259_simple"
@@ -123,7 +123,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "803ea8cb602dbb32c1a657a866d2dd79fe7dbeab0fb2ac667cb4dcc7de12a58b"
 dependencies = [
  "bitflags",
- "x86_64",
+ "x86_64 0.7.7",
 ]
 
 [[package]]
@@ -149,4 +149,14 @@ dependencies = [
  "bitflags",
  "cast",
  "ux",
+]
+
+[[package]]
+name = "x86_64"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4206b60c9f99766329b66962aa8ddc01df6c7edd02edc046b7a69d5df9fcdbcf"
+dependencies = [
+ "bit_field",
+ "bitflags",
 ]

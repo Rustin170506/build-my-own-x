@@ -4,35 +4,37 @@
 #![test_runner(blog_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use blog_os::memory::BootInfoFrameAllocator;
 use blog_os::println;
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    use blog_os::memory;
+    use x86_64::{structures::paging::Page, VirtAddr};
+
     println!("Hello World{}", "!");
     blog_os::init();
 
-    let ptr = 0x2031b2 as *mut u32;
-    unsafe {
-        let _x = *ptr;
-    }
-    println!("read worked");
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
-    // write to a code page
-    unsafe {
-        *ptr = 42;
-    }
-    println!("write worked");
+    // map an unused page
+    let page = Page::containing_address(VirtAddr::new(0));
+    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
 
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
+    // write the string `New!` to the screen through the new mapping
+    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
 
     #[cfg(test)]
-    test_main();
+        test_main();
 
     println!("It did not crash!");
-    loop {}
+    blog_os::hlt_loop();
 }
 
 /// This function is called on panic.
