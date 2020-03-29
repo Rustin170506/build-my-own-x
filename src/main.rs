@@ -31,7 +31,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
 
     #[cfg(test)]
-        test_main();
+    test_main();
 
     println!("It did not crash!");
     blog_os::hlt_loop();
