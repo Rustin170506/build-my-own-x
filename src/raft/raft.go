@@ -18,6 +18,7 @@ package raft
 //
 
 import (
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -170,7 +171,7 @@ func (rf *Raft) startLeaderElection() {
 		}
 		if rf.lastReceiveTime.Before(startTime) {
 			if rf.state != Leader {
-				DPrintf("%d kicks off election on term: %d", rf.me, rf.currentTerm)
+				log.Printf("%d kicks off election on term: %d", rf.me, rf.currentTerm)
 				go rf.kickOffElection()
 			}
 		}
@@ -191,7 +192,7 @@ func (rf *Raft) kickOffElection() {
 		LastLogIndex: lastLogEntry.Index,
 		LastLogTerm:  lastLogEntry.Term,
 	}
-	DPrintf("%d start send vote request to peers", rf.me)
+	log.Printf("%d start send vote request to peers", rf.me)
 	numVote := 1
 	rf.mu.Unlock()
 	for i := 0; i < len(rf.peers); i++ {
@@ -214,7 +215,7 @@ func (rf *Raft) kickOffElection() {
 					// Get the most vote, so we can set myself as leader and start sync log.
 					if numVote > len(rf.peers)/2 && rf.state == Candidate {
 						rf.convertToLeader()
-						DPrintf("%d become the leader on term: %d", rf.me, rf.currentTerm)
+						log.Printf("%d become the leader on term: %d", rf.me, rf.currentTerm)
 						for j := 0; j < len(rf.peers); j++ {
 							if j != rf.me {
 								go rf.syncLogToPeer(j)
@@ -229,7 +230,7 @@ func (rf *Raft) kickOffElection() {
 
 // Sync the log to peer node.
 func (rf *Raft) syncLogToPeer(peerId int) {
-	DPrintf("%d start sync log to %d", rf.me, peerId)
+	log.Printf("%d start sync log to %d", rf.me, peerId)
 	for {
 		rf.mu.Lock()
 		if rf.state != Leader {
@@ -261,7 +262,7 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 	// Because append entry handler AppendEntries also acquire the lock, so we need release this lock before send RPC.
 	ok := rf.sendAppendEntryRPC(peerId, &args, &replay)
 	if !ok {
-		DPrintf("%d send a append PRC to %d failed", rf.me, peerId)
+		log.Printf("%d send a append PRC to %d failed", rf.me, peerId)
 		return
 	}
 	rf.mu.Lock()
@@ -270,7 +271,7 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 		rf.convertToFollower(replay.Term)
 		return
 	}
-	DPrintf("%d success send a append to %d", rf.me, peerId)
+	log.Printf("%d success send a append to %d", rf.me, peerId)
 }
 
 // Get the last log entry.

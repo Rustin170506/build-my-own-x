@@ -1,6 +1,9 @@
 package raft
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 //
 // RequestVote RPC handler.
@@ -8,7 +11,7 @@ import "time"
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	DPrintf("%d start process vote request", rf.me)
+	log.Printf("%d start process vote request", rf.me)
 	rf.lastReceiveTime = time.Now()
 
 	lastEntry := rf.getLastLogEntry()
@@ -18,7 +21,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	reply.Term = rf.currentTerm
 	if args.Term < rf.currentTerm {
 		reply.VoteGranted = false
-		DPrintf("%d refuse vote for %d", rf.me, args.CandidateId)
+		log.Printf("%d refuse vote for %d", rf.me, args.CandidateId)
 	} else {
 		if args.Term > rf.currentTerm {
 			rf.convertToFollower(args.Term)
@@ -26,7 +29,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		if (rf.votedFor == -1 || rf.votedFor == args.CandidateId) && logUpToDate {
 			rf.votedFor = args.CandidateId
 			reply.VoteGranted = true
-			DPrintf("%d vote for %d", rf.me, args.CandidateId)
+			log.Printf("%d vote for %d", rf.me, args.CandidateId)
 		}
 	}
 	// Your code here (2B).
@@ -38,7 +41,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	DPrintf("%d start process append entries request from %d, args term: %d node term: %d", rf.me, args.LeaderId, args.Term, rf.currentTerm)
+	log.Printf("%d start process append entries request from %d, args term: %d node term: %d", rf.me, args.LeaderId, args.Term, rf.currentTerm)
 	if args.Term < rf.currentTerm {
 		DPrintf("get append entries form %d, but the term less than %d", args.LeaderId, rf.me)
 		reply.Term, reply.Success = rf.currentTerm, false
