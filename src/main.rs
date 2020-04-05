@@ -52,7 +52,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     );
 
     #[cfg(test)]
-        test_main();
+    test_main();
 
     println!("It did not crash!");
     blog_os::hlt_loop();
