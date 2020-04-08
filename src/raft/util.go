@@ -2,6 +2,7 @@ package raft
 
 import (
 	"log"
+	"sort"
 )
 
 // Debugging
@@ -13,4 +14,20 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 		log.Printf(format, a...)
 	}
 	return
+}
+
+// Get most peers matched index.
+func getMajoritySameIndex(matchedIndexes []int) int {
+	tmp := make([]int, len(matchedIndexes))
+	copy(tmp, matchedIndexes)
+	sort.Sort(sort.Reverse(sort.IntSlice(tmp)))
+	idx := len(tmp) / 2
+	return tmp[idx]
+}
+
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
 }

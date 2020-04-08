@@ -21,5 +21,15 @@ func (rf *Raft) convertToFollower(newTerm int) {
 // Convert to leader and update lastReceiveTime.
 func (rf *Raft) convertToLeader() {
 	rf.state = Leader
+	rf.leaderId = rf.me
 	rf.lastReceiveTime = time.Now()
+	rf.initIndex()
+}
+
+// Init index when became the leader.
+func (rf *Raft) initIndex() {
+	for i := 0; i < len(rf.peers); i++ {
+		rf.matchedIndexes[i] = 0
+		rf.nextIndexes[i] = len(rf.log)
+	}
 }

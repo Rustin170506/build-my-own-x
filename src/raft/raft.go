@@ -18,7 +18,6 @@ package raft
 //
 
 import (
-	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -52,9 +51,10 @@ type Raft struct {
 	lastAppliedIndex int // Index of highest log entry applied to state machine(initialized to 0, increases monotonically).
 
 	// Volatile state on leaders:
-	nextIndexes  []int // For each server, index of the next log entry to send to that server(initialized to leader last log index +1 ).
-	matchIndexed []int // For each server, index of highest log entry to be replicated on server(initialized to 0, increases monotonically).
+	nextIndexes    []int // For each server, index of the next log entry to send to that server(initialized to leader last log index +1 ).
+	matchedIndexes []int // For each server, index of highest log entry to be replicated on server(initialized to 0, increases monotonically).
 
+	applyCh chan ApplyMsg // Is a channel on which the tester or service expects Raft to send ApplyMsg messages
 }
 
 // return currentTerm and whether this server
@@ -122,12 +122,28 @@ func (rf *Raft) readPersist(data []byte) {
 // the leader.
 //
 func (rf *Raft) Start(command interface{}) (int, int, bool) {
+	// The init state.
 	index := -1
 	term := -1
 	isLeader := true
-
-	// Your code here (2B).
-
+	// Get current state.
+	term, isLeader = rf.GetState()
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if isLeader {
+		index = rf.getLastLogEntry().Index + 1
+		entry := LogEntry{
+			Command: command,
+			Term:    term,
+			Index:   index,
+		}
+		DPrintf("%v add command %v to self", rf.me, entry.Command)
+		rf.log = append(rf.log, entry)
+		// Update ourselves next indexes and matched indexes after we add a new log.
+		rf.nextIndexes[rf.me] = len(rf.log)
+		rf.matchedIndexes[rf.me] = len(rf.log) - 1
+		// Your code here (2C).
+	}
 	return index, term, isLeader
 }
 
@@ -161,7 +177,7 @@ func (l LogEntry) isMoreUpToDate(r LogEntry) bool {
 // Kick off new election when election time out.
 func (rf *Raft) startLeaderElection() {
 	for {
-		electionTimeout := rand.Intn(200)
+		electionTimeout := rand.Intn(150)
 		startTime := time.Now()
 		time.Sleep(time.Duration(HeartbeatInterval+electionTimeout) * time.Millisecond)
 		rf.mu.Lock()
@@ -171,7 +187,7 @@ func (rf *Raft) startLeaderElection() {
 		}
 		if rf.lastReceiveTime.Before(startTime) {
 			if rf.state != Leader {
-				log.Printf("%d kicks off election on term: %d", rf.me, rf.currentTerm)
+				DPrintf("%d kicks off election on term: %d", rf.me, rf.currentTerm)
 				go rf.kickOffElection()
 			}
 		}
@@ -182,8 +198,6 @@ func (rf *Raft) startLeaderElection() {
 // Kick off election to get new leader.
 func (rf *Raft) kickOffElection() {
 	rf.mu.Lock()
-	DPrintf("%d start of the election", rf.me)
-	rf.lastReceiveTime = time.Now()
 	rf.convertToCandidate()
 	lastLogEntry := rf.getLastLogEntry()
 	args := RequestVoteArgs{
@@ -192,14 +206,13 @@ func (rf *Raft) kickOffElection() {
 		LastLogIndex: lastLogEntry.Index,
 		LastLogTerm:  lastLogEntry.Term,
 	}
-	log.Printf("%d start send vote request to peers", rf.me)
 	numVote := 1
 	rf.mu.Unlock()
 	for i := 0; i < len(rf.peers); i++ {
 		if i != rf.me {
 			go func(peerId int) {
 				replay := RequestVoteReply{}
-				DPrintf("%d send reuqest vote to %d", rf.me, peerId)
+				DPrintf("%d send vote request to %d", rf.me, peerId)
 				ok := rf.sendRequestVoteRPC(peerId, &args, &replay)
 				if !ok {
 					return
@@ -215,10 +228,10 @@ func (rf *Raft) kickOffElection() {
 					// Get the most vote, so we can set myself as leader and start sync log.
 					if numVote > len(rf.peers)/2 && rf.state == Candidate {
 						rf.convertToLeader()
-						log.Printf("%d become the leader on term: %d", rf.me, rf.currentTerm)
+						DPrintf("%d become the leader on term: %d", rf.me, rf.currentTerm)
 						for j := 0; j < len(rf.peers); j++ {
 							if j != rf.me {
-								go rf.syncLogToPeer(j)
+								go rf.replicaLogToPeer(j)
 							}
 						}
 					}
@@ -229,49 +242,75 @@ func (rf *Raft) kickOffElection() {
 }
 
 // Sync the log to peer node.
-func (rf *Raft) syncLogToPeer(peerId int) {
-	log.Printf("%d start sync log to %d", rf.me, peerId)
+func (rf *Raft) replicaLogToPeer(peerId int) {
+	DPrintf("%d start sync log to %d", rf.me, peerId)
 	for {
 		rf.mu.Lock()
 		if rf.state != Leader {
 			rf.mu.Unlock()
-			DPrintf("%d stop sends heartbeat to %d", rf.me, peerId)
+			DPrintf("%d stop sends append entries to %d", rf.me, peerId)
 			return
 		}
 		rf.mu.Unlock()
-		DPrintf("%d sends heartbeat to %d", rf.me, peerId)
 		go rf.sendAppendEntry(peerId)
 		time.Sleep(HeartbeatInterval * time.Millisecond)
-		DPrintf("%d still sync log to %d", rf.me, peerId)
 	}
 }
 
 // Send append entry to other peers.
 func (rf *Raft) sendAppendEntry(peerId int) {
 	rf.mu.Lock()
-	lastLogEntry := rf.getLastLogEntry()
+	peerNextIndex := rf.nextIndexes[peerId]
+	prevLogIndex := peerNextIndex - 1
 	args := AppendEntriesArgs{
 		Term:         rf.currentTerm,
 		LeaderId:     rf.me,
-		PrevLogIndex: lastLogEntry.Index,
-		Entries:      nil,
-		LeaderCommit: -1, // TODO: use real value.
+		PrevLogIndex: prevLogIndex,
+		PrevLogTerm:  rf.log[prevLogIndex].Term,
+		Entries:      rf.log[rf.nextIndexes[peerId]:], // Log after next index.
+		LeaderCommit: rf.commitIndex,
 	}
-	replay := AppendEntriesReply{}
 	rf.mu.Unlock()
+	replay := AppendEntriesReply{}
 	// Because append entry handler AppendEntries also acquire the lock, so we need release this lock before send RPC.
 	ok := rf.sendAppendEntryRPC(peerId, &args, &replay)
 	if !ok {
-		log.Printf("%d send a append PRC to %d failed", rf.me, peerId)
+		DPrintf("%d send a append PRC to %d failed", rf.me, peerId)
 		return
 	}
 	rf.mu.Lock()
-	defer rf.mu.Unlock()
-	if replay.Term > rf.currentTerm {
-		rf.convertToFollower(replay.Term)
+	if rf.state != Leader || rf.currentTerm != args.Term {
+		rf.mu.Unlock()
 		return
 	}
-	log.Printf("%d success send a append to %d", rf.me, peerId)
+	rf.mu.Unlock()
+
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if replay.Success {
+		// Update matched indexes and next indexes.
+		rf.matchedIndexes[peerId] = args.PrevLogIndex + len(args.Entries)
+		rf.nextIndexes[peerId] = rf.matchedIndexes[peerId] + 1
+		DPrintf("%d success send a append to %d", rf.me, peerId)
+		rf.updateCommittedIndex(rf.matchedIndexes)
+		return
+	} else {
+		// If replay term more than current term, we should convert ourselves be a follower.
+		if replay.Term > rf.currentTerm {
+			rf.convertToFollower(replay.Term)
+			return
+		} else {
+			// It means follower's log conflict with leader log.
+			// So we need to fast back up.
+			prevIndex := args.PrevLogIndex // Get the previous log index.
+
+			// We will back up to a index which is first index of previous log term.
+			for prevIndex > 0 && rf.log[prevIndex].Term == args.PrevLogTerm {
+				prevIndex--
+			}
+			rf.nextIndexes[peerId] = prevIndex + 1
+		}
+	}
 }
 
 // Get the last log entry.
@@ -280,6 +319,29 @@ func (rf *Raft) getLastLogEntry() LogEntry {
 		return rf.log[len(rf.log)-1]
 	} else {
 		return LogEntry{nil, -1, -1}
+	}
+}
+
+// Update committed index.
+func (rf *Raft) updateCommittedIndex(matchedIndexes []int) {
+	majorityIndex := getMajoritySameIndex(matchedIndexes)
+	if rf.log[majorityIndex].Term == rf.currentTerm && majorityIndex > rf.commitIndex {
+		rf.commitIndex = majorityIndex
+		DPrintf("%v update commit index to %v", rf.me, rf.commitIndex)
+	}
+}
+
+// Start apply message.
+func (rf *Raft) startApply() {
+	for {
+		time.Sleep(5 * time.Millisecond)
+		rf.mu.Lock()
+		for rf.lastAppliedIndex < rf.commitIndex {
+			rf.lastAppliedIndex++
+			DPrintf("%v apply command %v", rf.me, rf.log[rf.lastAppliedIndex].Command)
+			rf.applyCh <- ApplyMsg{CommandValid: true, CommandIndex: rf.lastAppliedIndex, Command: rf.log[rf.lastAppliedIndex].Command}
+		}
+		rf.mu.Unlock()
 	}
 }
 
@@ -308,11 +370,16 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.commitIndex = 0
 	rf.lastAppliedIndex = 0
 	rf.state = Follower
+	rf.applyCh = applyCh
+	rf.log = []LogEntry{{nil, 0, 0}} // log entry at index 0 is unused
+	rf.matchedIndexes = make([]int, len(peers))
+	rf.nextIndexes = make([]int, len(peers))
 	rf.lastReceiveTime = time.Now()
-	// Your initialization code here (2B, 2C).
-	DPrintf("%d initialized", rf.me)
+	// Your initialization code here (2C).
 	// Start leader election.
 	go rf.startLeaderElection()
+	// Start apply message.
+	go rf.startApply()
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
 	return rf
