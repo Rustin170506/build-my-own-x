@@ -31,6 +31,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		if rf.votedFor == -1 && logUpToDate {
 			rf.votedFor = args.CandidateId
 			reply.VoteGranted = true
+			rf.persist()
 			DPrintf("%d vote for %d", rf.me, args.CandidateId)
 		}
 	}
@@ -67,7 +68,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		// If our log length longer than leader log, we need to delete the useless log.
 		if args.PrevLogIndex < len(rf.log) {
 			rf.log = rf.log[0:args.PrevLogIndex] // Delete the log in prevLogIndex and after it.
-			// Your code here (2C).
+			rf.persist()
 		}
 		reply.Success = false
 		return
@@ -75,6 +76,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	// If no conflict with leader's log.
 	// We just append the entries to our log.
 	rf.log = append(rf.log[0:args.PrevLogIndex+1], args.Entries...)
+	rf.persist()
 	// Update the committed index.
 	if args.LeaderCommit > rf.commitIndex {
 		rf.commitIndex = min(args.LeaderCommit, len(rf.log)-1)

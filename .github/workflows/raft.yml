@@ -26,3 +26,7 @@ jobs:
         working-directory: ./src/raft
         run: |
           go test -run 2B
+      - name: Build and Test 2C
+        working-directory: ./src/raft
+        run: |
+          go test -run 2C

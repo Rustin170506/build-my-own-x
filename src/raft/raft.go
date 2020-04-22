@@ -18,15 +18,14 @@ package raft
 //
 
 import (
+	"bytes"
 	"math/rand"
 	"sync"
 	"time"
 )
 import "sync/atomic"
 import "../labrpc"
-
-// import "bytes"
-// import "../labgob"
+import "../labgob"
 
 //
 // A Go object implementing a single Raft peer.
@@ -75,14 +74,26 @@ func (rf *Raft) GetState() (int, bool) {
 // see paper's Figure 2 for a description of what should be persistent.
 //
 func (rf *Raft) persist() {
-	// Your code here (2C).
-	// Example:
-	// w := new(bytes.Buffer)
-	// e := labgob.NewEncoder(w)
-	// e.Encode(rf.xxx)
-	// e.Encode(rf.yyy)
-	// data := w.Bytes()
-	// rf.persister.SaveRaftState(data)
+	buffer := new(bytes.Buffer)
+	encoder := labgob.NewEncoder(buffer)
+
+	err := encoder.Encode(rf.currentTerm)
+	if err != nil {
+		DPrintf("%v encode currentTerm error: %v", rf.me, err)
+	}
+
+	err = encoder.Encode(rf.votedFor)
+	if err != nil {
+		DPrintf("%v encode votedFor error: %v", rf.me, err)
+	}
+
+	err = encoder.Encode(rf.log)
+	if err != nil {
+		DPrintf("%v encode log error: %v", rf.me, err)
+	}
+
+	data := buffer.Bytes()
+	rf.persister.SaveRaftState(data)
 }
 
 //
@@ -92,19 +103,25 @@ func (rf *Raft) readPersist(data []byte) {
 	if data == nil || len(data) < 1 { // bootstrap without any state?
 		return
 	}
-	// Your code here (2C).
-	// Example:
-	// r := bytes.NewBuffer(data)
-	// d := labgob.NewDecoder(r)
-	// var xxx
-	// var yyy
-	// if d.Decode(&xxx) != nil ||
-	//    d.Decode(&yyy) != nil {
-	//   error...
-	// } else {
-	//   rf.xxx = xxx
-	//   rf.yyy = yyy
-	// }
+	r := bytes.NewBuffer(data)
+	d := labgob.NewDecoder(r)
+	currentTerm, votedFor := 0, 0
+	err := d.Decode(&currentTerm)
+	if err != nil {
+		DPrintf("%v decode currentTerm error: %v", rf.me, err)
+	}
+
+	err = d.Decode(&votedFor)
+	if err != nil {
+		DPrintf("%v decode votedFor error: %v", rf.me, err)
+	}
+
+	err = d.Decode(&rf.log)
+	if err != nil {
+		DPrintf("%v decode log error: %v", rf.me, err)
+	}
+
+	rf.currentTerm, rf.votedFor = currentTerm, votedFor
 }
 
 //
@@ -142,7 +159,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 		// Update ourselves next indexes and matched indexes after we add a new log.
 		rf.nextIndexes[rf.me] = len(rf.log)
 		rf.matchedIndexes[rf.me] = len(rf.log) - 1
-		// Your code here (2C).
+		rf.persist()
 	}
 	return index, term, isLeader
 }
@@ -177,9 +194,9 @@ func (l LogEntry) isMoreUpToDate(r LogEntry) bool {
 // Kick off new election when election time out.
 func (rf *Raft) startLeaderElection() {
 	for {
-		electionTimeout := rand.Intn(150)
+		electionTimeout := rand.Intn(300)
 		startTime := time.Now()
-		time.Sleep(time.Duration(HeartbeatInterval+electionTimeout) * time.Millisecond)
+		time.Sleep(time.Duration(HeartbeatInterval*4+electionTimeout) * time.Millisecond)
 		rf.mu.Lock()
 		if atomic.LoadInt32(&rf.dead) == Dead {
 			rf.mu.Unlock()
@@ -199,6 +216,7 @@ func (rf *Raft) startLeaderElection() {
 func (rf *Raft) kickOffElection() {
 	rf.mu.Lock()
 	rf.convertToCandidate()
+	rf.persist()
 	lastLogEntry := rf.getLastLogEntry()
 	args := RequestVoteArgs{
 		Term:         rf.currentTerm,
@@ -338,6 +356,7 @@ func (rf *Raft) startApply() {
 		rf.mu.Lock()
 		for rf.lastAppliedIndex < rf.commitIndex {
 			rf.lastAppliedIndex++
+			rf.persist()
 			DPrintf("%v apply command %v", rf.me, rf.log[rf.lastAppliedIndex].Command)
 			rf.applyCh <- ApplyMsg{CommandValid: true, CommandIndex: rf.lastAppliedIndex, Command: rf.log[rf.lastAppliedIndex].Command}
 		}
