@@ -229,19 +229,20 @@ func (rf *Raft) kickOffElection() {
 	for i := 0; i < len(rf.peers); i++ {
 		if i != rf.me {
 			go func(peerId int) {
-				replay := RequestVoteReply{}
+
+				reply := RequestVoteReply{}
 				DPrintf("%d send vote request to %d", rf.me, peerId)
-				ok := rf.sendRequestVoteRPC(peerId, &args, &replay)
+				ok := rf.sendRequestVoteRPC(peerId, &args, &reply)
 				if !ok {
 					return
 				}
 				rf.mu.Lock()
 				defer rf.mu.Unlock()
-				if replay.Term > rf.currentTerm {
-					rf.convertToFollower(replay.Term)
+				if reply.Term > rf.currentTerm {
+					rf.convertToFollower(reply.Term)
 					return
 				}
-				if replay.VoteGranted {
+				if reply.VoteGranted {
 					numVote++
 					// Get the most vote, so we can set myself as leader and start sync log.
 					if numVote > len(rf.peers)/2 && rf.state == Candidate {
@@ -289,9 +290,9 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 		LeaderCommit: rf.commitIndex,
 	}
 	rf.mu.Unlock()
-	replay := AppendEntriesReply{}
+	reply := AppendEntriesReply{}
 	// Because append entry handler AppendEntries also acquire the lock, so we need release this lock before send RPC.
-	ok := rf.sendAppendEntryRPC(peerId, &args, &replay)
+	ok := rf.sendAppendEntryRPC(peerId, &args, &reply)
 	if !ok {
 		DPrintf("%d send a append PRC to %d failed", rf.me, peerId)
 		return
@@ -305,7 +306,7 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	if replay.Success {
+	if reply.Success {
 		// Update matched indexes and next indexes.
 		rf.matchedIndexes[peerId] = args.PrevLogIndex + len(args.Entries)
 		rf.nextIndexes[peerId] = rf.matchedIndexes[peerId] + 1
@@ -313,9 +314,9 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 		rf.updateCommittedIndex(rf.matchedIndexes)
 		return
 	} else {
-		// If replay term more than current term, we should convert ourselves be a follower.
-		if replay.Term > rf.currentTerm {
-			rf.convertToFollower(replay.Term)
+		// If reply term more than current term, we should convert ourselves be a follower.
+		if reply.Term > rf.currentTerm {
+			rf.convertToFollower(reply.Term)
 			return
 		} else {
 			// It means follower's log conflict with leader log.

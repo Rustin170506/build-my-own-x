@@ -5,7 +5,6 @@ package raft
 // field names must start with capital letters!
 //
 type RequestVoteArgs struct {
-	// Your data here (2B).
 	Term         int // Candidate's term.
 	CandidateId  int // Candidate's id.
 	LastLogIndex int // Candidate's latest log entry index.
