@@ -229,7 +229,6 @@ func (rf *Raft) kickOffElection() {
 	for i := 0; i < len(rf.peers); i++ {
 		if i != rf.me {
 			go func(peerId int) {
-
 				reply := RequestVoteReply{}
 				DPrintf("%d send vote request to %d", rf.me, peerId)
 				ok := rf.sendRequestVoteRPC(peerId, &args, &reply)
