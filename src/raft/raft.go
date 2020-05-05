@@ -224,7 +224,7 @@ func (rf *Raft) kickOffElection() {
 		LastLogIndex: lastLogEntry.Index,
 		LastLogTerm:  lastLogEntry.Term,
 	}
-	numVote := 1
+	numVote := int32(1)
 	rf.mu.Unlock()
 	for i := 0; i < len(rf.peers); i++ {
 		if i != rf.me {
@@ -242,9 +242,9 @@ func (rf *Raft) kickOffElection() {
 					return
 				}
 				if reply.VoteGranted {
-					numVote++
+					atomic.AddInt32(&numVote, 1)
 					// Get the most vote, so we can set myself as leader and start sync log.
-					if numVote > len(rf.peers)/2 && rf.state == Candidate {
+					if atomic.LoadInt32(&numVote) > int32(len(rf.peers)/2) && rf.state == Candidate {
 						rf.convertToLeader()
 						DPrintf("%d become the leader on term: %d", rf.me, rf.currentTerm)
 						for j := 0; j < len(rf.peers); j++ {
