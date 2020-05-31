@@ -6,10 +6,8 @@
 
 extern crate alloc;
 
-use alloc::boxed::Box;
-use alloc::vec::Vec;
-use blog_os::allocator::HEAP_SIZE;
-use blog_os::{serial_print, serial_println};
+use alloc::{boxed::Box, vec::Vec};
+use blog_os::{allocator::HEAP_SIZE, serial_print, serial_println};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
@@ -30,16 +28,13 @@ fn main(boot_info: &'static BootInfo) -> ! {
     loop {}
 }
 
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    blog_os::test_panic_handler(info)
-}
-
 #[test_case]
 fn simple_allocation() {
     serial_print!("simple_allocation... ");
-    let heap_value = Box::new(41);
-    assert_eq!(*heap_value, 41);
+    let heap_value_1 = Box::new(41);
+    let heap_value_2 = Box::new(13);
+    assert_eq!(*heap_value_1, 41);
+    assert_eq!(*heap_value_2, 13);
     serial_println!("[ok]");
 }
 
@@ -63,4 +58,9 @@ fn many_boxes() {
         assert_eq!(*x, i);
     }
     serial_println!("[ok]");
+}
+
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    blog_os::test_panic_handler(info)
 }
