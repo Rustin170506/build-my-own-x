@@ -1,0 +1,53 @@
+syntax = "proto3";
+package etcdserverpb;
+
+import "kv.proto";
+
+message ResponseHeader {
+  // cluster_id is the ID of the cluster which sent the response.
+  uint64 cluster_id = 1;
+  // member_id is the ID of the member which sent the response.
+  uint64 member_id = 2;
+  // revision is the key-value store revision when the request was applied, and
+  // it's unset (so 0) in case of calls not interacting with key-value store.
+  // For watch progress responses, the header.revision indicates progress. All
+  // future events received in this stream are guaranteed to have a higher
+  // revision number than the header.revision number.
+  int64 revision = 3;
+  // raft_term is the raft term when the request was applied.
+  uint64 raft_term = 4;
+}
+
+message PutRequest {
+  // key is the key, in bytes, to put into the key-value store.
+  bytes key = 1;
+  // value is the value, in bytes, to associate with the key in the key-value
+  // store.
+  bytes value = 2;
+  // lease is the lease ID to associate with the key in the key-value store. A
+  // lease value of 0 indicates no lease.
+  int64 lease = 3;
+
+  // If prev_kv is set, etcd gets the previous key-value pair before changing
+  // it. The previous key-value pair will be returned in the put response.
+  bool prev_kv = 4;
+
+  // If ignore_value is set, etcd updates the key using its current value.
+  // Returns an error if the key does not exist.
+  bool ignore_value = 5;
+
+  // If ignore_lease is set, etcd updates the key using its current lease.
+  // Returns an error if the key does not exist.
+  bool ignore_lease = 6;
+}
+
+message PutResponse {
+  ResponseHeader header = 1;
+  // if prev_kv is set in the request, the previous key-value pair will be
+  // returned.
+  mvccpb.KeyValue prev_kv = 2;
+}
+
+service KV {
+  rpc Put(PutRequest) returns (PutResponse) {}
+}
