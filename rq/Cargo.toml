@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 arrow = { version = "14.0.0", features = ["prettyprint"] }
 anyhow = "1.0.56"
+dyn-clone = "1.0.5"

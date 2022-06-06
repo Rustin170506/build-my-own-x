@@ -2,6 +2,7 @@ use super::column_array::{ColumnArray, ColumnData};
 use anyhow::{bail, Result};
 use arrow::datatypes::DataType;
 
+#[derive(Clone)]
 pub(crate) struct LiteralValueVector<T> {
     arrow_type: DataType,
     value: T,
