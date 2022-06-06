@@ -1,11 +1,14 @@
 use super::{column_array::ColumnArray, schema::Schema};
 
-struct RecordBatch {
-    schema: Schema,
-    fields: Vec<Box<dyn ColumnArray>>,
+pub(crate) struct RecordBatch {
+    pub(crate) schema: Schema,
+    pub(crate) fields: Vec<Box<dyn ColumnArray>>,
 }
 
 impl RecordBatch {
+    pub(crate) fn field(&self, index: usize) -> Box<dyn ColumnArray> {
+        dyn_clone::clone_box(&*self.fields[index])
+    }
     fn row_count(&self) -> usize {
         self.fields[0].size()
     }

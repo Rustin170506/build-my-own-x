@@ -8,11 +8,12 @@ use arrow::{
     datatypes::DataType,
 };
 
-struct ArrowFieldArray {
-    field: Box<dyn Array>,
+#[derive(Clone)]
+struct ArrowFieldArray<T> {
+    field: T,
 }
 
-impl ColumnArray for ArrowFieldArray {
+impl<T: Clone + ColumnData + Array> ColumnArray for ArrowFieldArray<T> {
     fn get_type(&self) -> DataType {
         match self.field.data_type() {
             DataType::Boolean => DataType::Boolean,
