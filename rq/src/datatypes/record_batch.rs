@@ -1,5 +1,5 @@
 use super::{column_array::ColumnArray, schema::Schema};
-use std::{rc::Rc};
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub(crate) struct RecordBatch {
