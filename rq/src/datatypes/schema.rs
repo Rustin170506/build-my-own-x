@@ -15,6 +15,7 @@ impl From<ArrowField> for Field {
     }
 }
 
+/// A schema is a list of fields.
 #[derive(Debug, Clone)]
 pub(crate) struct Schema {
     pub(crate) fields: Vec<Field>,

@@ -1,4 +1,6 @@
-use super::column_array::{ColumnArray, ColumnData};
+use std::any::Any;
+
+use super::column_array::ColumnArray;
 use anyhow::Result;
 use arrow::{
     array::{
@@ -8,12 +10,12 @@ use arrow::{
     datatypes::DataType,
 };
 
-#[derive(Clone)]
-struct ArrowFieldArray<T> {
-    field: T,
+/// Wrapper around Arrow Array.
+struct ArrowFieldArray {
+    field: Box<dyn Array>,
 }
 
-impl<T: Clone + ColumnData + Array> ColumnArray for ArrowFieldArray<T> {
+impl ColumnArray for ArrowFieldArray {
     fn get_type(&self) -> DataType {
         match self.field.data_type() {
             DataType::Boolean => DataType::Boolean,
@@ -33,13 +35,13 @@ impl<T: Clone + ColumnData + Array> ColumnArray for ArrowFieldArray<T> {
         }
     }
 
-    fn get_value(&self, i: usize) -> Result<Box<dyn ColumnData>> {
+    fn get_value(&self, i: usize) -> Result<Box<dyn Any>> {
         match self.field.data_type() {
             DataType::Boolean => Ok(Box::new(
                 self.field
                     .as_any()
                     .downcast_ref::<BooleanArray>()
-                    .unwrap()
+                    .expect("Failed to downcast")
                     .value(i),
             )),
             DataType::Int8 => Ok(Box::new(
@@ -126,5 +128,51 @@ impl<T: Clone + ColumnData + Array> ColumnArray for ArrowFieldArray<T> {
 
     fn size(&self) -> usize {
         self.field.len()
+    }
+}
+
+impl ArrowFieldArray {
+    fn new(value: Box<dyn Array>) -> Self {
+        ArrowFieldArray { field: value }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_arrow_field_array() {
+        let id = Int32Array::from(vec![1, 2, 3, 4, 5]);
+        let _ = ArrowFieldArray::new(Box::new(id));
+    }
+
+    #[test]
+    fn test_get_type() {
+        let id = Int32Array::from(vec![1, 2, 3, 4, 5]);
+        let a = ArrowFieldArray::new(Box::new(id));
+        assert_eq!(a.get_type(), DataType::Int32);
+        let s = StringArray::from(vec!["a", "b", "c", "d", "e"]);
+        let a = ArrowFieldArray::new(Box::new(s));
+        assert_eq!(a.get_type(), DataType::Utf8);
+    }
+
+    #[test]
+    fn test_get_value() {
+        let id = Int32Array::from(vec![1, 2, 3, 4, 5]);
+        let a = ArrowFieldArray::new(Box::new(id));
+        assert_eq!(a.get_value(0).unwrap().downcast_ref::<i32>().unwrap(), &1);
+        let s = StringArray::from(vec!["a", "b", "c", "d", "e"]);
+        let a = ArrowFieldArray::new(Box::new(s));
+        assert_eq!(
+            a.get_value(0).unwrap().downcast_ref::<String>().unwrap(),
+            &"a".to_string()
+        );
+    }
+
+    #[test]
+    fn test_size() {
+        let id = Int32Array::from(vec![1, 2, 3, 4, 5]);
+        let a = ArrowFieldArray::new(Box::new(id));
+        assert_eq!(a.size(), 5);
     }
 }
