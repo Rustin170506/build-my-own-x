@@ -20,7 +20,10 @@ impl DataSource for MemeoryDataSource {
             .iter()
             .map(|batch| RecordBatch {
                 schema: self.schema.clone(),
-                fields: projection_indices.iter().map(|i| batch.field(*i)).collect(),
+                fields: projection_indices
+                    .iter()
+                    .map(|i| batch.field(*i).clone())
+                    .collect(),
             })
             .collect()
     }
