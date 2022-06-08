@@ -11,7 +11,7 @@ use arrow::{
 };
 
 /// Wrapper around Arrow Array.
-struct ArrowFieldArray {
+pub(crate) struct ArrowFieldArray {
     field: Box<dyn Array>,
 }
 
@@ -132,10 +132,11 @@ impl ColumnArray for ArrowFieldArray {
 }
 
 impl ArrowFieldArray {
-    fn new(value: Box<dyn Array>) -> Self {
+    pub(crate) fn new(value: Box<dyn Array>) -> Self {
         ArrowFieldArray { field: value }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -6,6 +6,12 @@ pub(crate) struct Field {
     data_type: DataType,
 }
 
+impl Field {
+    pub(crate) fn new(name: String, data_type: DataType) -> Self {
+        Self { name, data_type }
+    }
+}
+
 impl From<ArrowField> for Field {
     fn from(field: ArrowField) -> Self {
         Self {
@@ -22,7 +28,7 @@ pub(crate) struct Schema {
 }
 
 impl Schema {
-    fn new(fields: Vec<Field>) -> Self {
+    pub(crate) fn new(fields: Vec<Field>) -> Self {
         Self { fields }
     }
 
