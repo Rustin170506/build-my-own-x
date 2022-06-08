@@ -28,3 +28,13 @@ impl<T: Clone + Any> ColumnArray for LiteralValueVector<T> {
         self.size
     }
 }
+
+impl<T: Clone + Any> LiteralValueVector<T> {
+    pub(crate) fn new(arrow_type: DataType, value: T, size: usize) -> Self {
+        Self {
+            arrow_type,
+            value,
+            size,
+        }
+    }
+}
