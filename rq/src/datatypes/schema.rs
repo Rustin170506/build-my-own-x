@@ -1,6 +1,6 @@
 use arrow::datatypes::{DataType, Field as ArrowField, Schema as ArrowSchema};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Field {
     pub(crate) name: String,
     data_type: DataType,
@@ -22,7 +22,7 @@ impl From<ArrowField> for Field {
 }
 
 /// A schema is a list of fields.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Schema {
     pub(crate) fields: Vec<Field>,
 }
