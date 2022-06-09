@@ -34,7 +34,7 @@ mod tests {
 
     use super::*;
     use crate::datatypes::{
-        arrow_field_array::ArrowFieldArray, literal_value_array::LiteralValueVector, schema::Field,
+        arrow_field_array::ArrowFieldArray, literal_value_array::LiteralValueArray, schema::Field,
     };
     use arrow::{array::Int32Array, datatypes::DataType};
 
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_new_with_literal_value_array() {
-        let id_arrary = LiteralValueVector::new(DataType::Int32, vec![1, 2, 3, 4, 5], 5);
+        let id_arrary = LiteralValueArray::new(DataType::Int32, 1, 1);
         let id_arrary = vec![Rc::new(id_arrary) as ArrayRef];
         let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int32)]);
         let _ = RecordBatch::new(schema, id_arrary);
