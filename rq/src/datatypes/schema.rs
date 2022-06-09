@@ -54,3 +54,19 @@ impl From<ArrowSchema> for Schema {
         Self { fields }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_select() {
+        let schema = Schema::new(vec![
+            Field::new("id".to_string(), DataType::Int32),
+            Field::new("name".to_string(), DataType::Utf8),
+        ]);
+        let selected_schema = schema.select(vec!["id".to_string()]);
+        assert_eq!(selected_schema.fields.len(), 1);
+        assert_eq!(selected_schema.fields[0].name, "id");
+    }
+}
