@@ -32,7 +32,7 @@ impl Schema {
         Self { fields }
     }
 
-    fn select(&self, names: Vec<String>) -> Self {
+    pub(crate) fn select(&self, names: Vec<String>) -> Self {
         let mut filterd_fields = vec![];
         names.into_iter().for_each(|name| {
             let fields: Vec<&Field> = self.fields.iter().filter(|f| f.name == name).collect();
