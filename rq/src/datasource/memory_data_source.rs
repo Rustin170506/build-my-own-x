@@ -1,5 +1,6 @@
 use super::data_source::DataSource;
 use crate::datatypes::{record_batch::RecordBatch, schema::Schema};
+use anyhow::Result;
 
 #[derive(Clone)]
 struct MemoryDataSource {
@@ -12,21 +13,20 @@ impl DataSource for MemoryDataSource {
         &self.schema
     }
 
-    fn scan(&self, projection: Vec<String>) -> Vec<RecordBatch> {
+    fn scan(&self, projection: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         let projection_indices = projection
             .iter()
             .filter_map(|name| self.schema.fields.iter().position(|f| f.name == *name))
             .collect::<Vec<_>>();
-        self.data
-            .iter()
-            .map(|batch| RecordBatch {
+        Ok(Box::new(self.data.iter().map(move |batch| {
+            RecordBatch {
                 schema: self.schema.clone(),
                 fields: projection_indices
                     .iter()
                     .map(|i| batch.field(*i).clone())
                     .collect(),
-            })
-            .collect()
+            }
+        })))
     }
 }
 
@@ -64,12 +64,12 @@ mod tests {
             data: records,
         };
         let projection = vec!["a".to_string()];
-        let result = data_source.scan(projection);
+        let result: Vec<RecordBatch> = data_source.scan(projection).unwrap().collect();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].fields.len(), 0);
 
         let projection = vec!["id".to_string()];
-        let result = data_source.scan(projection);
+        let result: Vec<RecordBatch> = data_source.scan(projection).unwrap().collect();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].fields.len(), 1);
         assert_eq!(result[0].fields[0].size(), 5);
