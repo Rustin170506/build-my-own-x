@@ -3,7 +3,7 @@ use arrow::datatypes::{DataType, Field as ArrowField, Schema as ArrowSchema};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Field {
     pub(crate) name: String,
-    data_type: DataType,
+    pub(crate) data_type: DataType,
 }
 
 impl Field {
@@ -18,6 +18,12 @@ impl From<ArrowField> for Field {
             name: field.name().clone(),
             data_type: field.data_type().clone(),
         }
+    }
+}
+
+impl Into<ArrowField> for &Field {
+    fn into(self) -> ArrowField {
+        ArrowField::new(self.name.clone().as_str(), self.data_type.clone(), false)
     }
 }
 
@@ -52,6 +58,13 @@ impl From<ArrowSchema> for Schema {
             .map(|f| Field::from(f.clone()))
             .collect();
         Self { fields }
+    }
+}
+
+impl Into<ArrowSchema> for Schema {
+    fn into(self) -> ArrowSchema {
+        let fields = self.fields.iter().map(|f| f.into()).collect();
+        ArrowSchema::new(fields)
     }
 }
 
