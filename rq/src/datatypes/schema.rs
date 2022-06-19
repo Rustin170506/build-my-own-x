@@ -12,18 +12,9 @@ impl Field {
     }
 }
 
-impl From<ArrowField> for Field {
-    fn from(field: ArrowField) -> Self {
-        Self {
-            name: field.name().clone(),
-            data_type: field.data_type().clone(),
-        }
-    }
-}
-
-impl Into<ArrowField> for &Field {
-    fn into(self) -> ArrowField {
-        ArrowField::new(self.name.clone().as_str(), self.data_type.clone(), false)
+impl From<Field> for ArrowField {
+    fn from(field: Field) -> Self {
+        ArrowField::new(field.name.as_str(), field.data_type, false)
     }
 }
 
@@ -50,20 +41,12 @@ impl Schema {
     }
 }
 
-impl From<ArrowSchema> for Schema {
-    fn from(schema: ArrowSchema) -> Self {
-        let fields = schema
-            .fields()
-            .iter()
-            .map(|f| Field::from(f.clone()))
-            .collect();
-        Self { fields }
-    }
-}
-
-impl Into<ArrowSchema> for Schema {
-    fn into(self) -> ArrowSchema {
-        let fields = self.fields.iter().map(|f| f.into()).collect();
+impl From<Schema> for ArrowSchema {
+    fn from(schema: Schema) -> Self {
+        let mut fields = vec![];
+        schema.fields.into_iter().for_each(|field| {
+            fields.push(field.into());
+        });
         ArrowSchema::new(fields)
     }
 }

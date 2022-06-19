@@ -19,11 +19,11 @@ impl RecordBatch {
         &self.fields[index]
     }
 
-    fn row_count(&self) -> usize {
+    pub(crate) fn row_count(&self) -> usize {
         self.fields[0].size()
     }
 
-    fn column_count(&self) -> usize {
+    pub(crate) fn column_count(&self) -> usize {
         self.fields.len()
     }
 }
