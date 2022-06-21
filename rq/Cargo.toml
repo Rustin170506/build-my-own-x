@@ -9,3 +9,4 @@ edition = "2021"
 arrow = { version = "14.0.0", features = ["prettyprint"] }
 anyhow = "1.0.56"
 csv = "1.1"
+lexical-core = "0.8.5"

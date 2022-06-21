@@ -1,12 +1,15 @@
-use super::data_source::DataSource;
+use super::{data_source::DataSource, reader_parser::Parser};
 use crate::datatypes::{
     arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
     schema::Schema,
 };
 use anyhow::{Ok, Result};
 use arrow::{
-    array::BooleanArray,
-    datatypes::{DataType, Schema as ArrowSchema},
+    array::{BooleanArray, PrimitiveArray},
+    datatypes::{
+        ArrowPrimitiveType, DataType, Float32Type, Float64Type, Int16Type, Int32Type, Int64Type,
+        Int8Type, Schema as ArrowSchema, UInt16Type, UInt32Type, UInt64Type, UInt8Type,
+    },
 };
 use csv::{Reader, ReaderBuilder, StringRecord};
 use std::{fs::File, rc::Rc};
@@ -105,6 +108,16 @@ impl CsvDataSourceReader {
             .enumerate()
             .map(|(col_index, field)| match field.data_type() {
                 DataType::Boolean => build_boolean_array(rows.clone(), col_index),
+                DataType::Int8 => build_primitive_array::<Int8Type>(rows.clone(), col_index),
+                DataType::Int16 => build_primitive_array::<Int16Type>(rows.clone(), col_index),
+                DataType::Int32 => build_primitive_array::<Int32Type>(rows.clone(), col_index),
+                DataType::Int64 => build_primitive_array::<Int64Type>(rows.clone(), col_index),
+                DataType::UInt8 => build_primitive_array::<UInt8Type>(rows.clone(), col_index),
+                DataType::UInt16 => build_primitive_array::<UInt16Type>(rows.clone(), col_index),
+                DataType::UInt32 => build_primitive_array::<UInt32Type>(rows.clone(), col_index),
+                DataType::UInt64 => build_primitive_array::<UInt64Type>(rows.clone(), col_index),
+                DataType::Float32 => build_primitive_array::<Float32Type>(rows.clone(), col_index),
+                DataType::Float64 => build_primitive_array::<Float64Type>(rows.clone(), col_index),
                 _ => unreachable!(),
             })
             .collect();
@@ -113,6 +126,16 @@ impl CsvDataSourceReader {
             schema: self.schema.clone(),
             fields: arrays,
         }
+    }
+}
+
+fn parse_bool(string: &str) -> Option<bool> {
+    if string.eq_ignore_ascii_case("false") {
+        Some(false)
+    } else if string.eq_ignore_ascii_case("true") {
+        Some(true)
+    } else {
+        None
     }
 }
 
@@ -139,21 +162,37 @@ fn build_boolean_array(rows: Vec<StringRecord>, col_index: usize) -> ArrayRef {
     Rc::new(ArrowFieldArray::new(array)) as ArrayRef
 }
 
-fn parse_bool(string: &str) -> Option<bool> {
-    if string.eq_ignore_ascii_case("false") {
-        Some(false)
-    } else if string.eq_ignore_ascii_case("true") {
-        Some(true)
-    } else {
-        None
-    }
+fn build_primitive_array<T: ArrowPrimitiveType + Parser>(
+    rows: Vec<StringRecord>,
+    col_index: usize,
+) -> ArrayRef {
+    let array = Box::new(
+        rows.iter()
+            .map(|row| match row.get(col_index) {
+                Some(s) => {
+                    if s.is_empty() {
+                        return None;
+                    }
+
+                    let parsed = T::parse(s);
+                    match parsed {
+                        Some(e) => Some(e),
+                        None => panic!("Failed to parse {}", s),
+                    }
+                }
+                None => None,
+            })
+            .collect::<PrimitiveArray<T>>(),
+    );
+
+    Rc::new(ArrowFieldArray::new(array)) as ArrayRef
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::datatypes::schema::Field;
-    use std::path::PathBuf;
+    use std::{any::Any, fmt::Debug, path::PathBuf};
 
     #[test]
     fn test_boolean_field_csv_data_source() {
@@ -190,5 +229,76 @@ mod tests {
             .unwrap()
             .downcast_ref::<bool>()
             .unwrap());
+    }
+
+    #[test]
+    fn test_primitive_field_csv_data_source() {
+        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        data_path.push("tests/data/primitive_field.csv");
+        let schema = Schema::new(vec![
+            Field::new("c1".to_string(), DataType::Int8),
+            Field::new("c2".to_string(), DataType::Int16),
+            Field::new("c3".to_string(), DataType::UInt32),
+            Field::new("c4".to_string(), DataType::UInt64),
+            Field::new("c5".to_string(), DataType::Float32),
+            Field::new("c6".to_string(), DataType::Float64),
+        ]);
+        let csv_data_source = CsvDataSource::new(
+            data_path.into_os_string().into_string().unwrap(),
+            schema,
+            false,
+            3,
+        );
+        let mut reader = csv_data_source
+            .scan(vec![
+                "c1".to_string(),
+                "c2".to_string(),
+                "c3".to_string(),
+                "c4".to_string(),
+                "c5".to_string(),
+                "c6".to_string(),
+            ])
+            .unwrap();
+        let batch = reader.next().unwrap();
+
+        assert_eq!(batch.row_count(), 3);
+        assert_eq!(batch.column_count(), 6);
+
+        fn assert_type_and_values<T: Any + PartialEq + Debug>(
+            batch: &RecordBatch,
+            index: usize,
+            data_type: DataType,
+            values: Vec<T>,
+        ) {
+            assert_eq!(batch.field(index).get_type(), data_type);
+
+            for (idx, val) in values.iter().enumerate() {
+                assert_eq!(
+                    batch
+                        .field(index)
+                        .get_value(idx)
+                        .unwrap()
+                        .downcast_ref::<T>()
+                        .unwrap(),
+                    val
+                );
+            }
+        }
+
+        assert_type_and_values::<i8>(&batch, 0, DataType::Int8, vec![1, 2, 3]);
+        assert_type_and_values::<i16>(&batch, 1, DataType::Int16, vec![9, 10, 11]);
+        assert_type_and_values::<u32>(&batch, 2, DataType::UInt32, vec![20, 21, 22]);
+        assert_type_and_values::<u64>(&batch, 3, DataType::UInt64, vec![30, 31, 32]);
+        assert_type_and_values::<f32>(&batch, 4, DataType::Float32, vec![1.0, 1.1, 1.2]);
+        assert_type_and_values::<f64>(
+            &batch,
+            5,
+            DataType::Float64,
+            vec![
+                0.0000000000000000000001,
+                0.0000000000000000000002,
+                0.0000000000000000000003,
+            ],
+        );
     }
 }

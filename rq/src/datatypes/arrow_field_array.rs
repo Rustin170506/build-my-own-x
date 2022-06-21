@@ -27,7 +27,6 @@ impl ColumnArray for ArrowFieldArray {
             DataType::UInt16 => DataType::UInt16,
             DataType::UInt32 => DataType::UInt32,
             DataType::UInt64 => DataType::UInt64,
-            DataType::Float16 => DataType::Float16,
             DataType::Float32 => DataType::Float32,
             DataType::Float64 => DataType::Float64,
             DataType::Utf8 => DataType::Utf8,
