@@ -450,6 +450,7 @@ dependencies = [
  "anyhow",
  "arrow",
  "csv",
+ "lexical-core",
 ]
 
 [[package]]
