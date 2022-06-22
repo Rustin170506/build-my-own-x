@@ -18,7 +18,6 @@ use std::{fs::File, rc::Rc};
 struct CsvDataSource {
     file_name: String,
     schema: Schema,
-    has_headers: bool,
     // The total number of rows in the CSV file.
     batch_size: usize,
 }
@@ -35,8 +34,7 @@ impl DataSource for CsvDataSource {
         } else {
             self.schema.select(projections)
         };
-        let mut csv_reader_builder = ReaderBuilder::new();
-        csv_reader_builder.has_headers(self.has_headers);
+        let csv_reader_builder = ReaderBuilder::new();
         let mut csv_reader = csv_reader_builder.from_reader(file);
         // Set headers for the CSV reader.
         // This will append the name into the first record of reader.
@@ -47,11 +45,10 @@ impl DataSource for CsvDataSource {
 }
 
 impl CsvDataSource {
-    fn new(file_name: String, schema: Schema, has_headers: bool, batch_size: usize) -> Self {
+    fn new(file_name: String, schema: Schema, batch_size: usize) -> Self {
         Self {
             file_name,
             schema,
-            has_headers,
             batch_size,
         }
     }
@@ -217,12 +214,8 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema,
-            false,
-            3,
-        );
+        let csv_data_source =
+            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1".to_string()]).unwrap();
         let batch = reader.next().unwrap();
 
@@ -261,12 +254,8 @@ mod tests {
             Field::new("c5".to_string(), DataType::Float32),
             Field::new("c6".to_string(), DataType::Float64),
         ]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema,
-            false,
-            3,
-        );
+        let csv_data_source =
+            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source
             .scan(vec![
                 "c1".to_string(),
@@ -325,12 +314,8 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/string_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Utf8)]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema,
-            false,
-            3,
-        );
+        let csv_data_source =
+            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1".to_string()]).unwrap();
         let batch = reader.next().unwrap();
 
