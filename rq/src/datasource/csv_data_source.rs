@@ -14,10 +14,12 @@ use arrow::{
 use csv::{Reader, ReaderBuilder, StringRecord};
 use std::{fs::File, rc::Rc};
 
+// A data source that reads from a CSV file.
 struct CsvDataSource {
     file_name: String,
     schema: Schema,
     has_headers: bool,
+    // The total number of rows in the CSV file.
     batch_size: usize,
 }
 
@@ -36,6 +38,8 @@ impl DataSource for CsvDataSource {
         let mut csv_reader_builder = ReaderBuilder::new();
         csv_reader_builder.has_headers(self.has_headers);
         let mut csv_reader = csv_reader_builder.from_reader(file);
+        // Set headers for the CSV reader.
+        // This will append the name into the first record of reader.
         csv_reader.set_headers(schema.fields.iter().map(|f| f.name.clone()).collect());
         let csv_data_source_reader = CsvDataSourceReader::new(csv_reader, schema, self.batch_size);
         Ok(Box::new(csv_data_source_reader))
@@ -53,6 +57,7 @@ impl CsvDataSource {
     }
 }
 
+// A reader for the CSV data source with the specified schema.
 struct CsvDataSourceReader {
     schema: Schema,
     parser: Reader<File>,
@@ -100,6 +105,8 @@ impl CsvDataSourceReader {
         Some(self.create_batch(records))
     }
 
+    // Build a record batch from the given records.
+    // String -> ArrowFieldArray -> ArrayRef -> RecordBatch.
     fn create_batch(&mut self, rows: Vec<StringRecord>) -> RecordBatch {
         let schema: ArrowSchema = self.schema.clone().into();
         let arrays = schema
