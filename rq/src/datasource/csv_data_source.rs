@@ -34,7 +34,8 @@ impl DataSource for CsvDataSource {
         } else {
             self.schema.select(projections)
         };
-        let csv_reader_builder = ReaderBuilder::new();
+        let mut csv_reader_builder = ReaderBuilder::new();
+        csv_reader_builder.has_headers(false);
         let mut csv_reader = csv_reader_builder.from_reader(file);
         // Set headers for the CSV reader.
         // This will append the name into the first record of reader.
