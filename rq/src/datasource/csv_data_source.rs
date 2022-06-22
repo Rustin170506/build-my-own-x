@@ -5,7 +5,7 @@ use crate::datatypes::{
 };
 use anyhow::{Ok, Result};
 use arrow::{
-    array::{BooleanArray, PrimitiveArray},
+    array::{BooleanArray, PrimitiveArray, StringArray},
     datatypes::{
         ArrowPrimitiveType, DataType, Float32Type, Float64Type, Int16Type, Int32Type, Int64Type,
         Int8Type, Schema as ArrowSchema, UInt16Type, UInt32Type, UInt64Type, UInt8Type,
@@ -27,7 +27,7 @@ impl DataSource for CsvDataSource {
     }
 
     fn scan(&self, projections: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch>>> {
-        let file = File::open(self.file_name.clone())?;
+        let file = File::open(&self.file_name)?;
         let schema = if projections.is_empty() {
             self.schema.clone()
         } else {
@@ -107,17 +107,18 @@ impl CsvDataSourceReader {
             .iter()
             .enumerate()
             .map(|(col_index, field)| match field.data_type() {
-                DataType::Boolean => build_boolean_array(rows.clone(), col_index),
-                DataType::Int8 => build_primitive_array::<Int8Type>(rows.clone(), col_index),
-                DataType::Int16 => build_primitive_array::<Int16Type>(rows.clone(), col_index),
-                DataType::Int32 => build_primitive_array::<Int32Type>(rows.clone(), col_index),
-                DataType::Int64 => build_primitive_array::<Int64Type>(rows.clone(), col_index),
-                DataType::UInt8 => build_primitive_array::<UInt8Type>(rows.clone(), col_index),
-                DataType::UInt16 => build_primitive_array::<UInt16Type>(rows.clone(), col_index),
-                DataType::UInt32 => build_primitive_array::<UInt32Type>(rows.clone(), col_index),
-                DataType::UInt64 => build_primitive_array::<UInt64Type>(rows.clone(), col_index),
-                DataType::Float32 => build_primitive_array::<Float32Type>(rows.clone(), col_index),
-                DataType::Float64 => build_primitive_array::<Float64Type>(rows.clone(), col_index),
+                DataType::Boolean => build_boolean_array(&rows, col_index),
+                DataType::Int8 => build_primitive_array::<Int8Type>(&rows, col_index),
+                DataType::Int16 => build_primitive_array::<Int16Type>(&rows, col_index),
+                DataType::Int32 => build_primitive_array::<Int32Type>(&rows, col_index),
+                DataType::Int64 => build_primitive_array::<Int64Type>(&rows, col_index),
+                DataType::UInt8 => build_primitive_array::<UInt8Type>(&rows, col_index),
+                DataType::UInt16 => build_primitive_array::<UInt16Type>(&rows, col_index),
+                DataType::UInt32 => build_primitive_array::<UInt32Type>(&rows, col_index),
+                DataType::UInt64 => build_primitive_array::<UInt64Type>(&rows, col_index),
+                DataType::Float32 => build_primitive_array::<Float32Type>(&rows, col_index),
+                DataType::Float64 => build_primitive_array::<Float64Type>(&rows, col_index),
+                DataType::Utf8 => build_string_array(&rows, col_index),
                 _ => unreachable!(),
             })
             .collect();
@@ -139,7 +140,7 @@ fn parse_bool(string: &str) -> Option<bool> {
     }
 }
 
-fn build_boolean_array(rows: Vec<StringRecord>, col_index: usize) -> ArrayRef {
+fn build_boolean_array(rows: &[StringRecord], col_index: usize) -> ArrayRef {
     let array = Box::new(
         rows.iter()
             .map(|row| match row.get(col_index) {
@@ -163,7 +164,7 @@ fn build_boolean_array(rows: Vec<StringRecord>, col_index: usize) -> ArrayRef {
 }
 
 fn build_primitive_array<T: ArrowPrimitiveType + Parser>(
-    rows: Vec<StringRecord>,
+    rows: &[StringRecord],
     col_index: usize,
 ) -> ArrayRef {
     let array = Box::new(
@@ -183,6 +184,16 @@ fn build_primitive_array<T: ArrowPrimitiveType + Parser>(
                 None => None,
             })
             .collect::<PrimitiveArray<T>>(),
+    );
+
+    Rc::new(ArrowFieldArray::new(array)) as ArrayRef
+}
+
+fn build_string_array(rows: &[StringRecord], col_index: usize) -> ArrayRef {
+    let array = Box::new(
+        rows.iter()
+            .map(|row| row.get(col_index))
+            .collect::<StringArray>(),
     );
 
     Rc::new(ArrowFieldArray::new(array)) as ArrayRef
@@ -299,6 +310,52 @@ mod tests {
                 0.0000000000000000000002,
                 0.0000000000000000000003,
             ],
+        );
+    }
+
+    #[test]
+    fn test_string_field_csv_data_source() {
+        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        data_path.push("tests/data/string_field.csv");
+        let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Utf8)]);
+        let csv_data_source = CsvDataSource::new(
+            data_path.into_os_string().into_string().unwrap(),
+            schema,
+            false,
+            3,
+        );
+        let mut reader = csv_data_source.scan(vec!["c1".to_string()]).unwrap();
+        let batch = reader.next().unwrap();
+
+        assert_eq!(batch.row_count(), 3);
+        assert_eq!(batch.column_count(), 1);
+
+        assert_eq!(
+            batch
+                .field(0)
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<String>()
+                .unwrap(),
+            "a"
+        );
+        assert_eq!(
+            batch
+                .field(0)
+                .get_value(1)
+                .unwrap()
+                .downcast_ref::<String>()
+                .unwrap(),
+            "b"
+        );
+        assert_eq!(
+            batch
+                .field(0)
+                .get_value(2)
+                .unwrap()
+                .downcast_ref::<String>()
+                .unwrap(),
+            "c"
         );
     }
 }
