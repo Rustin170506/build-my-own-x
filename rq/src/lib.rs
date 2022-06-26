@@ -1,2 +1,3 @@
-pub(crate) mod datasource;
-pub(crate) mod datatypes;
+pub(crate) mod data_source;
+pub(crate) mod data_types;
+pub(crate) mod logical_plan;

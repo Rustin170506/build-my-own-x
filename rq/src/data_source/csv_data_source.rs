@@ -1,5 +1,5 @@
-use super::{data_source::DataSource, reader_parser::Parser};
-use crate::datatypes::{
+use super::{DataSource, reader_parser::Parser};
+use crate::data_types::{
     arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
     schema::Schema,
 };
