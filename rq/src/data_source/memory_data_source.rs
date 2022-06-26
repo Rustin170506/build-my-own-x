@@ -33,7 +33,7 @@ impl DataSource for MemoryDataSource {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::datatypes::{
+    use crate::data_types::{
         arrow_field_array::ArrowFieldArray, column_array::ArrayRef, schema::Field,
     };
     use arrow::{array::Int32Array, datatypes::DataType};
