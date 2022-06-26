@@ -1,5 +1,5 @@
-use super::data_source::DataSource;
-use crate::datatypes::{record_batch::RecordBatch, schema::Schema};
+use super::DataSource;
+use crate::data_types::{record_batch::RecordBatch, schema::Schema};
 use anyhow::Result;
 
 #[derive(Clone)]

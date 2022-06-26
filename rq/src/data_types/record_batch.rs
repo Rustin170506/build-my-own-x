@@ -33,7 +33,7 @@ mod tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::datatypes::{
+    use crate::data_types::{
         arrow_field_array::ArrowFieldArray, literal_value_array::LiteralValueArray, schema::Field,
     };
     use arrow::{array::Int32Array, datatypes::DataType};
