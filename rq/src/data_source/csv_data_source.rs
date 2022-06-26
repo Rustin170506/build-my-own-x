@@ -1,4 +1,4 @@
-use super::{DataSource, reader_parser::Parser};
+use super::{reader_parser::Parser, DataSource};
 use crate::data_types::{
     arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
     schema::Schema,
@@ -207,7 +207,7 @@ fn build_string_array(rows: &[StringRecord], col_index: usize) -> ArrayRef {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::datatypes::schema::Field;
+    use crate::data_types::schema::Field;
     use std::{any::Any, fmt::Debug, path::PathBuf};
 
     #[test]
