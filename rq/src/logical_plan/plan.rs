@@ -2,7 +2,7 @@ use crate::data_types::schema::Schema;
 
 /// A logical plan represents a data transformation
 /// or action that returns a relation(a set of tuples).
-trait LogicalPlan: ToString {
+pub(crate) trait LogicalPlan: ToString {
     /// Returns the schema of the data that will be produced by this logical plan.
     fn schema(&self) -> Schema;
     /// Returns the children (inputs) of this logical plan.
