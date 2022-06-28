@@ -1,10 +1,68 @@
-use std::{fmt::Display, ops};
-
 use super::{logical_expr::LogicalExpr, plan::LogicalPlan};
 use crate::data_types::schema::Field;
 use anyhow::{anyhow, Result};
 use arrow::datatypes::DataType;
+use ordered_float::OrderedFloat;
+use std::fmt::Display;
 
+/// `Expr` represent logical expressions such as `A + 1`, or `CAST(c1 AS
+/// int)`.
+#[derive(Clone, PartialEq, Hash)]
+pub(crate) enum Expr {
+    /// A named reference to a qualified filed in a schema.
+    Column(Column),
+    /// A indexed reference to a qualified filed in a schema.
+    ColumnIndex(ColumnIndex),
+    /// A constant value.
+    Literal(ScalarValue),
+    /// Negation of an expression. The expression's type must be a boolean to make sense.
+    Not(Not),
+    /// Casts the expression to a given type and will return a runtime error if the expression cannot be cast.
+    /// This expression is guaranteed to have a fixed type.
+    Cast(Cast),
+    /// A binary expression such as "age > 21"
+    Binary(BinaryExpr),
+    /// An expression with a specific name.
+    Alias(Alias),
+    /// Represents the call of a built-in scalar function with a set of arguments.
+    ScalarFunction(ScalarFunction),
+    /// Represents the call of an aggregate built-in function with arguments.
+    AggregateFunction(ScalarFunction),
+}
+
+impl LogicalExpr for Expr {
+    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+        match self {
+            Expr::Column(column) => column.to_field(input),
+            Expr::ColumnIndex(column_index) => column_index.to_field(input),
+            Expr::Literal(literal) => literal.to_field(input),
+            Expr::Not(not) => not.to_field(input),
+            Expr::Cast(cast) => cast.to_field(input),
+            Expr::Binary(binary) => binary.to_field(input),
+            Expr::Alias(alias) => alias.to_field(input),
+            Expr::ScalarFunction(function) => function.to_field(input),
+            Expr::AggregateFunction(function) => function.to_field(input),
+        }
+    }
+}
+
+impl ToString for Expr {
+    fn to_string(&self) -> String {
+        match self {
+            Expr::Column(column) => column.to_string(),
+            Expr::ColumnIndex(column_index) => column_index.to_string(),
+            Expr::Literal(literal) => literal.to_string(),
+            Expr::Not(not) => not.to_string(),
+            Expr::Cast(cast) => cast.to_string(),
+            Expr::Binary(binary) => binary.to_string(),
+            Expr::Alias(alias) => alias.to_string(),
+            Expr::ScalarFunction(function) => function.to_string(),
+            Expr::AggregateFunction(function) => function.to_string(),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Hash)]
 /// Logical expression representing a reference to a column by name.
 pub(crate) struct Column {
     pub(crate) name: String,
@@ -26,6 +84,7 @@ impl ToString for Column {
     }
 }
 
+#[derive(Clone, PartialEq, Hash)]
 /// Logical expression representing a reference to a column by index.
 pub(crate) struct ColumnIndex {
     pub(crate) index: usize,
@@ -43,102 +102,96 @@ impl ToString for ColumnIndex {
     }
 }
 
-pub(crate) struct LiteralString {
-    pub(crate) value: String,
+/// Represents a dynamically typed single value.
+#[derive(Clone)]
+pub(crate) enum ScalarValue {
+    String(String),
+    Int64(i64),
+    Float32(f32),
+    Float64(f64),
 }
 
-/// Logical expression representing a literal string value.
-impl LogicalExpr for LiteralString {
+impl LogicalExpr for ScalarValue {
     fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
-        Ok(Field::new(self.value.clone(), DataType::Utf8))
+        match &self {
+            ScalarValue::String(s) => Ok(Field::new(s.clone(), DataType::Utf8)),
+            ScalarValue::Int64(i) => Ok(Field::new(i.to_string(), DataType::Int64)),
+            ScalarValue::Float32(f) => Ok(Field::new(f.to_string(), DataType::Float32)),
+            ScalarValue::Float64(f) => Ok(Field::new(f.to_string(), DataType::Float64)),
+        }
     }
 }
 
-impl ToString for LiteralString {
-    fn to_string(&self) -> String {
-        format!("'{}'", self.value)
+impl Display for ScalarValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ScalarValue::String(s) => write!(f, "{}", s),
+            ScalarValue::Int64(i) => write!(f, "{}", i),
+            ScalarValue::Float32(ft) => write!(f, "{}", ft),
+            ScalarValue::Float64(ft) => write!(f, "{}", ft),
+        }
     }
 }
 
-/// Logical expression representing a literal i64 value.
-pub(crate) struct LiteralInt64 {
-    pub(crate) value: i64,
-}
-
-impl LogicalExpr for LiteralInt64 {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
-        Ok(Field::new(self.value.to_string(), DataType::Int64))
+impl std::hash::Hash for ScalarValue {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            ScalarValue::String(s) => s.hash(state),
+            ScalarValue::Int64(i) => i.hash(state),
+            ScalarValue::Float32(ft) => {
+                let ft = OrderedFloat(*ft);
+                ft.hash(state)
+            }
+            ScalarValue::Float64(ft) => {
+                let ft = OrderedFloat(*ft);
+                ft.hash(state)
+            }
+        }
     }
 }
 
-impl ToString for LiteralInt64 {
-    fn to_string(&self) -> String {
-        format!("{}", self.value)
-    }
-}
-
-/// Logical expression representing a literal f32 value.
-pub(crate) struct LiteralFloat32 {
-    pub(crate) value: f32,
-}
-
-impl LogicalExpr for LiteralFloat32 {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
-        Ok(Field::new(self.value.to_string(), DataType::Float32))
-    }
-}
-
-impl ToString for LiteralFloat32 {
-    fn to_string(&self) -> String {
-        format!("{}", self.value)
-    }
-}
-
-/// Logical expression representing a literal f64 value.
-pub(crate) struct LiteralFloat64 {
-    pub(crate) value: f64,
-}
-
-impl LogicalExpr for LiteralFloat64 {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
-        Ok(Field::new(self.value.to_string(), DataType::Float64))
-    }
-}
-
-impl ToString for LiteralFloat64 {
-    fn to_string(&self) -> String {
-        format!("{}", self.value)
+impl PartialEq for ScalarValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ScalarValue::String(s), ScalarValue::String(o)) => s == o,
+            (ScalarValue::Int64(i), ScalarValue::Int64(o)) => i == o,
+            (ScalarValue::Float32(f), ScalarValue::Float32(o)) => f == o,
+            (ScalarValue::Float64(f), ScalarValue::Float64(o)) => f == o,
+            _ => false,
+        }
     }
 }
 
 /// Cast a given expression to a given data type field.
-pub(crate) struct CastExpr {
-    pub(crate) expr: Box<dyn LogicalExpr>,
+#[derive(Clone, PartialEq, Hash)]
+pub(crate) struct Cast {
+    pub(crate) expr: Box<Expr>,
     pub(crate) data_type: DataType,
 }
 
-impl LogicalExpr for CastExpr {
+impl LogicalExpr for Cast {
     fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
         let field = self.expr.to_field(input)?;
         Ok(Field::new(field.name, self.data_type.clone()))
     }
 }
 
-impl ToString for CastExpr {
+impl ToString for Cast {
     fn to_string(&self) -> String {
         format!("CAST({} AS {})", self.expr.to_string(), self.data_type)
     }
 }
 
+/// Logical expression representing a logical NOT.
+#[derive(Clone, PartialEq, Hash)]
 pub(crate) struct Not {
     name: String,
     op: String,
-    pub(crate) expr: Box<dyn LogicalExpr>,
+    pub(crate) expr: Box<Expr>,
 }
 
-/// Logical expression representing a logical NOT.
 impl Not {
-    fn new(expr: Box<dyn LogicalExpr>) -> Self {
+    fn new(expr: Box<Expr>) -> Self {
         Not {
             name: "not".to_string(),
             op: "NOT".to_string(),
@@ -219,10 +272,11 @@ impl Display for Operator {
 }
 
 /// Binary expressions that return a boolean type.
+#[derive(Clone, PartialEq, Hash)]
 pub(crate) struct BinaryExpr {
     pub(crate) op: Operator,
-    pub(crate) left: Box<dyn LogicalExpr>,
-    pub(crate) right: Box<dyn LogicalExpr>,
+    pub(crate) left: Box<Expr>,
+    pub(crate) right: Box<Expr>,
 }
 
 impl LogicalExpr for BinaryExpr {
@@ -242,8 +296,9 @@ impl ToString for BinaryExpr {
     }
 }
 
+#[derive(Clone, PartialEq, Hash)]
 pub(crate) struct Alias {
-    pub(crate) expr: Box<dyn LogicalExpr>,
+    pub(crate) expr: Box<Expr>,
     pub(crate) alias: String,
 }
 
@@ -262,9 +317,10 @@ impl ToString for Alias {
     }
 }
 
+#[derive(Clone, PartialEq, Hash)]
 pub(crate) struct ScalarFunction {
     pub(crate) name: String,
-    pub(crate) args: Vec<Box<dyn LogicalExpr>>,
+    pub(crate) args: Vec<Expr>,
     pub(crate) return_type: DataType,
 }
 
@@ -324,6 +380,7 @@ impl Display for AggregateFunction {
     }
 }
 
+/// AggregateFunction is a logical expression that represents an aggregate function.
 pub(crate) struct AggregateExpr {
     pub(crate) op: AggregateFunction,
     pub(crate) expr: Box<dyn LogicalExpr>,
