@@ -1,13 +1,13 @@
-use super::{logical_expr::LogicalExpr, plan::LogicalPlan};
+use super::{expr_fn::binary_expr, logical_expr::LogicalExpr, plan::LogicalPlan};
 use crate::data_types::schema::Field;
 use anyhow::{anyhow, Result};
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
-use std::fmt::Display;
+use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
 
 /// `Expr` represent logical expressions such as `A + 1`, or `CAST(c1 AS
 /// int)`.
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
 pub(crate) enum Expr {
     /// A named reference to a qualified filed in a schema.
     Column(Column),
@@ -21,13 +21,13 @@ pub(crate) enum Expr {
     /// This expression is guaranteed to have a fixed type.
     Cast(Cast),
     /// A binary expression such as "age > 21"
-    Binary(BinaryExpr),
+    BinaryExpr(BinaryExpr),
     /// An expression with a specific name.
     Alias(Alias),
     /// Represents the call of a built-in scalar function with a set of arguments.
     ScalarFunction(ScalarFunction),
     /// Represents the call of an aggregate built-in function with arguments.
-    AggregateFunction(ScalarFunction),
+    AggregateFunction(AggregateExpr),
 }
 
 impl LogicalExpr for Expr {
@@ -38,7 +38,7 @@ impl LogicalExpr for Expr {
             Expr::Literal(literal) => literal.to_field(input),
             Expr::Not(not) => not.to_field(input),
             Expr::Cast(cast) => cast.to_field(input),
-            Expr::Binary(binary) => binary.to_field(input),
+            Expr::BinaryExpr(binary) => binary.to_field(input),
             Expr::Alias(alias) => alias.to_field(input),
             Expr::ScalarFunction(function) => function.to_field(input),
             Expr::AggregateFunction(function) => function.to_field(input),
@@ -54,7 +54,7 @@ impl ToString for Expr {
             Expr::Literal(literal) => literal.to_string(),
             Expr::Not(not) => not.to_string(),
             Expr::Cast(cast) => cast.to_string(),
-            Expr::Binary(binary) => binary.to_string(),
+            Expr::BinaryExpr(binary) => binary.to_string(),
             Expr::Alias(alias) => alias.to_string(),
             Expr::ScalarFunction(function) => function.to_string(),
             Expr::AggregateFunction(function) => function.to_string(),
@@ -62,7 +62,97 @@ impl ToString for Expr {
     }
 }
 
-#[derive(Clone, PartialEq, Hash)]
+impl ops::Add for Expr {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        binary_expr(self, Operator::Add, rhs)
+    }
+}
+
+impl ops::Sub for Expr {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        binary_expr(self, Operator::Subtract, rhs)
+    }
+}
+
+impl ops::Mul for Expr {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        binary_expr(self, Operator::Multiply, rhs)
+    }
+}
+
+impl ops::Div for Expr {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self {
+        binary_expr(self, Operator::Divide, rhs)
+    }
+}
+
+impl ops::Rem for Expr {
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self {
+        binary_expr(self, Operator::Modulus, rhs)
+    }
+}
+
+impl ops::Not for Expr {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Expr::Not(Not::new(Box::new(self)))
+    }
+}
+
+impl Expr {
+    /// Return `self == other`
+    pub fn eq(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::Eq, other)
+    }
+
+    /// Return `self != other`
+    pub fn not_eq(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::Neq, other)
+    }
+
+    /// Return `self > other`
+    pub fn gt(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::Gt, other)
+    }
+
+    /// Return `self >= other`
+    pub fn gt_eq(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::GtEq, other)
+    }
+
+    /// Return `self < other`
+    pub fn lt(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::Lt, other)
+    }
+
+    /// Return `self <= other`
+    pub fn lt_eq(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::LtEq, other)
+    }
+
+    /// Return `self && other`
+    pub fn and(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::And, other)
+    }
+
+    /// Return `self || other`
+    pub fn or(self, other: Expr) -> Expr {
+        binary_expr(self, Operator::Or, other)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// Logical expression representing a reference to a column by name.
 pub(crate) struct Column {
     pub(crate) name: String,
@@ -84,7 +174,15 @@ impl ToString for Column {
     }
 }
 
-#[derive(Clone, PartialEq, Hash)]
+impl From<&str> for Column {
+    fn from(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 /// Logical expression representing a reference to a column by index.
 pub(crate) struct ColumnIndex {
     pub(crate) index: usize,
@@ -103,7 +201,7 @@ impl ToString for ColumnIndex {
 }
 
 /// Represents a dynamically typed single value.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) enum ScalarValue {
     String(String),
     Int64(i64),
@@ -155,15 +253,45 @@ impl PartialEq for ScalarValue {
         match (self, other) {
             (ScalarValue::String(s), ScalarValue::String(o)) => s == o,
             (ScalarValue::Int64(i), ScalarValue::Int64(o)) => i == o,
-            (ScalarValue::Float32(f), ScalarValue::Float32(o)) => f == o,
-            (ScalarValue::Float64(f), ScalarValue::Float64(o)) => f == o,
+            (ScalarValue::Float32(f), ScalarValue::Float32(o)) => {
+                let v1 = OrderedFloat(*f);
+                let v2 = OrderedFloat(*o);
+                v1.eq(&v2)
+            }
+            (ScalarValue::Float64(f), ScalarValue::Float64(o)) => {
+                let v1 = OrderedFloat(*f);
+                let v2 = OrderedFloat(*o);
+                v1.eq(&v2)
+            }
             _ => false,
         }
     }
 }
 
+impl PartialOrd for ScalarValue {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (ScalarValue::String(s), ScalarValue::String(o)) => s.partial_cmp(o),
+            (ScalarValue::Int64(i), ScalarValue::Int64(o)) => i.partial_cmp(o),
+            (ScalarValue::Float32(f), ScalarValue::Float32(o)) => {
+                let v1 = OrderedFloat(*f);
+                let v2 = OrderedFloat(*o);
+                v1.partial_cmp(&v2)
+            }
+            (ScalarValue::Float64(f), ScalarValue::Float64(o)) => {
+                let v1 = OrderedFloat(*f);
+                let v2 = OrderedFloat(*o);
+                v1.partial_cmp(&v2)
+            }
+            _ => None,
+        }
+    }
+}
+
+impl Eq for ScalarValue {}
+
 /// Cast a given expression to a given data type field.
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct Cast {
     pub(crate) expr: Box<Expr>,
     pub(crate) data_type: DataType,
@@ -183,7 +311,7 @@ impl ToString for Cast {
 }
 
 /// Logical expression representing a logical NOT.
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct Not {
     name: String,
     op: String,
@@ -272,7 +400,7 @@ impl Display for Operator {
 }
 
 /// Binary expressions that return a boolean type.
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct BinaryExpr {
     pub(crate) op: Operator,
     pub(crate) left: Box<Expr>,
@@ -296,7 +424,7 @@ impl ToString for BinaryExpr {
     }
 }
 
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct Alias {
     pub(crate) expr: Box<Expr>,
     pub(crate) alias: String,
@@ -317,7 +445,7 @@ impl ToString for Alias {
     }
 }
 
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct ScalarFunction {
     pub(crate) name: String,
     pub(crate) args: Vec<Expr>,
@@ -344,6 +472,7 @@ impl ToString for ScalarFunction {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) enum AggregateFunction {
     Sum,
     Min,
@@ -381,16 +510,17 @@ impl Display for AggregateFunction {
 }
 
 /// AggregateFunction is a logical expression that represents an aggregate function.
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct AggregateExpr {
-    pub(crate) op: AggregateFunction,
-    pub(crate) expr: Box<dyn LogicalExpr>,
+    pub(crate) fun: AggregateFunction,
+    pub(crate) expr: Box<Expr>,
     pub(crate) is_distinct: bool,
 }
 
 impl LogicalExpr for AggregateExpr {
     fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
         Ok(Field::new(
-            self.op.get_name(),
+            self.fun.get_name(),
             self.expr.to_field(_input)?.data_type,
         ))
     }
@@ -399,9 +529,39 @@ impl LogicalExpr for AggregateExpr {
 impl ToString for AggregateExpr {
     fn to_string(&self) -> String {
         if self.is_distinct {
-            format!("{}(DISTINCT {})", self.op, self.expr.to_string())
+            format!("{}(DISTINCT {})", self.fun, self.expr.to_string())
         } else {
-            format!("{}({})", self.op, self.expr.to_string())
+            format!("{}({})", self.fun, self.expr.to_string())
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::logical_plan::expr_fn::{col, lit};
+    use std::ops::{Add, Not};
+
+    #[test]
+    fn test_add() {
+        assert_eq!(col("a").add(col("b")), col("a") + col("b"));
+    }
+
+    #[test]
+    fn test_not() {
+        assert_eq!(lit(1).not(), !lit(1));
+    }
+
+    #[test]
+    fn test_partial_ord() {
+        // Test validates that partial ord is defined for Expr using hashes, not
+        // intended to exhaustively test all possibilities
+        let exp1 = col("a") + lit(1);
+        let exp2 = col("a") + lit(2);
+        let exp3 = !(col("a") + lit(2));
+        assert!(exp1 < exp2);
+        assert!(exp2 > exp1);
+        assert!(exp2 > exp3);
+        assert!(exp3 < exp2);
+        assert!(lit(1.2) < lit(1.3));
     }
 }
