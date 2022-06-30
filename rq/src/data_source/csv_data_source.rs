@@ -15,7 +15,7 @@ use csv::{Reader, ReaderBuilder, StringRecord};
 use std::{fs::File, rc::Rc};
 
 // A data source that reads from a CSV file.
-struct CsvDataSource {
+pub(crate) struct CsvDataSource {
     file_name: String,
     schema: Schema,
     // The total number of rows in the CSV file.
@@ -46,7 +46,7 @@ impl DataSource for CsvDataSource {
 }
 
 impl CsvDataSource {
-    fn new(file_name: String, schema: Schema, batch_size: usize) -> Self {
+    pub(crate) fn new(file_name: String, schema: Schema, batch_size: usize) -> Self {
         Self {
             file_name,
             schema,
