@@ -564,4 +564,34 @@ mod test {
         assert!(exp3 < exp2);
         assert!(lit(1.2) < lit(1.3));
     }
+
+    #[test]
+    fn test_column_to_string() {
+        let col = col("a");
+        assert_eq!(col.to_string(), "#a");
+    }
+
+    #[test]
+    fn test_lit_to_string() {
+        let l = lit(1);
+        assert_eq!(l.to_string(), "1");
+        let l = lit(1.2);
+        assert_eq!(l.to_string(), "1.2");
+        let l = lit("a".to_string());
+        assert_eq!(l.to_string(), "a");
+    }
+
+    #[test]
+    fn test_binary_expr_to_string() {
+        let e = col("a") + lit(1);
+        assert_eq!(e.to_string(), "#a + 1");
+        let e = col("a") - lit(1);
+        assert_eq!(e.to_string(), "#a - 1");
+        let e = col("a") * lit(1);
+        assert_eq!(e.to_string(), "#a * 1");
+        let e = col("a") / lit(1);
+        assert_eq!(e.to_string(), "#a / 1");
+        let e = col("a") % lit(1);
+        assert_eq!(e.to_string(), "#a % 1");
+    }
 }
