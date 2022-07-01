@@ -31,7 +31,7 @@ pub(crate) enum Expr {
 }
 
 impl LogicalExpr for Expr {
-    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field> {
         match self {
             Expr::Column(column) => column.to_field(input),
             Expr::ColumnIndex(column_index) => column_index.to_field(input),
@@ -159,7 +159,7 @@ pub(crate) struct Column {
 }
 
 impl LogicalExpr for Column {
-    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field> {
         if let Some(field) = input.schema().fields.iter().find(|f| f.name == self.name) {
             Ok(field.clone())
         } else {
@@ -189,7 +189,7 @@ pub(crate) struct ColumnIndex {
 }
 
 impl LogicalExpr for ColumnIndex {
-    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field> {
         Ok(input.schema().fields[self.index].clone())
     }
 }
@@ -210,7 +210,7 @@ pub(crate) enum ScalarValue {
 }
 
 impl LogicalExpr for ScalarValue {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, _input: &dyn LogicalPlan) -> Result<Field> {
         match &self {
             ScalarValue::String(s) => Ok(Field::new(s.clone(), DataType::Utf8)),
             ScalarValue::Int64(i) => Ok(Field::new(i.to_string(), DataType::Int64)),
@@ -298,7 +298,7 @@ pub(crate) struct Cast {
 }
 
 impl LogicalExpr for Cast {
-    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field> {
         let field = self.expr.to_field(input)?;
         Ok(Field::new(field.name, self.data_type.clone()))
     }
@@ -329,7 +329,7 @@ impl Not {
 }
 
 impl LogicalExpr for Not {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, _input: &dyn LogicalPlan) -> Result<Field> {
         Ok(Field::new(self.name.clone(), DataType::Boolean))
     }
 }
@@ -408,7 +408,7 @@ pub(crate) struct BinaryExpr {
 }
 
 impl LogicalExpr for BinaryExpr {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, _input: &dyn LogicalPlan) -> Result<Field> {
         Ok(Field::new(self.op.get_name(), DataType::Boolean))
     }
 }
@@ -431,7 +431,7 @@ pub(crate) struct Alias {
 }
 
 impl LogicalExpr for Alias {
-    fn to_field(&self, input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field> {
         Ok(Field::new(
             self.alias.clone(),
             self.expr.to_field(input)?.data_type,
@@ -453,7 +453,7 @@ pub(crate) struct ScalarFunction {
 }
 
 impl LogicalExpr for ScalarFunction {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, _input: &dyn LogicalPlan) -> Result<Field> {
         Ok(Field::new(self.name.clone(), self.return_type.clone()))
     }
 }
@@ -518,7 +518,7 @@ pub(crate) struct AggregateExpr {
 }
 
 impl LogicalExpr for AggregateExpr {
-    fn to_field(&self, _input: Box<dyn LogicalPlan>) -> Result<Field> {
+    fn to_field(&self, _input: &dyn LogicalPlan) -> Result<Field> {
         Ok(Field::new(
             self.fun.get_name(),
             self.expr.to_field(_input)?.data_type,

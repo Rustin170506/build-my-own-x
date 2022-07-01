@@ -7,7 +7,7 @@ pub(crate) trait LogicalPlan: ToString {
     fn schema(&self) -> Schema;
     /// Returns the children (inputs) of this logical plan.
     /// This method is used to enable use of the visitor pattern to walk a query tree.
-    fn children(&self) -> Vec<Box<dyn LogicalPlan>>;
+    fn children(&self) -> Vec<&dyn LogicalPlan>;
 
     fn pretty(&self, indent: usize) -> String {
         let mut result = String::new();
