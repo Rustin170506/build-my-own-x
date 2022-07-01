@@ -12,7 +12,7 @@ impl LogicalPlan for Scan {
         self.data_source.get_schema().clone()
     }
 
-    fn children(&self) -> Vec<Box<dyn LogicalPlan>> {
+    fn children(&self) -> Vec<&dyn LogicalPlan> {
         vec![]
     }
 }
@@ -36,7 +36,11 @@ impl ToString for Scan {
 }
 
 impl Scan {
-    fn new(path: String, data_source: Box<dyn DataSource>, projection: Vec<String>) -> Self {
+    pub(crate) fn new(
+        path: String,
+        data_source: Box<dyn DataSource>,
+        projection: Vec<String>,
+    ) -> Self {
         Scan {
             path,
             data_source,
@@ -56,7 +60,7 @@ mod tests {
     use arrow::datatypes::DataType;
     use std::path::PathBuf;
 
-    fn get_data_source() -> (String, Box<dyn DataSource>) {
+    pub(crate) fn get_data_source() -> (String, Box<dyn DataSource>) {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/primitive_field.csv");
         let schema = Schema::new(vec![
