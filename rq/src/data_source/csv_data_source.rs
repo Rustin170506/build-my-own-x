@@ -28,7 +28,7 @@ impl DataSource for CsvDataSource {
         &self.schema
     }
 
-    fn scan(&self, projections: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch>>> {
+    fn scan(&self, projections: Vec<&str>) -> Result<Box<dyn Iterator<Item = RecordBatch>>> {
         let file = File::open(&self.file_name)?;
         let schema = if projections.is_empty() {
             self.schema.clone()
@@ -218,7 +218,7 @@ mod tests {
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let mut reader = csv_data_source.scan(vec!["c1".to_string()]).unwrap();
+        let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
         let batch = reader.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);
@@ -259,14 +259,7 @@ mod tests {
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source
-            .scan(vec![
-                "c1".to_string(),
-                "c2".to_string(),
-                "c3".to_string(),
-                "c4".to_string(),
-                "c5".to_string(),
-                "c6".to_string(),
-            ])
+            .scan(vec!["c1", "c2", "c3", "c4", "c5", "c6"])
             .unwrap();
         let batch = reader.next().unwrap();
 
@@ -318,7 +311,7 @@ mod tests {
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Utf8)]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let mut reader = csv_data_source.scan(vec!["c1".to_string()]).unwrap();
+        let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
         let batch = reader.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);

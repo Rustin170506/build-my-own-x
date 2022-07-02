@@ -10,7 +10,7 @@ pub(crate) trait DataSource {
     /// Return the schema for the underlying data source.
     fn get_schema(&self) -> &Schema;
     /// Scan the data source, selecting the specified columns.
-    fn scan(&self, projection: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>>;
+    fn scan(&self, projection: Vec<&str>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>>;
 }
 
 #[derive(Clone)]
@@ -27,7 +27,7 @@ impl DataSource for Source {
         }
     }
 
-    fn scan(&self, projection: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
+    fn scan(&self, projection: Vec<&str>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         match self {
             Source::Csv(csv_data_source) => csv_data_source.scan(projection),
             Source::Mem(memory_data_source) => memory_data_source.scan(projection),

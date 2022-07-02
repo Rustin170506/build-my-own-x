@@ -13,7 +13,7 @@ impl DataSource for MemoryDataSource {
         &self.schema
     }
 
-    fn scan(&self, projection: Vec<String>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
+    fn scan(&self, projection: Vec<&str>) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         let projection_indices = projection
             .iter()
             .filter_map(|name| self.schema.fields.iter().position(|f| f.name == *name))
@@ -63,12 +63,12 @@ mod tests {
             schema: schema.clone(),
             data: records,
         };
-        let projection = vec!["a".to_string()];
+        let projection = vec!["a"];
         let result: Vec<RecordBatch> = data_source.scan(projection).unwrap().collect();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].fields.len(), 0);
 
-        let projection = vec!["id".to_string()];
+        let projection = vec!["id"];
         let result: Vec<RecordBatch> = data_source.scan(projection).unwrap().collect();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].fields.len(), 1);
