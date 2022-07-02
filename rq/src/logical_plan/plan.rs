@@ -1,6 +1,5 @@
+use super::{aggregate::Aggregate, projection::Projection, scan::Scan, selection::Selection};
 use crate::data_types::schema::Schema;
-
-use super::{projection::Projection, scan::Scan};
 
 /// A logical plan represents a data transformation
 /// or action that returns a relation(a set of tuples).
@@ -29,6 +28,8 @@ pub(crate) trait LogicalPlan: ToString {
 pub(crate) enum Plan {
     Scan(Scan),
     Projection(Projection),
+    Selection(Selection),
+    Aggregate(Aggregate),
 }
 
 impl LogicalPlan for Plan {
@@ -36,6 +37,8 @@ impl LogicalPlan for Plan {
         match self {
             Plan::Scan(scan) => scan.schema(),
             Plan::Projection(projection) => projection.schema(),
+            Plan::Selection(selection) => selection.schema(),
+            Plan::Aggregate(aggregate) => aggregate.schema(),
         }
     }
 
@@ -43,6 +46,8 @@ impl LogicalPlan for Plan {
         match self {
             Plan::Scan(scan) => scan.children(),
             Plan::Projection(projection) => projection.children(),
+            Plan::Selection(selection) => selection.children(),
+            Plan::Aggregate(aggregate) => aggregate.children(),
         }
     }
 }
@@ -52,6 +57,8 @@ impl ToString for Plan {
         match self {
             Plan::Scan(scan) => scan.to_string(),
             Plan::Projection(projection) => projection.to_string(),
+            Plan::Selection(selection) => selection.to_string(),
+            Plan::Aggregate(aggregate) => aggregate.to_string(),
         }
     }
 }
