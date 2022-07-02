@@ -1,6 +1,5 @@
 use super::{
-    expr::Expr,
-    logical_expr::LogicalExpr,
+    expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;

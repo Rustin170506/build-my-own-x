@@ -1,6 +1,5 @@
 use super::{
     expr_fn::binary_expr,
-    logical_expr::LogicalExpr,
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Field;
@@ -8,6 +7,15 @@ use anyhow::{anyhow, Result};
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
 use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
+
+/// Logical Expression for use in logical query plans.
+/// The logical expression provides information needed
+/// during the planning phase such as the name and data type of the expression.
+pub(crate) trait LogicalExpr: ToString {
+    /// Return meta-data about the value that will be produced by this expression when evaluated
+    /// against a particular input.
+    fn to_field(&self, input: &Plan) -> Result<Field>;
+}
 
 /// `Expr` represent logical expressions such as `A + 1`, or `CAST(c1 AS
 /// int)`.
