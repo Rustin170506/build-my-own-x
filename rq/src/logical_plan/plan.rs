@@ -41,8 +41,8 @@ impl LogicalPlan for Plan {
 
     fn children(&self) -> Vec<Plan> {
         match self {
-            Plan::Scan(scan) => vec![],
-            Plan::Projection(projection) => vec![*projection.input.clone()],
+            Plan::Scan(scan) => scan.children(),
+            Plan::Projection(projection) => projection.children(),
         }
     }
 }
