@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use super::column_array::ColumnArray;
 use anyhow::Result;
 use arrow::{
@@ -9,6 +7,7 @@ use arrow::{
     },
     datatypes::DataType,
 };
+use std::any::Any;
 
 /// Wrapper around Arrow Array.
 pub(crate) struct ArrowFieldArray {

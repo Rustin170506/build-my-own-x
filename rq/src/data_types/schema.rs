@@ -29,7 +29,7 @@ impl Schema {
         Self { fields }
     }
 
-    pub(crate) fn select(&self, names: Vec<String>) -> Self {
+    pub(crate) fn select(&self, names: Vec<&str>) -> Self {
         let mut filterd_fields = vec![];
         names.into_iter().for_each(|name| {
             let fields: Vec<&Field> = self.fields.iter().filter(|f| f.name == name).collect();
@@ -61,7 +61,7 @@ mod tests {
             Field::new("id".to_string(), DataType::Int32),
             Field::new("name".to_string(), DataType::Utf8),
         ]);
-        let selected_schema = schema.select(vec!["id".to_string()]);
+        let selected_schema = schema.select(vec!["id"]);
         assert_eq!(selected_schema.fields.len(), 1);
         assert_eq!(selected_schema.fields[0].name, "id");
     }
