@@ -64,10 +64,22 @@ mod tests {
     };
 
     #[test]
-    fn test_schema() {
+    fn test_schema_without_projection() {
         let (path, csv_data_source) = get_data_source();
         let schema = csv_data_source.get_schema().clone();
         let plan = Scan::new(path, csv_data_source, vec![]);
+        assert_eq!(plan.schema(), schema);
+    }
+
+    #[test]
+    fn test_schema_with_projection() {
+        let (path, csv_data_source) = get_data_source();
+        let schema = csv_data_source.get_schema().select(vec!["c1", "c2"]);
+        let plan = Scan::new(
+            path,
+            csv_data_source,
+            vec!["c1".to_string(), "c2".to_string()],
+        );
         assert_eq!(plan.schema(), schema);
     }
 

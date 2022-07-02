@@ -67,12 +67,36 @@ impl Aggregate {
 #[cfg(test)]
 mod tests {
     use super::Aggregate;
-    use crate::logical_plan::{
-        expr_fn::{col, max},
-        plan::Plan,
-        scan::Scan,
-        util::get_data_source,
+    use crate::{
+        data_types::schema::{Field, Schema},
+        logical_plan::{
+            expr_fn::{col, max},
+            plan::{LogicalPlan, Plan},
+            scan::Scan,
+            util::get_data_source,
+        },
     };
+    use arrow::datatypes::DataType;
+
+    #[test]
+    fn test_schema() {
+        let (path, csv_data_source) = get_data_source();
+        let scan_plan = Scan::new(path, csv_data_source, vec![]);
+        let group_exprs = vec![col("c1")];
+        let aggregate_exprs = vec![max(col("c2"))];
+        let agg = Aggregate::new(
+            Box::new(Plan::Scan(scan_plan)),
+            group_exprs,
+            aggregate_exprs,
+        );
+        assert_eq!(
+            agg.schema(),
+            Schema::new(vec![
+                Field::new("c1".to_string(), DataType::Int8),
+                Field::new("max".to_string(), DataType::Int16),
+            ])
+        );
+    }
 
     #[test]
     fn test_to_string() {

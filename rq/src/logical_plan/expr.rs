@@ -530,10 +530,10 @@ pub(crate) struct AggregateExpr {
 }
 
 impl LogicalExpr for AggregateExpr {
-    fn to_field(&self, _input: &Plan) -> Result<Field> {
+    fn to_field(&self, input: &Plan) -> Result<Field> {
         Ok(Field::new(
             self.fun.get_name(),
-            self.expr.to_field(_input)?.data_type,
+            self.expr.to_field(input)?.data_type,
         ))
     }
 }
