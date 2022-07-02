@@ -13,7 +13,13 @@ pub(crate) struct Scan {
 
 impl LogicalPlan for Scan {
     fn schema(&self) -> Schema {
-        self.data_source.get_schema().clone()
+        if self.projection.is_empty() {
+            self.data_source.get_schema().clone()
+        } else {
+            self.data_source
+                .get_schema()
+                .select(self.projection.iter().map(|s| s.as_str()).collect())
+        }
     }
 
     fn children(&self) -> Vec<Plan> {

@@ -7,13 +7,13 @@ use crate::data_types::schema::Schema;
 #[derive(Clone)]
 pub(crate) struct Projection {
     pub(crate) input: Box<Plan>,
-    pub(crate) expr: Vec<Expr>,
+    pub(crate) exprs: Vec<Expr>,
 }
 
 impl LogicalPlan for Projection {
     fn schema(&self) -> Schema {
         let fields = self
-            .expr
+            .exprs
             .iter()
             .map(|e| e.to_field(&self.input).unwrap())
             .collect();
@@ -21,7 +21,7 @@ impl LogicalPlan for Projection {
     }
 
     fn children(&self) -> Vec<Plan> {
-        return vec![*self.input.clone()];
+        return vec![self.input.as_ref().clone()];
     }
 }
 
@@ -29,7 +29,7 @@ impl ToString for Projection {
     fn to_string(&self) -> String {
         format!(
             "Projection: {}",
-            self.expr
+            self.exprs
                 .iter()
                 .map(|e| e.to_string())
                 .collect::<Vec<String>>()
@@ -39,8 +39,8 @@ impl ToString for Projection {
 }
 
 impl Projection {
-    pub(crate) fn new(input: Box<Plan>, expr: Vec<Expr>) -> Self {
-        Projection { input, expr }
+    pub(crate) fn new(input: Box<Plan>, exprs: Vec<Expr>) -> Self {
+        Projection { input, exprs }
     }
 }
 
