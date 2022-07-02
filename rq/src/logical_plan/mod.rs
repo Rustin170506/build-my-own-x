@@ -4,3 +4,5 @@ pub(crate) mod logical_expr;
 pub(crate) mod plan;
 pub(crate) mod projection;
 pub(crate) mod scan;
+#[cfg(test)]
+mod util;
