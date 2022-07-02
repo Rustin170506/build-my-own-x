@@ -15,6 +15,7 @@ use csv::{Reader, ReaderBuilder, StringRecord};
 use std::{fs::File, rc::Rc};
 
 // A data source that reads from a CSV file.
+#[derive(Clone)]
 pub(crate) struct CsvDataSource {
     file_name: String,
     schema: Schema,
