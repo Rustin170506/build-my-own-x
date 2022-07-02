@@ -1,4 +1,4 @@
-use super::plan::LogicalPlan;
+use super::plan::Plan;
 use crate::data_types::schema::Field;
 use anyhow::Result;
 
@@ -8,5 +8,5 @@ use anyhow::Result;
 pub(crate) trait LogicalExpr: ToString {
     /// Return meta-data about the value that will be produced by this expression when evaluated
     /// against a particular input.
-    fn to_field(&self, input: &dyn LogicalPlan) -> Result<Field>;
+    fn to_field(&self, input: &Plan) -> Result<Field>;
 }

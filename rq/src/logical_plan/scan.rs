@@ -1,9 +1,13 @@
-use super::plan::LogicalPlan;
-use crate::{data_source::DataSource, data_types::schema::Schema};
+use super::plan::{LogicalPlan, Plan};
+use crate::{
+    data_source::{DataSource, Source},
+    data_types::schema::Schema,
+};
 
+#[derive(Clone)]
 pub(crate) struct Scan {
     path: String,
-    data_source: Box<dyn DataSource>,
+    data_source: Box<Source>,
     projection: Vec<String>,
 }
 
@@ -12,7 +16,7 @@ impl LogicalPlan for Scan {
         self.data_source.get_schema().clone()
     }
 
-    fn children(&self) -> Vec<&dyn LogicalPlan> {
+    fn children(&self) -> Vec<Plan> {
         vec![]
     }
 }
@@ -36,11 +40,7 @@ impl ToString for Scan {
 }
 
 impl Scan {
-    pub(crate) fn new(
-        path: String,
-        data_source: Box<dyn DataSource>,
-        projection: Vec<String>,
-    ) -> Self {
+    pub(crate) fn new(path: String, data_source: Box<Source>, projection: Vec<String>) -> Self {
         Scan {
             path,
             data_source,
@@ -53,14 +53,14 @@ impl Scan {
 mod tests {
     use super::Scan;
     use crate::{
-        data_source::{csv_data_source::CsvDataSource, DataSource},
+        data_source::{csv_data_source::CsvDataSource, DataSource, Source},
         data_types::schema::{Field, Schema},
         logical_plan::plan::LogicalPlan,
     };
     use arrow::datatypes::DataType;
     use std::path::PathBuf;
 
-    pub(crate) fn get_data_source() -> (String, Box<dyn DataSource>) {
+    pub(crate) fn get_data_source() -> (String, Box<Source>) {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/primitive_field.csv");
         let schema = Schema::new(vec![
@@ -73,7 +73,7 @@ mod tests {
         ]);
         let path = data_path.into_os_string().into_string().unwrap();
         let csv_data_source = CsvDataSource::new(path.clone(), schema, 3);
-        (path, Box::new(csv_data_source))
+        (path, Box::new(Source::Csv(csv_data_source)))
     }
 
     #[test]
