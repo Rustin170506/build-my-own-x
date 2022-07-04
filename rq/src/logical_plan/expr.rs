@@ -124,43 +124,48 @@ impl ops::Not for Expr {
 
 impl Expr {
     /// Return `self == other`
-    pub fn eq(self, other: Expr) -> Expr {
+    pub(crate) fn eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Eq, other)
     }
 
     /// Return `self != other`
-    pub fn not_eq(self, other: Expr) -> Expr {
+    pub(crate) fn not_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Neq, other)
     }
 
     /// Return `self > other`
-    pub fn gt(self, other: Expr) -> Expr {
+    pub(crate) fn gt(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Gt, other)
     }
 
     /// Return `self >= other`
-    pub fn gt_eq(self, other: Expr) -> Expr {
+    pub(crate) fn gt_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::GtEq, other)
     }
 
     /// Return `self < other`
-    pub fn lt(self, other: Expr) -> Expr {
+    pub(crate) fn lt(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Lt, other)
     }
 
     /// Return `self <= other`
-    pub fn lt_eq(self, other: Expr) -> Expr {
+    pub(crate) fn lt_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::LtEq, other)
     }
 
     /// Return `self && other`
-    pub fn and(self, other: Expr) -> Expr {
+    pub(crate) fn and(self, other: Expr) -> Expr {
         binary_expr(self, Operator::And, other)
     }
 
     /// Return `self || other`
-    pub fn or(self, other: Expr) -> Expr {
+    pub(crate) fn or(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Or, other)
+    }
+
+    /// Return `self as name`
+    pub(crate) fn alias(self, name: String) -> Expr {
+        Expr::Alias(Alias::new(Box::new(self), name))
     }
 }
 
@@ -454,6 +459,12 @@ impl LogicalExpr for Alias {
 impl ToString for Alias {
     fn to_string(&self) -> String {
         format!("{} as {}", self.expr.to_string(), self.alias)
+    }
+}
+
+impl Alias {
+    pub(crate) fn new(expr: Box<Expr>, alias: String) -> Self {
+        Alias { expr, alias }
     }
 }
 
