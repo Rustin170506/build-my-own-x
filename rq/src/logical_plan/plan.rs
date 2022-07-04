@@ -16,7 +16,7 @@ pub(crate) trait LogicalPlan: ToString {
             result.push('\t');
         }
         result.push_str(&self.to_string());
-        result.push_str("\n");
+        result.push('\n');
         self.children()
             .iter()
             .for_each(|child| result.push_str(child.pretty(indent + 1).as_str()));

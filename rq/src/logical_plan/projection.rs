@@ -21,7 +21,7 @@ impl LogicalPlan for Projection {
     }
 
     fn children(&self) -> Vec<Plan> {
-        return vec![self.input.as_ref().clone()];
+        vec![self.input.as_ref().clone()]
     }
 }
 
