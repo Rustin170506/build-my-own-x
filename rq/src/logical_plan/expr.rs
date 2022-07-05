@@ -169,8 +169,8 @@ impl Expr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// Logical expression representing a reference to a column by name.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) struct Column {
     pub(crate) name: String,
 }
@@ -199,8 +199,8 @@ impl From<&str> for Column {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 /// Logical expression representing a reference to a column by index.
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub(crate) struct ColumnIndex {
     pub(crate) index: usize,
 }

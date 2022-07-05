@@ -27,6 +27,7 @@ impl ToString for Column {
     }
 }
 
+/// Represents a dynamically typed single value.
 pub(crate) enum ScalarValue {
     String(String),
     Int64(i64),
