@@ -7,7 +7,7 @@ pub fn is_palindrome(x: i32) -> bool {
 
     while x > reverted_num {
         reverted_num = reverted_num * 10 + x % 10;
-        x = x / 10;
+        x /= 10;
     }
 
     reverted_num == x || reverted_num / 10 == x
