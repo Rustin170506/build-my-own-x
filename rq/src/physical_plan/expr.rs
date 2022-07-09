@@ -146,6 +146,12 @@ impl ToString for BinaryExpr {
     }
 }
 
+impl BinaryExpr {
+    pub(crate) fn new(op: Operator, left: Box<Expr>, right: Box<Expr>) -> Self {
+        Self { op, left, right }
+    }
+}
+
 // Build the arrow array from the values.
 fn evaluate_from_values(array: &[Box<dyn Any>], data_type: &DataType) -> Result<ArrayRef> {
     match data_type {
@@ -180,7 +186,7 @@ fn evaluate_from_values(array: &[Box<dyn Any>], data_type: &DataType) -> Result<
     }
 }
 
-fn add(l: &dyn Any, r: &dyn Any, data_type: &DataType) -> Box<dyn Any> {
+fn add(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
     match data_type {
         DataType::Int64 => {
             let l = l.downcast_ref::<i64>().unwrap();
@@ -203,12 +209,15 @@ fn add(l: &dyn Any, r: &dyn Any, data_type: &DataType) -> Box<dyn Any> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Column, PhysicalExpr, ScalarValue};
-    use crate::data_types::{
-        arrow_field_array::ArrowFieldArray,
-        column_array::ArrayRef,
-        record_batch::RecordBatch,
-        schema::{Field, Schema},
+    use super::{BinaryExpr, Column, Expr, PhysicalExpr, ScalarValue};
+    use crate::{
+        data_types::{
+            arrow_field_array::ArrowFieldArray,
+            column_array::ArrayRef,
+            record_batch::RecordBatch,
+            schema::{Field, Schema},
+        },
+        logical_plan::expr::Operator,
     };
     use arrow::{array::Int64Array, datatypes::DataType};
     use std::rc::Rc;
@@ -217,7 +226,7 @@ mod tests {
     fn test_column_expr_evaluate() {
         let id = Int64Array::from(vec![1, 2, 3, 4, 5]);
         let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
-        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int32)]);
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
         let input = RecordBatch::new(schema, id_arrary);
         let expr = Column::new(0);
         assert!(expr.evaluate(&input).is_ok());
@@ -242,7 +251,7 @@ mod tests {
     fn test_scalar_value_expr_evaluate() {
         let id = Int64Array::from(vec![1]);
         let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
-        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int32)]);
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
         let input = RecordBatch::new(schema, id_arrary);
         let expr = ScalarValue::Int64(1);
         assert!(expr.evaluate(&input).is_ok());
@@ -261,5 +270,38 @@ mod tests {
     fn test_scalar_value_expr_to_string() {
         let expr = ScalarValue::Int64(1);
         assert_eq!(expr.to_string(), "1");
+    }
+
+    #[test]
+    fn test_add_expr_evaluate() {
+        let id = Int64Array::from(vec![1]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = BinaryExpr::new(
+            Operator::Add,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap()
+                == &2
+        );
+    }
+
+    #[test]
+    fn test_add_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::Add,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert_eq!(expr.to_string(), "#0 + 1");
     }
 }
