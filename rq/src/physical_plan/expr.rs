@@ -135,6 +135,13 @@ impl PhysicalExpr for BinaryExpr {
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
+            Operator::Subtract => {
+                for i in 0..left.size() {
+                    let value = subtract(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    vals.push(value);
+                }
+                evaluate_from_values(&vals, &arrow_type)
+            }
             Operator::Eq => {
                 for i in 0..left.size() {
                     let value = eq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
@@ -151,6 +158,7 @@ impl ToString for BinaryExpr {
     fn to_string(&self) -> String {
         match self.op {
             Operator::Add => format!("{} + {}", self.left.to_string(), self.right.to_string()),
+            Operator::Subtract => format!("{} - {}", self.left.to_string(), self.right.to_string()),
             Operator::Eq => format!("{} == {}", self.left.to_string(), self.right.to_string()),
             _ => unimplemented!(),
         }
@@ -222,6 +230,27 @@ fn add(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any>
             let l = l.downcast_ref::<f64>().unwrap();
             let r = r.downcast_ref::<f64>().unwrap();
             Box::new(*l + *r)
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn subtract(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
+    match data_type {
+        DataType::Int64 => {
+            let l = l.downcast_ref::<i64>().unwrap();
+            let r = r.downcast_ref::<i64>().unwrap();
+            Box::new(*l - *r)
+        }
+        DataType::Float32 => {
+            let l = l.downcast_ref::<f32>().unwrap();
+            let r = r.downcast_ref::<f32>().unwrap();
+            Box::new(*l - *r)
+        }
+        DataType::Float64 => {
+            let l = l.downcast_ref::<f64>().unwrap();
+            let r = r.downcast_ref::<f64>().unwrap();
+            Box::new(*l - *r)
         }
         _ => unreachable!(),
     }
@@ -381,5 +410,38 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Int64(1))),
         );
         assert_eq!(expr.to_string(), "#0 == 1");
+    }
+
+    #[test]
+    fn test_subtract_expr_evaluate() {
+        let id = Int64Array::from(vec![1]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = BinaryExpr::new(
+            Operator::Subtract,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap()
+                == &0
+        );
+    }
+
+    #[test]
+    fn test_subtract_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::Subtract,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert_eq!(expr.to_string(), "#0 - 1");
     }
 }
