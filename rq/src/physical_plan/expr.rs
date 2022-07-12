@@ -219,7 +219,6 @@ impl PhysicalExpr for BinaryExpr {
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
-            _ => unimplemented!(),
         }
     }
 }
@@ -240,7 +239,6 @@ impl ToString for BinaryExpr {
             Operator::LtEq => format!("{} <= {}", self.left.to_string(), self.right.to_string()),
             Operator::Gt => format!("{} > {}", self.left.to_string(), self.right.to_string()),
             Operator::GtEq => format!("{} >= {}", self.left.to_string(), self.right.to_string()),
-            _ => unimplemented!(),
         }
     }
 }
