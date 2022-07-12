@@ -191,6 +191,13 @@ impl PhysicalExpr for BinaryExpr {
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
+            Operator::Lt => {
+                for i in 0..left.size() {
+                    let value = lt(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    vals.push(value);
+                }
+                evaluate_from_values(&vals, &DataType::Boolean)
+            }
             _ => unimplemented!(),
         }
     }
@@ -208,6 +215,7 @@ impl ToString for BinaryExpr {
             Operator::Or => format!("{} OR {}", self.left.to_string(), self.right.to_string()),
             Operator::Eq => format!("{} == {}", self.left.to_string(), self.right.to_string()),
             Operator::Neq => format!("{} != {}", self.left.to_string(), self.right.to_string()),
+            Operator::Lt => format!("{} < {}", self.left.to_string(), self.right.to_string()),
             _ => unimplemented!(),
         }
     }
@@ -434,6 +442,31 @@ fn neq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any>
             let l = OrderedFloat(*l);
             let r = OrderedFloat(*r);
             Box::new(l != r)
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn lt(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
+    match data_type {
+        DataType::Int64 => {
+            let l = l.downcast_ref::<i64>().unwrap();
+            let r = r.downcast_ref::<i64>().unwrap();
+            Box::new(l < r)
+        }
+        DataType::Float32 => {
+            let l = l.downcast_ref::<f32>().unwrap();
+            let r = r.downcast_ref::<f32>().unwrap();
+            let l = OrderedFloat(*l);
+            let r = OrderedFloat(*r);
+            Box::new(l < r)
+        }
+        DataType::Float64 => {
+            let l = l.downcast_ref::<f64>().unwrap();
+            let r = r.downcast_ref::<f64>().unwrap();
+            let l = OrderedFloat(*l);
+            let r = OrderedFloat(*r);
+            Box::new(l < r)
         }
         _ => unreachable!(),
     }
@@ -802,5 +835,38 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Int64(1))),
         );
         assert_eq!(expr.to_string(), "#0 != 1");
+    }
+
+    #[test]
+    fn test_lt_expr_evaluate() {
+        let id = Int64Array::from(vec![1]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = BinaryExpr::new(
+            Operator::Lt,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<bool>()
+                .unwrap()
+                == &true
+        );
+    }
+
+    #[test]
+    fn test_lt_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::Lt,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+        );
+        assert_eq!(expr.to_string(), "#0 < 2");
     }
 }
