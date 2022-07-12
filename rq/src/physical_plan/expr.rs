@@ -163,6 +163,13 @@ impl PhysicalExpr for BinaryExpr {
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
+            Operator::And => {
+                for i in 0..left.size() {
+                    let value = and(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    vals.push(value);
+                }
+                evaluate_from_values(&vals, &DataType::Boolean)
+            }
             Operator::Eq => {
                 for i in 0..left.size() {
                     let value = eq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
@@ -183,6 +190,7 @@ impl ToString for BinaryExpr {
             Operator::Multiply => format!("{} * {}", self.left.to_string(), self.right.to_string()),
             Operator::Divide => format!("{} / {}", self.left.to_string(), self.right.to_string()),
             Operator::Modulus => format!("{} % {}", self.left.to_string(), self.right.to_string()),
+            Operator::And => format!("{} AND {}", self.left.to_string(), self.right.to_string()),
             Operator::Eq => format!("{} == {}", self.left.to_string(), self.right.to_string()),
             _ => unimplemented!(),
         }
@@ -343,6 +351,17 @@ fn modulus(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn 
     }
 }
 
+fn and(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
+    match data_type {
+        DataType::Boolean => {
+            let l = l.downcast_ref::<bool>().unwrap();
+            let r = r.downcast_ref::<bool>().unwrap();
+            Box::new(*l && *r)
+        }
+        _ => unreachable!(),
+    }
+}
+
 fn eq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
     match data_type {
         DataType::Int64 => {
@@ -380,7 +399,10 @@ mod tests {
         },
         logical_plan::expr::Operator,
     };
-    use arrow::{array::Int64Array, datatypes::DataType};
+    use arrow::{
+        array::{BooleanArray, Int64Array},
+        datatypes::DataType,
+    };
     use std::rc::Rc;
 
     #[test]
@@ -464,39 +486,6 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Int64(1))),
         );
         assert_eq!(expr.to_string(), "#0 + 1");
-    }
-
-    #[test]
-    fn test_eq_expr_evaluate() {
-        let id = Int64Array::from(vec![1]);
-        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
-        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
-        let input = RecordBatch::new(schema, id_arrary);
-        let expr = BinaryExpr::new(
-            Operator::Eq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
-        );
-        assert!(expr.evaluate(&input).is_ok());
-        assert!(
-            expr.evaluate(&input)
-                .unwrap()
-                .get_value(0)
-                .unwrap()
-                .downcast_ref::<bool>()
-                .unwrap()
-                == &true
-        );
-    }
-
-    #[test]
-    fn test_eq_expr_to_string() {
-        let expr = BinaryExpr::new(
-            Operator::Eq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
-        );
-        assert_eq!(expr.to_string(), "#0 == 1");
     }
 
     #[test]
@@ -629,5 +618,71 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Int64(2))),
         );
         assert_eq!(expr.to_string(), "#0 % 2");
+    }
+
+    #[test]
+    fn test_and_expr_evaluate() {
+        let bool = BooleanArray::from(vec![false]);
+        let bool_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(bool))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("bool".to_string(), DataType::Boolean)]);
+        let input = RecordBatch::new(schema, bool_arrary);
+        let expr = BinaryExpr::new(
+            Operator::And,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Column(Column::new(0))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<bool>()
+                .unwrap()
+                == &false
+        );
+    }
+
+    #[test]
+    fn test_and_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::And,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Column(Column::new(0))),
+        );
+        assert_eq!(expr.to_string(), "#0 AND #0");
+    }
+
+    #[test]
+    fn test_eq_expr_evaluate() {
+        let id = Int64Array::from(vec![1]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = BinaryExpr::new(
+            Operator::Eq,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<bool>()
+                .unwrap()
+                == &true
+        );
+    }
+
+    #[test]
+    fn test_eq_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::Eq,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+        );
+        assert_eq!(expr.to_string(), "#0 == 1");
     }
 }
