@@ -170,6 +170,13 @@ impl PhysicalExpr for BinaryExpr {
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
+            Operator::Or => {
+                for i in 0..left.size() {
+                    let value = or(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    vals.push(value);
+                }
+                evaluate_from_values(&vals, &DataType::Boolean)
+            }
             Operator::Eq => {
                 for i in 0..left.size() {
                     let value = eq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
@@ -191,6 +198,7 @@ impl ToString for BinaryExpr {
             Operator::Divide => format!("{} / {}", self.left.to_string(), self.right.to_string()),
             Operator::Modulus => format!("{} % {}", self.left.to_string(), self.right.to_string()),
             Operator::And => format!("{} AND {}", self.left.to_string(), self.right.to_string()),
+            Operator::Or => format!("{} OR {}", self.left.to_string(), self.right.to_string()),
             Operator::Eq => format!("{} == {}", self.left.to_string(), self.right.to_string()),
             _ => unimplemented!(),
         }
@@ -357,6 +365,17 @@ fn and(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any>
             let l = l.downcast_ref::<bool>().unwrap();
             let r = r.downcast_ref::<bool>().unwrap();
             Box::new(*l && *r)
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn or(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
+    match data_type {
+        DataType::Boolean => {
+            let l = l.downcast_ref::<bool>().unwrap();
+            let r = r.downcast_ref::<bool>().unwrap();
+            Box::new(*l || *r)
         }
         _ => unreachable!(),
     }
@@ -651,6 +670,39 @@ mod tests {
             Box::new(Expr::Column(Column::new(0))),
         );
         assert_eq!(expr.to_string(), "#0 AND #0");
+    }
+
+    #[test]
+    fn test_or_expr_evaluate() {
+        let bool = BooleanArray::from(vec![false]);
+        let bool_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(bool))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("bool".to_string(), DataType::Boolean)]);
+        let input = RecordBatch::new(schema, bool_arrary);
+        let expr = BinaryExpr::new(
+            Operator::Or,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Column(Column::new(0))),
+        );
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<bool>()
+                .unwrap()
+                == &false
+        );
+    }
+
+    #[test]
+    fn test_or_expr_to_string() {
+        let expr = BinaryExpr::new(
+            Operator::Or,
+            Box::new(Expr::Column(Column::new(0))),
+            Box::new(Expr::Column(Column::new(0))),
+        );
+        assert_eq!(expr.to_string(), "#0 OR #0");
     }
 
     #[test]
