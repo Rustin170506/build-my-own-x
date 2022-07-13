@@ -60,7 +60,7 @@ mod tests {
 
         let records = vec![RecordBatch::new(schema.clone(), id_array)];
         let data_source = MemoryDataSource {
-            schema: schema.clone(),
+            schema,
             data: records,
         };
         let projection = vec!["a"];
