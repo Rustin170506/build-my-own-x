@@ -130,35 +130,45 @@ impl PhysicalExpr for BinaryExpr {
         match self.op {
             Operator::Add => {
                 for i in 0..left.size() {
-                    let value = add(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::math_binary_op!(&l,&r, &arrow_type,+);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
             Operator::Subtract => {
                 for i in 0..left.size() {
-                    let value = subtract(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::math_binary_op!(&l,&r, &arrow_type,-);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
             Operator::Multiply => {
                 for i in 0..left.size() {
-                    let value = multiply(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::math_binary_op!(&l,&r, &arrow_type,*);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
             Operator::Divide => {
                 for i in 0..left.size() {
-                    let value = divide(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::math_binary_op!(&l,&r, &arrow_type,/);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &arrow_type)
             }
             Operator::Modulus => {
                 for i in 0..left.size() {
-                    let value = modulus(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::math_binary_op!(&l,&r, &arrow_type,%);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &arrow_type)
@@ -292,109 +302,28 @@ fn evaluate_from_values(array: &[Box<dyn Any>], data_type: &DataType) -> Result<
     }
 }
 
-fn add(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(*l + *r)
+#[macro_export]
+macro_rules! math_binary_op {
+    ($LEFT: expr, $RIGHT: expr, $DATA_TYPE: expr, $OP: tt) => {
+        match $DATA_TYPE {
+            DataType::Int64 => {
+                let l = $LEFT.downcast_ref::<i64>().unwrap();
+                let r = $RIGHT.downcast_ref::<i64>().unwrap();
+                Box::new(*l $OP *r) as Box<dyn Any>
+            }
+            DataType::Float32 => {
+                let l = $LEFT.downcast_ref::<f32>().unwrap();
+                let r = $RIGHT.downcast_ref::<f32>().unwrap();
+                Box::new(*l $OP *r) as Box<dyn Any>
+            }
+            DataType::Float64 => {
+                let l = $LEFT.downcast_ref::<f64>().unwrap();
+                let r = $RIGHT.downcast_ref::<f64>().unwrap();
+                Box::new(*l $OP *r) as Box<dyn Any>
+            }
+            _ => unreachable!(),
         }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            Box::new(*l + *r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            Box::new(*l + *r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn subtract(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(*l - *r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            Box::new(*l - *r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            Box::new(*l - *r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn multiply(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(*l * *r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            Box::new(*l * *r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            Box::new(*l * *r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn divide(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(*l / *r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            Box::new(*l / *r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            Box::new(*l / *r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn modulus(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(*l % *r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            Box::new(*l % *r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            Box::new(*l % *r)
-        }
-        _ => unreachable!(),
-    }
+    };
 }
 
 fn and(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
