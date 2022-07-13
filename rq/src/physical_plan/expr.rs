@@ -189,42 +189,54 @@ impl PhysicalExpr for BinaryExpr {
             }
             Operator::Eq => {
                 for i in 0..left.size() {
-                    let value = eq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, eq);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
             Operator::Neq => {
                 for i in 0..left.size() {
-                    let value = neq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, ne);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
             Operator::Lt => {
                 for i in 0..left.size() {
-                    let value = lt(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, lt);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
             Operator::LtEq => {
                 for i in 0..left.size() {
-                    let value = lteq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, le);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
             Operator::Gt => {
                 for i in 0..left.size() {
-                    let value = gt(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, gt);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
             }
             Operator::GtEq => {
                 for i in 0..left.size() {
-                    let value = gteq(&left.get_value(i)?, &right.get_value(i)?, &arrow_type);
+                    let l = left.get_value(i)?;
+                    let r = right.get_value(i)?;
+                    let value = crate::bool_binary_op!(&l, &r, &arrow_type, ge);
                     vals.push(value);
                 }
                 evaluate_from_values(&vals, &DataType::Boolean)
@@ -348,154 +360,32 @@ fn or(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> 
     }
 }
 
-fn eq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l == r)
+#[macro_export]
+macro_rules! bool_binary_op {
+    ($LEFT: expr, $RIGHT: expr, $DATA_TYPE: expr, $OP: ident) => {
+        match $DATA_TYPE {
+            DataType::Int64 => {
+                let l = $LEFT.downcast_ref::<i64>().unwrap();
+                let r = $RIGHT.downcast_ref::<i64>().unwrap();
+                Box::new(l.$OP(r)) as Box<dyn Any>
+            }
+            DataType::Float32 => {
+                let l = $LEFT.downcast_ref::<f32>().unwrap();
+                let r = $RIGHT.downcast_ref::<f32>().unwrap();
+                let l = OrderedFloat(*l);
+                let r = OrderedFloat(*r);
+                Box::new(l.$OP(&r)) as Box<dyn Any>
+            }
+            DataType::Float64 => {
+                let l = $LEFT.downcast_ref::<f64>().unwrap();
+                let r = $RIGHT.downcast_ref::<f64>().unwrap();
+                let l = OrderedFloat(*l);
+                let r = OrderedFloat(*r);
+                Box::new(l.$OP(&r)) as Box<dyn Any>
+            }
+            _ => unreachable!(),
         }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l.eq(&r))
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l.eq(&r))
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn neq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l != r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l != r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l != r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn lt(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l < r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l < r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l < r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn lteq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l <= r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l <= r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l <= r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn gt(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l > r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l > r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l > r)
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn gteq(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> {
-    match data_type {
-        DataType::Int64 => {
-            let l = l.downcast_ref::<i64>().unwrap();
-            let r = r.downcast_ref::<i64>().unwrap();
-            Box::new(l >= r)
-        }
-        DataType::Float32 => {
-            let l = l.downcast_ref::<f32>().unwrap();
-            let r = r.downcast_ref::<f32>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l >= r)
-        }
-        DataType::Float64 => {
-            let l = l.downcast_ref::<f64>().unwrap();
-            let r = r.downcast_ref::<f64>().unwrap();
-            let l = OrderedFloat(*l);
-            let r = OrderedFloat(*r);
-            Box::new(l >= r)
-        }
-        _ => unreachable!(),
-    }
+    };
 }
 
 #[cfg(test)]
