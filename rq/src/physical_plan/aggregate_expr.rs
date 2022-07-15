@@ -48,7 +48,7 @@ impl Accumulator {
 }
 
 fn is_max(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
-    if l.is::<&i64>() {
+    if l.is::<i64>() {
         return l.downcast_ref::<i64>().unwrap() > r.downcast_ref::<i64>().unwrap();
     }
     if l.is::<f32>() {
