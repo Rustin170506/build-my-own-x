@@ -1,10 +1,9 @@
-use std::fmt::Display;
-
 use super::{
     expr::Expr,
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
+use std::fmt::Display;
 
 /// Logical plan representing a selection (a.k.a. filter) against an input.
 #[derive(Clone)]

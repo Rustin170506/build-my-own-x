@@ -1,10 +1,9 @@
-use std::fmt::Display;
-
 use super::plan::{LogicalPlan, Plan};
 use crate::{
     data_source::{DataSource, Source},
     data_types::schema::Schema,
 };
+use std::fmt::Display;
 
 #[derive(Clone)]
 pub(crate) struct Scan {
