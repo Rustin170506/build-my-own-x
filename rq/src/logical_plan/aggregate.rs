@@ -1,3 +1,5 @@
+use std::fmt;
+
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
@@ -28,8 +30,8 @@ impl LogicalPlan for Aggregate {
     }
 }
 
-impl ToString for Aggregate {
-    fn to_string(&self) -> String {
+impl fmt::Display for Aggregate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let group_exprs = self
             .group_exprs
             .iter()
@@ -42,8 +44,8 @@ impl ToString for Aggregate {
             .map(|e| e.to_string())
             .collect::<Vec<String>>()
             .join(",");
-
-        format!(
+        write!(
+            f,
             "Aggregate: groupExpr={}, aggregateExpr={}",
             group_exprs, aggregate_exprs,
         )
@@ -99,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_string() {
+    fn test_display() {
         let (path, csv_data_source) = get_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let col1 = col("c1");

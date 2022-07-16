@@ -11,10 +11,10 @@ use arrow::{
     datatypes::DataType,
 };
 use ordered_float::OrderedFloat;
-use std::{any::Any, rc::Rc};
+use std::{any::Any, fmt::Display, rc::Rc};
 
 /// Physical representation of an expression.
-pub(crate) trait PhysicalExpr: ToString {
+pub(crate) trait PhysicalExpr: Display {
     fn evaluate(&self, input: &RecordBatch) -> Result<ArrayRef>;
 }
 
@@ -34,12 +34,12 @@ impl PhysicalExpr for Expr {
     }
 }
 
-impl ToString for Expr {
-    fn to_string(&self) -> String {
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expr::Column(column) => column.to_string(),
-            Expr::Literal(literal) => literal.to_string(),
-            Expr::BinaryExpr(binary_expr) => binary_expr.to_string(),
+            Expr::Column(column) => column.fmt(f),
+            Expr::Literal(literal) => literal.fmt(f),
+            Expr::BinaryExpr(binary_expr) => binary_expr.fmt(f),
         }
     }
 }
@@ -60,9 +60,9 @@ impl PhysicalExpr for Column {
     }
 }
 
-impl ToString for Column {
-    fn to_string(&self) -> String {
-        format!("#{}", self.i)
+impl Display for Column {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{}", self.i)
     }
 }
 
@@ -101,13 +101,13 @@ impl PhysicalExpr for ScalarValue {
     }
 }
 
-impl ToString for ScalarValue {
-    fn to_string(&self) -> String {
+impl Display for ScalarValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ScalarValue::String(s) => format!("'{}'", s),
-            ScalarValue::Int64(i) => format!("{}", i),
-            ScalarValue::Float32(f) => format!("{}", f),
-            ScalarValue::Float64(f) => format!("{}", f),
+            ScalarValue::String(s) => write!(f, "'{}'", s),
+            ScalarValue::Int64(i) => write!(f, "{}", i),
+            ScalarValue::Float32(fv) => write!(f, "{}", fv),
+            ScalarValue::Float64(fv) => write!(f, "{}", fv),
         }
     }
 }
@@ -245,22 +245,28 @@ impl PhysicalExpr for BinaryExpr {
     }
 }
 
-impl ToString for BinaryExpr {
-    fn to_string(&self) -> String {
+impl Display for BinaryExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.op {
-            Operator::Add => format!("{} + {}", self.left.to_string(), self.right.to_string()),
-            Operator::Subtract => format!("{} - {}", self.left.to_string(), self.right.to_string()),
-            Operator::Multiply => format!("{} * {}", self.left.to_string(), self.right.to_string()),
-            Operator::Divide => format!("{} / {}", self.left.to_string(), self.right.to_string()),
-            Operator::Modulus => format!("{} % {}", self.left.to_string(), self.right.to_string()),
-            Operator::And => format!("{} AND {}", self.left.to_string(), self.right.to_string()),
-            Operator::Or => format!("{} OR {}", self.left.to_string(), self.right.to_string()),
-            Operator::Eq => format!("{} == {}", self.left.to_string(), self.right.to_string()),
-            Operator::Neq => format!("{} != {}", self.left.to_string(), self.right.to_string()),
-            Operator::Lt => format!("{} < {}", self.left.to_string(), self.right.to_string()),
-            Operator::LtEq => format!("{} <= {}", self.left.to_string(), self.right.to_string()),
-            Operator::Gt => format!("{} > {}", self.left.to_string(), self.right.to_string()),
-            Operator::GtEq => format!("{} >= {}", self.left.to_string(), self.right.to_string()),
+            Operator::Add => write!(f, "{} + {}", self.left, self.right),
+            Operator::Subtract => {
+                write!(f, "{} - {}", self.left, self.right)
+            }
+            Operator::Multiply => {
+                write!(f, "{} * {}", self.left, self.right)
+            }
+            Operator::Divide => write!(f, "{} / {}", self.left, self.right),
+            Operator::Modulus => {
+                write!(f, "{} % {}", self.left, self.right)
+            }
+            Operator::And => write!(f, "{} AND {}", self.left, self.right),
+            Operator::Or => write!(f, "{} OR {}", self.left, self.right),
+            Operator::Eq => write!(f, "{} == {}", self.left, self.right),
+            Operator::Neq => write!(f, "{} != {}", self.left, self.right),
+            Operator::Lt => write!(f, "{} < {}", self.left, self.right),
+            Operator::LtEq => write!(f, "{} <= {}", self.left, self.right),
+            Operator::Gt => write!(f, "{} > {}", self.left, self.right),
+            Operator::GtEq => write!(f, "{} >= {}", self.left, self.right),
         }
     }
 }
@@ -426,7 +432,7 @@ mod tests {
     }
 
     #[test]
-    fn test_column_expr_to_string() {
+    fn test_column_expr_display() {
         let expr = Column::new(0);
         assert_eq!(expr.to_string(), "#0");
     }
@@ -451,7 +457,7 @@ mod tests {
     }
 
     #[test]
-    fn test_scalar_value_expr_to_string() {
+    fn test_scalar_value_expr_display() {
         let expr = ScalarValue::Int64(1);
         assert_eq!(expr.to_string(), "1");
     }
@@ -480,7 +486,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_expr_to_string() {
+    fn test_add_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Add,
             Box::new(Expr::Column(Column::new(0))),
@@ -513,7 +519,7 @@ mod tests {
     }
 
     #[test]
-    fn test_subtract_expr_to_string() {
+    fn test_subtract_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Subtract,
             Box::new(Expr::Column(Column::new(0))),
@@ -546,7 +552,7 @@ mod tests {
     }
 
     #[test]
-    fn test_multiply_expr_to_string() {
+    fn test_multiply_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Multiply,
             Box::new(Expr::Column(Column::new(0))),
@@ -579,7 +585,7 @@ mod tests {
     }
 
     #[test]
-    fn test_divide_expr_to_string() {
+    fn test_divide_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Divide,
             Box::new(Expr::Column(Column::new(0))),
@@ -612,7 +618,7 @@ mod tests {
     }
 
     #[test]
-    fn test_modulus_expr_to_string() {
+    fn test_modulus_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Modulus,
             Box::new(Expr::Column(Column::new(0))),
@@ -645,7 +651,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_expr_to_string() {
+    fn test_and_expr_display() {
         let expr = BinaryExpr::new(
             Operator::And,
             Box::new(Expr::Column(Column::new(0))),
@@ -678,7 +684,7 @@ mod tests {
     }
 
     #[test]
-    fn test_or_expr_to_string() {
+    fn test_or_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Or,
             Box::new(Expr::Column(Column::new(0))),
@@ -711,7 +717,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eq_expr_to_string() {
+    fn test_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Eq,
             Box::new(Expr::Column(Column::new(0))),
@@ -744,7 +750,7 @@ mod tests {
     }
 
     #[test]
-    fn test_neq_expr_to_string() {
+    fn test_neq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Neq,
             Box::new(Expr::Column(Column::new(0))),
@@ -777,7 +783,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lt_expr_to_string() {
+    fn test_lt_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Lt,
             Box::new(Expr::Column(Column::new(0))),
@@ -810,7 +816,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lt_eq_expr_to_string() {
+    fn test_lt_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::LtEq,
             Box::new(Expr::Column(Column::new(0))),
@@ -843,7 +849,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gt_expr_to_string() {
+    fn test_gt_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Gt,
             Box::new(Expr::Column(Column::new(0))),
@@ -876,7 +882,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gt_eq_expr_to_string() {
+    fn test_gt_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::GtEq,
             Box::new(Expr::Column(Column::new(0))),
