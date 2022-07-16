@@ -11,7 +11,7 @@ use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
 /// Logical Expression for use in logical query plans.
 /// The logical expression provides information needed
 /// during the planning phase such as the name and data type of the expression.
-pub(crate) trait LogicalExpr: ToString {
+pub(crate) trait LogicalExpr: Display {
     /// Return meta-data about the value that will be produced by this expression when evaluated
     /// against a particular input.
     fn to_field(&self, input: &Plan) -> Result<Field>;
@@ -58,18 +58,18 @@ impl LogicalExpr for Expr {
     }
 }
 
-impl ToString for Expr {
-    fn to_string(&self) -> String {
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expr::Column(column) => column.to_string(),
-            Expr::ColumnIndex(column_index) => column_index.to_string(),
-            Expr::Literal(literal) => literal.to_string(),
-            Expr::Not(not) => not.to_string(),
-            Expr::Cast(cast) => cast.to_string(),
-            Expr::BinaryExpr(binary) => binary.to_string(),
-            Expr::Alias(alias) => alias.to_string(),
-            Expr::ScalarFunction(function) => function.to_string(),
-            Expr::AggregateFunction(function) => function.to_string(),
+            Expr::Column(column) => column.fmt(f),
+            Expr::ColumnIndex(column_index) => column_index.fmt(f),
+            Expr::Literal(literal) => literal.fmt(f),
+            Expr::Not(not) => not.fmt(f),
+            Expr::Cast(cast) => cast.fmt(f),
+            Expr::BinaryExpr(binary) => binary.fmt(f),
+            Expr::Alias(alias) => alias.fmt(f),
+            Expr::ScalarFunction(function) => function.fmt(f),
+            Expr::AggregateFunction(function) => function.fmt(f),
         }
     }
 }
@@ -185,9 +185,9 @@ impl LogicalExpr for Column {
     }
 }
 
-impl ToString for Column {
-    fn to_string(&self) -> String {
-        format!("#{}", self.name)
+impl Display for Column {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{}", self.name)
     }
 }
 
@@ -211,9 +211,9 @@ impl LogicalExpr for ColumnIndex {
     }
 }
 
-impl ToString for ColumnIndex {
-    fn to_string(&self) -> String {
-        format!("#{}", self.index)
+impl Display for ColumnIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{}", self.index)
     }
 }
 
@@ -321,9 +321,9 @@ impl LogicalExpr for Cast {
     }
 }
 
-impl ToString for Cast {
-    fn to_string(&self) -> String {
-        format!("CAST({} AS {})", self.expr.to_string(), self.data_type)
+impl Display for Cast {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CAST({} AS {})", self.expr, self.data_type)
     }
 }
 
@@ -351,9 +351,9 @@ impl LogicalExpr for Not {
     }
 }
 
-impl ToString for Not {
-    fn to_string(&self) -> String {
-        format!("{} {}", self.op, self.expr.to_string())
+impl Display for Not {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.op, self.expr)
     }
 }
 
@@ -430,14 +430,9 @@ impl LogicalExpr for BinaryExpr {
     }
 }
 
-impl ToString for BinaryExpr {
-    fn to_string(&self) -> String {
-        format!(
-            "{} {} {}",
-            self.left.to_string(),
-            self.op,
-            self.right.to_string()
-        )
+impl Display for BinaryExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.left, self.op, self.right)
     }
 }
 
@@ -456,9 +451,9 @@ impl LogicalExpr for Alias {
     }
 }
 
-impl ToString for Alias {
-    fn to_string(&self) -> String {
-        format!("{} as {}", self.expr.to_string(), self.alias)
+impl Display for Alias {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} as {}", self.expr, self.alias)
     }
 }
 
@@ -481,9 +476,10 @@ impl LogicalExpr for ScalarFunction {
     }
 }
 
-impl ToString for ScalarFunction {
-    fn to_string(&self) -> String {
-        format!(
+impl Display for ScalarFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "{}({})",
             self.name,
             self.args
@@ -549,12 +545,12 @@ impl LogicalExpr for AggregateExpr {
     }
 }
 
-impl ToString for AggregateExpr {
-    fn to_string(&self) -> String {
+impl Display for AggregateExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_distinct {
-            format!("{}(DISTINCT {})", self.fun, self.expr.to_string())
+            write!(f, "{}(DISTINCT {})", self.fun, self.expr)
         } else {
-            format!("{}({})", self.fun, self.expr.to_string())
+            write!(f, "{}({})", self.fun, self.expr)
         }
     }
 }
@@ -589,13 +585,13 @@ mod test {
     }
 
     #[test]
-    fn test_column_to_string() {
+    fn test_column_display() {
         let col = col("a");
         assert_eq!(col.to_string(), "#a");
     }
 
     #[test]
-    fn test_lit_to_string() {
+    fn test_lit_display() {
         let l = lit(1);
         assert_eq!(l.to_string(), "1");
         let l = lit(1.2);
@@ -605,7 +601,7 @@ mod test {
     }
 
     #[test]
-    fn test_binary_expr_to_string() {
+    fn test_binary_expr_display() {
         let e = col("a") + lit(1);
         assert_eq!(e.to_string(), "#a + 1");
         let e = col("a") - lit(1);

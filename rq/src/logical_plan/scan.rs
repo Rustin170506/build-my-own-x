@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::plan::{LogicalPlan, Plan};
 use crate::{
     data_source::{DataSource, Source},
@@ -27,12 +29,13 @@ impl LogicalPlan for Scan {
     }
 }
 
-impl ToString for Scan {
-    fn to_string(&self) -> String {
+impl Display for Scan {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.projection.is_empty() {
-            format!("Scan: {}; projection=None", self.path)
+            write!(f, "Scan: {}; projection=None", self.path)
         } else {
-            format!(
+            write!(
+                f,
                 "Scan: {}; projection=[{}]",
                 self.path,
                 self.projection
@@ -91,14 +94,14 @@ mod tests {
     }
 
     #[test]
-    fn test_to_string_without_projection() {
+    fn test_display_without_projection() {
         let (path, csv_data_source) = get_data_source();
         let plan = Scan::new(path.clone(), csv_data_source, vec![]);
         assert_eq!(plan.to_string(), format!("Scan: {}; projection=None", path));
     }
 
     #[test]
-    fn test_to_string_with_projection() {
+    fn test_display_with_projection() {
         let (path, csv_data_source) = get_data_source();
         let plan = Scan::new(
             path.clone(),

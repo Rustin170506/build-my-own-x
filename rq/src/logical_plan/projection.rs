@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
@@ -25,9 +27,10 @@ impl LogicalPlan for Projection {
     }
 }
 
-impl ToString for Projection {
-    fn to_string(&self) -> String {
-        format!(
+impl Display for Projection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "Projection: {}",
             self.exprs
                 .iter()
@@ -95,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_string() {
+    fn test_display() {
         let (path, csv_data_source) = get_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let c1 = col("c1");

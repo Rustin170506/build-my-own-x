@@ -2,6 +2,7 @@ use super::expr::Expr;
 use crate::logical_plan::expr::AggregateFunction;
 use std::{
     any::{Any, TypeId},
+    fmt::Display,
     mem,
     ops::DerefMut,
 };
@@ -112,9 +113,9 @@ impl AggregateExpr {
     }
 }
 
-impl ToString for AggregateExpr {
-    fn to_string(&self) -> String {
-        format!("{}({})", self.fun, self.expr.to_string())
+impl Display for AggregateExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}({})", self.fun, self.expr)
     }
 }
 
@@ -223,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn test_aggregate_expr_to_string() {
+    fn test_aggregate_expr_display() {
         let agg_expr = AggregateExpr::new(Expr::Column(Column::new(0)), AggregateFunction::Max);
         assert_eq!(agg_expr.to_string(), "MAX(#0)");
     }

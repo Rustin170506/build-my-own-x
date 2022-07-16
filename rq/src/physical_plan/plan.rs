@@ -4,9 +4,10 @@ use crate::{
     logical_plan::expr::Expr,
 };
 use anyhow::Result;
+use std::fmt::Display;
 
 /// A physical plan represents an executable piece of code that will produce data.
-trait PhysicalPlan: ToString {
+trait PhysicalPlan: Display {
     /// Return the schema.
     fn schema(&self) -> Schema;
 
@@ -56,10 +57,10 @@ impl PhysicalPlan for Plan {
     }
 }
 
-impl ToString for Plan {
-    fn to_string(&self) -> String {
+impl Display for Plan {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Plan::Scan(scan) => scan.to_string(),
+            Plan::Scan(scan) => scan.fmt(f),
         }
     }
 }
@@ -96,9 +97,10 @@ impl PhysicalPlan for Scan {
     }
 }
 
-impl ToString for Scan {
-    fn to_string(&self) -> String {
-        format!(
+impl Display for Scan {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "ScanExec: projection={}",
             self.projection
                 .iter()
@@ -120,7 +122,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn test_scan_to_string() {
+    fn test_scan_display() {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
