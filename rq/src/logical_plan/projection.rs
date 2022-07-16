@@ -1,10 +1,9 @@
-use std::fmt::Display;
-
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
+use std::fmt::Display;
 
 #[derive(Clone)]
 pub(crate) struct Projection {

@@ -1,10 +1,9 @@
-use std::fmt;
-
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
+use std::fmt;
 
 /// Logical plan representing an aggregate query against an input.
 #[derive(Clone)]
