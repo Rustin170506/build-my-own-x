@@ -1,3 +1,4 @@
+use super::scan::Scan;
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
@@ -5,8 +6,6 @@ use crate::{
 };
 use anyhow::Result;
 use std::fmt::Display;
-
-use super::scan::Scan;
 
 /// A physical plan represents an executable piece of code that will produce data.
 pub(crate) trait PhysicalPlan: Display {
