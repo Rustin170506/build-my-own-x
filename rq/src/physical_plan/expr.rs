@@ -278,7 +278,10 @@ impl BinaryExpr {
 }
 
 // Build the arrow array from the values.
-fn evaluate_from_values(array: &[Box<dyn Any>], data_type: &DataType) -> Result<ArrayRef> {
+pub(crate) fn evaluate_from_values(
+    array: &[Box<dyn Any>],
+    data_type: &DataType,
+) -> Result<ArrayRef> {
     match data_type {
         DataType::Int64 => {
             let arrow_array = Int64Array::from(
