@@ -1,4 +1,4 @@
-use super::scan::Scan;
+use super::{projection::Projection, scan::Scan, selection::Selection};
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
@@ -36,24 +36,32 @@ pub(crate) trait PhysicalPlan: Display {
 
 pub(crate) enum Plan {
     Scan(Scan),
+    Projection(Projection),
+    Selection(Selection),
 }
 
 impl PhysicalPlan for Plan {
     fn schema(&self) -> Schema {
         match self {
             Plan::Scan(scan) => scan.schema(),
+            Plan::Projection(projection) => projection.schema(),
+            Plan::Selection(selection) => selection.schema(),
         }
     }
 
     fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         match self {
             Plan::Scan(scan) => scan.execute(),
+            Plan::Projection(projection) => projection.execute(),
+            Plan::Selection(selection) => selection.execute(),
         }
     }
 
     fn children(&self) -> Vec<&Plan> {
         match self {
             Plan::Scan(scan) => scan.children(),
+            Plan::Projection(projection) => projection.children(),
+            Plan::Selection(selection) => selection.children(),
         }
     }
 }
@@ -62,6 +70,8 @@ impl Display for Plan {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Plan::Scan(scan) => scan.fmt(f),
+            Plan::Projection(projection) => projection.fmt(f),
+            Plan::Selection(selection) => selection.fmt(f),
         }
     }
 }
