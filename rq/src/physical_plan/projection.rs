@@ -8,7 +8,7 @@ use std::fmt::Display;
 
 /// Execute a projection.
 pub(crate) struct Projection {
-    input: Plan,
+    input: Box<Plan>,
     schema: Schema,
     expr: Vec<Expr>,
 }
@@ -16,7 +16,7 @@ pub(crate) struct Projection {
 impl Projection {
     pub(crate) fn new(input: Plan, schema: Schema, expr: Vec<Expr>) -> Self {
         Self {
-            input,
+            input: Box::new(input),
             schema,
             expr,
         }
