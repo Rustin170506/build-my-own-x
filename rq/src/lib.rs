@@ -1,5 +1,4 @@
 // FIXME: This is a temporary solution to get the tests working.
-#![feature(type_name_of_val)]
 #![allow(dead_code)]
 #![allow(unused)]
 pub(crate) mod data_source;

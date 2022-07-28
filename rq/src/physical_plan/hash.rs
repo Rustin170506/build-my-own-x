@@ -14,7 +14,7 @@ use arrow::{
 };
 use ordered_float::OrderedFloat;
 use std::{
-    any::{self, type_name_of_val, Any},
+    any::{self, Any},
     collections::{hash_map::DefaultHasher, BTreeMap},
     fmt::Display,
     hash::{Hash, Hasher},
