@@ -14,8 +14,8 @@ use arrow::{
 };
 use ordered_float::OrderedFloat;
 use std::{
-    any::{self, Any},
-    collections::{hash_map::DefaultHasher, HashMap},
+    any::{self, type_name_of_val, Any},
+    collections::{hash_map::DefaultHasher, BTreeMap},
     fmt::Display,
     hash::{Hash, Hasher},
     rc::Rc,
@@ -23,7 +23,7 @@ use std::{
 
 // AccumulatorMap is a map storing the accumulators for each group.
 // GroupKey -> (GroupValues, Accumulators).
-type AccumulatorMap = HashMap<u64, (Vec<Box<dyn Any>>, Vec<Accumulator>)>;
+type AccumulatorMap = BTreeMap<u64, (Vec<Box<dyn Any>>, Vec<Accumulator>)>;
 
 /// HashExec will hash the input record batches and group them by the hash value.
 pub(crate) struct HashExec {
@@ -34,6 +34,20 @@ pub(crate) struct HashExec {
 }
 
 impl HashExec {
+    pub(crate) fn new(
+        input: Plan,
+        schema: Schema,
+        group_expr: Vec<Expr>,
+        aggregate_expr: Vec<AggregateExpr>,
+    ) -> Self {
+        Self {
+            input: Box::new(input),
+            schema,
+            group_expr,
+            aggregate_expr,
+        }
+    }
+
     /// Create array builders by the schema.
     fn create_builders(&self, row_count: usize) -> Vec<Box<dyn ArrayBuilder>> {
         self.schema
@@ -55,7 +69,7 @@ impl PhysicalPlan for HashExec {
     }
 
     fn execute(&self) -> anyhow::Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
-        let mut accumulator_map: AccumulatorMap = HashMap::new();
+        let mut accumulator_map: AccumulatorMap = BTreeMap::new();
 
         // For each batch from the input executor.
         for b in self.input.execute()? {
@@ -72,15 +86,15 @@ impl PhysicalPlan for HashExec {
                 .map(|e| e.input_expr().evaluate(&b))
                 .collect::<Result<Vec<ArrayRef>, _>>()?;
             // For each row in the batch.
-            for i in 0..b.row_count() {
+            for row_index in 0..b.row_count() {
                 // Get the group values to calculate the hash.
                 let values = group_keys
                     .iter()
-                    .map(|a| a.get_value(i))
+                    .map(|a| a.get_value(row_index))
                     .collect::<Result<Vec<Box<dyn Any>>, _>>()?;
                 let hash = create_hash(&values);
                 // Get or insert the accumulators for the group.
-                let accumulators = accumulator_map.entry(1).or_insert_with(|| {
+                let accumulators = accumulator_map.entry(hash).or_insert_with(|| {
                     (
                         values,
                         self.aggregate_expr
@@ -91,7 +105,7 @@ impl PhysicalPlan for HashExec {
                 });
                 // Preform the aggregate operation.
                 for (i, acc) in accumulators.1.iter_mut().enumerate() {
-                    let value = aggr_input_values[i].get_value(i)?;
+                    let value = aggr_input_values[i].get_value(row_index)?;
                     acc.accumulate(Some(value));
                 }
             }
@@ -155,6 +169,20 @@ fn append_value(build: &mut Box<dyn ArrayBuilder>, value: &Box<dyn Any>) {
             .downcast_mut::<Int64Builder>()
             .unwrap()
             .append_value(*value.downcast_ref::<i64>().unwrap());
+    } else if build.as_any().is::<Float32Builder>() {
+        build
+            .as_any_mut()
+            .downcast_mut::<Float32Builder>()
+            .unwrap()
+            .append_value(*value.downcast_ref::<f32>().unwrap());
+    } else if build.as_any().is::<Float64Builder>() {
+        build
+            .as_any_mut()
+            .downcast_mut::<Float64Builder>()
+            .unwrap()
+            .append_value(*value.downcast_ref::<f64>().unwrap());
+    } else {
+        unreachable!()
     }
 }
 
@@ -174,5 +202,123 @@ impl Display for HashExec {
                 .collect::<Vec<_>>()
                 .join(", "),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        data_source::{csv_data_source::CsvDataSource, Source},
+        data_types::schema::{self, Field},
+        logical_plan::expr::AggregateFunction,
+        physical_plan::{expr::Column, scan::Scan},
+    };
+    use std::path::PathBuf;
+
+    fn get_hash_exec() -> HashExec {
+        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        data_path.push("tests/data/hash_test_filed.csv");
+        let schema = Schema::new(vec![
+            Field::new("c1".to_string(), DataType::Int64),
+            Field::new("c2".to_string(), DataType::Float32),
+            Field::new("c3".to_string(), DataType::Float64),
+        ]);
+        let csv_data_source = CsvDataSource::new(
+            data_path.into_os_string().into_string().unwrap(),
+            schema,
+            4,
+        );
+        let scan = Scan::new(
+            Source::Csv(csv_data_source),
+            vec!["c1".to_string(), "c2".to_string(), "c3".to_string()],
+        );
+        let group_expr = vec![Expr::Column(Column::new(0)), Expr::Column(Column::new(1))];
+        let aggregate_expr = vec![AggregateExpr::new(
+            Expr::Column(Column::new(0)),
+            AggregateFunction::Sum,
+        )];
+
+        let schema = Schema::new(vec![
+            Field::new("c1".to_string(), DataType::Int64),
+            Field::new("c2".to_string(), DataType::Float32),
+            Field::new("c4".to_string(), DataType::Int64),
+        ]);
+
+        HashExec::new(Plan::Scan(scan), schema, group_expr, aggregate_expr)
+    }
+
+    #[test]
+    fn test_hash_execute() {
+        let hash = get_hash_exec();
+        let result = hash.execute().unwrap().next().unwrap();
+        assert_eq!(result.row_count(), 3);
+        assert_eq!(result.column_count(), 3);
+        // Assert the first row.
+        assert_eq!(
+            result
+                .field(0)
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &1
+        );
+        assert_eq!(
+            result
+                .field(0)
+                .get_value(1)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &2
+        );
+        assert_eq!(
+            result
+                .field(0)
+                .get_value(2)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &3
+        );
+        // Assert the aggregate result.
+        assert_eq!(
+            result
+                .field(2)
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &2
+        );
+        assert_eq!(
+            result
+                .field(2)
+                .get_value(1)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &2
+        );
+        assert_eq!(
+            result
+                .field(2)
+                .get_value(2)
+                .unwrap()
+                .downcast_ref::<i64>()
+                .unwrap(),
+            &3
+        );
+    }
+
+    #[test]
+    fn test_hash_display() {
+        let hash = get_hash_exec();
+
+        assert_eq!(
+            format!("{}", hash),
+            "HashAggregateExec: groupExpr=#0, #1, aggrExpr=SUM(#0)"
+        );
     }
 }
