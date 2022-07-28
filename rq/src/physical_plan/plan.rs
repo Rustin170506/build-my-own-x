@@ -1,4 +1,4 @@
-use super::{projection::Projection, scan::Scan, selection::Selection};
+use super::{projection::ProjectionExec, scan::ScanExec, selection::SelectionExec};
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
@@ -35,9 +35,9 @@ pub(crate) trait PhysicalPlan: Display {
 }
 
 pub(crate) enum Plan {
-    Scan(Scan),
-    Projection(Projection),
-    Selection(Selection),
+    Scan(ScanExec),
+    Projection(ProjectionExec),
+    Selection(SelectionExec),
 }
 
 impl PhysicalPlan for Plan {

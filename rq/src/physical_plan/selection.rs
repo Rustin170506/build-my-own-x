@@ -11,12 +11,12 @@ use arrow::array::BooleanArray;
 use std::{fmt::Display, rc::Rc};
 
 /// Execute a selection.
-pub(crate) struct Selection {
+pub(crate) struct SelectionExec {
     input: Box<Plan>,
     expr: Expr,
 }
 
-impl Selection {
+impl SelectionExec {
     pub(crate) fn new(input: Plan, expr: Expr) -> Self {
         Self {
             input: Box::new(input),
@@ -36,7 +36,7 @@ impl Selection {
     }
 }
 
-impl PhysicalPlan for Selection {
+impl PhysicalPlan for SelectionExec {
     fn schema(&self) -> Schema {
         self.input.schema()
     }
@@ -66,7 +66,7 @@ impl PhysicalPlan for Selection {
     }
 }
 
-impl Display for Selection {
+impl Display for SelectionExec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "SelectionExec: {}", self.expr)
     }
@@ -81,7 +81,7 @@ mod tests {
         logical_plan::expr::Operator,
         physical_plan::{
             expr::{BinaryExpr, Column, ScalarValue},
-            scan::Scan,
+            scan::ScanExec,
         },
     };
     use arrow::datatypes::DataType;
@@ -101,13 +101,13 @@ mod tests {
         ]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let scan = Scan::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
             Box::new(Expr::Column(Column::new(0))),
             Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
         ));
-        let selection = Selection::new(Plan::Scan(scan), filter);
+        let selection = SelectionExec::new(Plan::Scan(scan), filter);
         let result = selection.execute().unwrap().next().unwrap();
         let field = result.field(0);
         assert_eq!(field.get_type(), DataType::Float32);
@@ -136,13 +136,13 @@ mod tests {
         ]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let scan = Scan::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
             Box::new(Expr::Column(Column::new(0))),
             Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
         ));
-        let selection = Selection::new(Plan::Scan(scan), filter);
+        let selection = SelectionExec::new(Plan::Scan(scan), filter);
         assert_eq!(selection.to_string(), "SelectionExec: #0 <= 1.1");
     }
 }
