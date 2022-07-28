@@ -212,7 +212,7 @@ mod tests {
         data_source::{csv_data_source::CsvDataSource, Source},
         data_types::schema::{self, Field},
         logical_plan::expr::AggregateFunction,
-        physical_plan::{expr::Column, scan::Scan},
+        physical_plan::{expr::Column, scan::ScanExec},
     };
     use std::path::PathBuf;
 
@@ -224,12 +224,9 @@ mod tests {
             Field::new("c2".to_string(), DataType::Float32),
             Field::new("c3".to_string(), DataType::Float64),
         ]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema,
-            4,
-        );
-        let scan = Scan::new(
+        let csv_data_source =
+            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 4);
+        let scan = ScanExec::new(
             Source::Csv(csv_data_source),
             vec!["c1".to_string(), "c2".to_string(), "c3".to_string()],
         );

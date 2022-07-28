@@ -7,21 +7,21 @@ use anyhow::Result;
 use std::fmt::Display;
 
 // Scan a data source with optional push-down projection.
-pub(crate) struct Scan {
+pub(crate) struct ScanExec {
     data_source: Source,
     projection: Vec<String>,
 }
 
-impl Scan {
+impl ScanExec {
     pub(crate) fn new(data_source: Source, projection: Vec<String>) -> Self {
-        Scan {
+        ScanExec {
             data_source,
             projection,
         }
     }
 }
 
-impl PhysicalPlan for Scan {
+impl PhysicalPlan for ScanExec {
     fn schema(&self) -> Schema {
         self.data_source
             .get_schema()
@@ -38,7 +38,7 @@ impl PhysicalPlan for Scan {
     }
 }
 
-impl Display for Scan {
+impl Display for ScanExec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -54,7 +54,7 @@ impl Display for Scan {
 
 #[cfg(test)]
 mod tests {
-    use super::Scan;
+    use super::ScanExec;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, DataSource, Source},
         data_types::schema::{Field, Schema},
@@ -69,7 +69,7 @@ mod tests {
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let scan = Scan::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         assert_eq!(scan.to_string(), "ScanExec: projection=c1");
     }
 }

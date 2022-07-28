@@ -7,13 +7,13 @@ use anyhow::Result;
 use std::fmt::Display;
 
 /// Execute a projection.
-pub(crate) struct Projection {
+pub(crate) struct ProjectionExec {
     input: Box<Plan>,
     schema: Schema,
     expr: Vec<Expr>,
 }
 
-impl Projection {
+impl ProjectionExec {
     pub(crate) fn new(input: Plan, schema: Schema, expr: Vec<Expr>) -> Self {
         Self {
             input: Box::new(input),
@@ -23,7 +23,7 @@ impl Projection {
     }
 }
 
-impl PhysicalPlan for Projection {
+impl PhysicalPlan for ProjectionExec {
     fn schema(&self) -> Schema {
         self.schema.clone()
     }
@@ -44,7 +44,7 @@ impl PhysicalPlan for Projection {
     }
 }
 
-impl Display for Projection {
+impl Display for ProjectionExec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -64,7 +64,7 @@ mod tests {
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
         data_types::schema::Field,
-        physical_plan::{expr::Column, scan::Scan},
+        physical_plan::{expr::Column, scan::ScanExec},
     };
     use arrow::datatypes::DataType;
     use std::path::PathBuf;
@@ -79,9 +79,9 @@ mod tests {
             schema.clone(),
             3,
         );
-        let scan = Scan::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let projection =
-            Projection::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
+            ProjectionExec::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
         assert!(projection.execute().is_ok());
         assert_eq!(projection.execute().unwrap().count(), 1);
         assert!(projection
@@ -106,9 +106,9 @@ mod tests {
             schema.clone(),
             3,
         );
-        let scan = Scan::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let projection =
-            Projection::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
+            ProjectionExec::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
         assert_eq!(projection.to_string(), "ProjectionExec: #0");
     }
 }
