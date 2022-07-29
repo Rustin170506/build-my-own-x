@@ -1,4 +1,4 @@
-use super::{projection::ProjectionExec, scan::ScanExec, selection::SelectionExec};
+use super::{hash::HashExec, projection::ProjectionExec, scan::ScanExec, selection::SelectionExec};
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
@@ -38,6 +38,7 @@ pub(crate) enum Plan {
     Scan(ScanExec),
     Projection(ProjectionExec),
     Selection(SelectionExec),
+    Hash(HashExec),
 }
 
 impl PhysicalPlan for Plan {
@@ -46,6 +47,7 @@ impl PhysicalPlan for Plan {
             Plan::Scan(scan) => scan.schema(),
             Plan::Projection(projection) => projection.schema(),
             Plan::Selection(selection) => selection.schema(),
+            Plan::Hash(hash) => hash.schema(),
         }
     }
 
@@ -54,6 +56,7 @@ impl PhysicalPlan for Plan {
             Plan::Scan(scan) => scan.execute(),
             Plan::Projection(projection) => projection.execute(),
             Plan::Selection(selection) => selection.execute(),
+            Plan::Hash(hash) => hash.execute(),
         }
     }
 
@@ -62,6 +65,7 @@ impl PhysicalPlan for Plan {
             Plan::Scan(scan) => scan.children(),
             Plan::Projection(projection) => projection.children(),
             Plan::Selection(selection) => selection.children(),
+            Plan::Hash(hash) => hash.children(),
         }
     }
 }
@@ -72,6 +76,7 @@ impl Display for Plan {
             Plan::Scan(scan) => scan.fmt(f),
             Plan::Projection(projection) => projection.fmt(f),
             Plan::Selection(selection) => selection.fmt(f),
+            Plan::Hash(hash) => hash.fmt(f),
         }
     }
 }

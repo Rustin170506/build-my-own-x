@@ -8,8 +8,8 @@ use std::fmt::Display;
 #[derive(Clone)]
 pub(crate) struct Scan {
     path: String,
-    data_source: Box<Source>,
-    projection: Vec<String>,
+    pub(crate) data_source: Box<Source>,
+    pub(crate) projection: Vec<String>,
 }
 
 impl LogicalPlan for Scan {
