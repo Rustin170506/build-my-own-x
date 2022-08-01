@@ -5,7 +5,7 @@ use crate::{
     },
     logical_plan::expr::Operator,
 };
-use anyhow::Result;
+use anyhow::{Error, Result};
 use arrow::{
     array::{BooleanArray, Int64Array},
     datatypes::DataType,
@@ -22,6 +22,7 @@ pub(crate) enum Expr {
     Column(Column),
     Literal(ScalarValue),
     BinaryExpr(BinaryExpr),
+    Cast(Cast),
 }
 
 impl PhysicalExpr for Expr {
@@ -30,6 +31,7 @@ impl PhysicalExpr for Expr {
             Expr::Column(column) => column.evaluate(input),
             Expr::Literal(literal) => literal.evaluate(input),
             Expr::BinaryExpr(binary_expr) => binary_expr.evaluate(input),
+            Expr::Cast(cast) => cast.evaluate(input),
         }
     }
 }
@@ -40,6 +42,7 @@ impl Display for Expr {
             Expr::Column(column) => column.fmt(f),
             Expr::Literal(literal) => literal.fmt(f),
             Expr::BinaryExpr(binary_expr) => binary_expr.fmt(f),
+            Expr::Cast(cast) => cast.fmt(f),
         }
     }
 }
@@ -397,9 +400,79 @@ macro_rules! bool_binary_op {
     };
 }
 
+pub(crate) struct Cast {
+    expr: Box<Expr>,
+    data_type: DataType,
+}
+
+impl Cast {
+    pub(crate) fn new(expr: Expr, data_type: DataType) -> Self {
+        Self {
+            expr: Box::new(expr),
+            data_type,
+        }
+    }
+}
+
+impl PhysicalExpr for Cast {
+    fn evaluate(&self, input: &RecordBatch) -> Result<ArrayRef> {
+        let value = self.expr.evaluate(input)?;
+        let values = cast(&value, &self.data_type)?;
+        evaluate_from_values(&values, &self.data_type)
+    }
+}
+
+impl Display for Cast {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CAST({} AS {})", self.expr, self.data_type)
+    }
+}
+
+fn cast(value: &ArrayRef, data_type: &DataType) -> Result<Vec<Box<dyn Any>>> {
+    Ok(match value.get_type() {
+        DataType::Int64 => (0..value.size())
+            .map(|i| Ok(*value.get_value(i)?.downcast_ref::<i64>().unwrap()))
+            .map(|v: Result<i64, Error>| match v {
+                Ok(v) => match data_type {
+                    DataType::Int64 => Ok(Box::new(v) as Box<dyn Any>),
+                    DataType::Float32 => Ok(Box::new(v as f32) as Box<dyn Any>),
+                    DataType::Float64 => Ok(Box::new(v as f64) as Box<dyn Any>),
+                    _ => unreachable!(),
+                },
+                Err(e) => Err(e),
+            })
+            .collect::<Result<Vec<Box<dyn Any>>, _>>()?,
+        DataType::Float32 => (0..value.size())
+            .map(|i| Ok(*value.get_value(i)?.downcast_ref::<f32>().unwrap()))
+            .map(|v: Result<f32, Error>| match v {
+                Ok(v) => match data_type {
+                    DataType::Int64 => Ok(Box::new(v as i64) as Box<dyn Any>),
+                    DataType::Float32 => Ok(Box::new(v) as Box<dyn Any>),
+                    DataType::Float64 => Ok(Box::new(v as f64) as Box<dyn Any>),
+                    _ => unreachable!(),
+                },
+                Err(e) => Err(e),
+            })
+            .collect::<Result<Vec<Box<dyn Any>>, _>>()?,
+        DataType::Float64 => (0..value.size())
+            .map(|i| Ok(*value.get_value(i)?.downcast_ref::<f64>().unwrap()))
+            .map(|v: Result<f64, Error>| match v {
+                Ok(v) => match data_type {
+                    DataType::Int64 => Ok(Box::new(v as i64) as Box<dyn Any>),
+                    DataType::Float32 => Ok(Box::new(v as f32) as Box<dyn Any>),
+                    DataType::Float64 => Ok(Box::new(v) as Box<dyn Any>),
+                    _ => unreachable!(),
+                },
+                Err(e) => Err(e),
+            })
+            .collect::<Result<Vec<Box<dyn Any>>, _>>()?,
+        _ => unreachable!(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{BinaryExpr, Column, Expr, PhysicalExpr, ScalarValue};
+    use super::{BinaryExpr, Cast, Column, Expr, PhysicalExpr, ScalarValue};
     use crate::{
         data_types::{
             arrow_field_array::ArrowFieldArray,
@@ -892,5 +965,30 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Int64(2))),
         );
         assert_eq!(expr.to_string(), "#0 >= 2");
+    }
+
+    #[test]
+    fn test_cast_expr_evaluate() {
+        let id = Int64Array::from(vec![2]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int64)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = Cast::new(Expr::Column(Column::new(0)), DataType::Float64);
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<f64>()
+                .unwrap()
+                == &2.0
+        );
+    }
+
+    #[test]
+    fn test_cast_expr_display() {
+        let expr = Cast::new(Expr::Column(Column::new(0)), DataType::Float64);
+        assert_eq!(expr.to_string(), "CAST(#0 AS Float64)");
     }
 }
