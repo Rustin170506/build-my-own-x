@@ -10,7 +10,9 @@ use crate::{
     },
     physical_plan::{
         aggregate_expr::AggregateExpr,
-        expr::{BinaryExpr, Column, Expr as PhysicalExpr, ScalarValue as PhysicalScalarValue},
+        expr::{
+            BinaryExpr, Cast, Column, Expr as PhysicalExpr, ScalarValue as PhysicalScalarValue,
+        },
         hash::HashExec,
         plan::Plan as PhysicalPlan,
         projection::ProjectionExec,
@@ -110,7 +112,10 @@ impl QueryPlanner {
                 };
                 Ok(PhysicalExpr::Literal(l))
             }
-            LogicalExpr::Cast(_) => todo!(),
+            LogicalExpr::Cast(c) => {
+                let expr = self.create_physical_expr(c.expr.as_ref(), input)?;
+                Ok(PhysicalExpr::Cast(Cast::new(expr, c.data_type.clone())))
+            }
             LogicalExpr::BinaryExpr(b) => {
                 let l = Box::new(self.create_physical_expr(b.left.as_ref(), input)?);
                 let r = Box::new(self.create_physical_expr(b.right.as_ref(), input)?);
