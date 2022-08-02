@@ -55,8 +55,8 @@ mod tests {
             expr_fn::col,
             plan::{LogicalPlan, Plan},
             scan::Scan,
-            util::get_data_source,
         },
+        util::get_data_source,
     };
 
     #[test]

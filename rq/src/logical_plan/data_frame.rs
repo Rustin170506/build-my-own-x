@@ -52,10 +52,12 @@ impl DataFrame {
 #[cfg(test)]
 mod tests {
     use super::DataFrame;
-    use crate::logical_plan::{
-        expr_fn::{col, lit, max, min},
-        plan::{LogicalPlan, Plan},
-        scan::Scan,
+    use crate::{
+        logical_plan::{
+            expr_fn::{col, lit, max, min},
+            plan::{LogicalPlan, Plan},
+            scan::Scan,
+        },
         util::get_data_source,
     };
 

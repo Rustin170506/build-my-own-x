@@ -60,10 +60,7 @@ impl Scan {
 #[cfg(test)]
 mod tests {
     use super::Scan;
-    use crate::{
-        data_source::DataSource,
-        logical_plan::{plan::LogicalPlan, util::get_data_source},
-    };
+    use crate::{data_source::DataSource, logical_plan::plan::LogicalPlan, util::get_data_source};
 
     #[test]
     fn test_schema_without_projection() {

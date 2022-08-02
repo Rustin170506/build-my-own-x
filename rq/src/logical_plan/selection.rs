@@ -36,8 +36,9 @@ impl Selection {
 
 #[cfg(test)]
 mod tests {
-    use crate::logical_plan::{
-        expr_fn::col, plan::Plan, scan::Scan, selection::Selection, util::get_data_source,
+    use crate::{
+        logical_plan::{expr_fn::col, plan::Plan, scan::Scan, selection::Selection},
+        util::get_data_source,
     };
 
     #[test]
