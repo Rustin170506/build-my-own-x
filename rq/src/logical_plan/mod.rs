@@ -6,5 +6,3 @@ pub(crate) mod plan;
 pub(crate) mod projection;
 pub(crate) mod scan;
 pub(crate) mod selection;
-#[cfg(test)]
-mod util;
