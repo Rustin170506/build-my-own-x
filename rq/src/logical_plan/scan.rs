@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 #[derive(Clone)]
 pub(crate) struct Scan {
-    path: String,
+    pub(crate) path: String,
     pub(crate) data_source: Box<Source>,
     pub(crate) projection: Vec<String>,
 }
