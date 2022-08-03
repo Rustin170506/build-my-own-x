@@ -1,11 +1,72 @@
-use crate::logical_plan::{
-    expr::Expr,
-    plan::{LogicalPlan, Plan},
+use crate::{
+    data_source::DataSource,
+    logical_plan::{
+        aggregate::Aggregate,
+        expr::Expr,
+        plan::{LogicalPlan, Plan},
+        projection::Projection,
+        scan::Scan,
+        selection::Selection,
+    },
 };
 use std::collections::HashSet;
 
+/// Rule for optimizing a logical plan.
 pub(crate) trait OptimizerRule {
-    fn optimize(&self, plan: Plan) -> Plan;
+    fn optimize(&self, plan: &Plan) -> Plan;
+}
+
+/// Rule for pushing down projections.
+pub(crate) struct ProjectionPushDownRule;
+
+impl ProjectionPushDownRule {
+    fn push_down(&self, plan: &Plan, column_names: &mut HashSet<String>) -> Plan {
+        match plan {
+            Plan::Projection(p) => {
+                extract_columns(&p.exprs, &p.input, column_names);
+                let input = self.push_down(&p.input, column_names);
+                Plan::Projection(Projection::new(Box::new(input), p.exprs.clone()))
+            }
+            Plan::Selection(s) => {
+                extract_column(&s.expr, &s.input, column_names);
+                let input = self.push_down(&s.input, column_names);
+                Plan::Selection(Selection::new(Box::new(input), s.expr.clone()))
+            }
+            Plan::Aggregate(a) => {
+                extract_columns(&a.group_exprs, &a.input, column_names);
+                extract_columns(&a.aggregate_exprs, &a.input, column_names);
+                let input = self.push_down(&a.input, column_names);
+                Plan::Aggregate(Aggregate::new(
+                    Box::new(input),
+                    a.group_exprs.clone(),
+                    a.aggregate_exprs.clone(),
+                ))
+            }
+            Plan::Scan(s) => {
+                let valid_filed_names = s
+                    .data_source
+                    .get_schema()
+                    .fields
+                    .iter()
+                    .map(|f| f.name.clone())
+                    .collect::<HashSet<String>>();
+
+                let mut push_down = valid_filed_names
+                    .iter()
+                    .filter(|&n| column_names.contains(n))
+                    .cloned()
+                    .collect::<Vec<String>>();
+                push_down.sort();
+                Plan::Scan(Scan::new(s.path.clone(), s.data_source.clone(), push_down))
+            }
+        }
+    }
+}
+
+impl OptimizerRule for ProjectionPushDownRule {
+    fn optimize(&self, plan: &Plan) -> Plan {
+        self.push_down(plan, &mut HashSet::new())
+    }
 }
 
 /// Extracts the set of columns that are referenced in the given query.
@@ -29,10 +90,12 @@ fn extract_column(expr: &Expr, input: &Plan, accum: &mut HashSet<String>) {
         }
         Expr::Alias(e) => extract_column(&e.expr, input, accum),
         Expr::Cast(c) => extract_column(&c.expr, input, accum),
+        Expr::AggregateFunction(a) => {
+            extract_column(&a.expr, input, accum);
+        }
         Expr::Literal(_) => {}
         Expr::Not(_) => {}
         Expr::ScalarFunction(_) => {}
-        Expr::AggregateFunction(_) => {}
     };
 }
 
@@ -42,13 +105,31 @@ mod tests {
     use crate::{
         data_source::DataSource,
         logical_plan::{
-            expr_fn::{and, col, lit},
+            data_frame::DataFrame,
+            expr_fn::{and, col, count, lit, max, min},
             plan::Plan,
             scan::Scan,
         },
         util::get_data_source,
     };
     use std::collections::HashSet;
+
+    fn csv() -> DataFrame {
+        let (_, csv_data_source) = get_data_source();
+        let scan_plan = Scan::new(
+            "push_down_test".to_string(),
+            csv_data_source,
+            vec![
+                "c1".to_string(),
+                "c2".to_string(),
+                "c3".to_string(),
+                "c4".to_string(),
+                "c5".to_string(),
+                "c6".to_string(),
+            ],
+        );
+        DataFrame::new(Plan::Scan(scan_plan))
+    }
 
     #[test]
     fn test_extract_columns() {
@@ -61,5 +142,34 @@ mod tests {
         assert_eq!(accum.len(), 0);
         extract_columns(&expr, &plan, &mut accum);
         assert_eq!(accum.len(), 4);
+    }
+
+    #[test]
+    fn test_projection_push_down() {
+        let df = csv().aggregate(
+            vec![col("c1")],
+            vec![min(col("c2")), max(col("c2")), count(col("c2"))],
+        );
+
+        let rule = ProjectionPushDownRule;
+        let optimized_plan = rule.optimize(&df.logical_plan());
+        assert_eq!(
+            "Aggregate: groupExpr=#c1, aggregateExpr=MIN(#c2),MAX(#c2),COUNT(#c2)\n\tScan: push_down_test; projection=[c1,c2]\n",
+            optimized_plan.pretty(0)
+        );
+    }
+
+    #[test]
+    fn test_projection_push_down_with_selection() {
+        let df = csv()
+            .filter(col("c1").eq(lit(1)))
+            .project(vec![col("c1"), col("c2"), col("c3")]);
+
+        let rule = ProjectionPushDownRule;
+        let optimized_plan = rule.optimize(&df.logical_plan());
+        assert_eq!(
+            "Projection: #c1,#c2,#c3\n\tSelection: #c1 = 1\n\t\tScan: push_down_test; projection=[c1,c2,c3]\n",
+            optimized_plan.pretty(0)
+        );
     }
 }

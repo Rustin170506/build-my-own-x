@@ -13,23 +13,23 @@ pub(crate) struct DataFrame {
 }
 
 impl DataFrame {
-    fn new(plan: Plan) -> Self {
+    pub(crate) fn new(plan: Plan) -> Self {
         DataFrame { plan }
     }
     /// Apply a projection.
-    fn project(&self, expr: Vec<Expr>) -> Self {
+    pub(crate) fn project(&self, expr: Vec<Expr>) -> Self {
         let plan = Plan::Projection(Projection::new(Box::new(self.plan.clone()), expr));
         DataFrame::new(plan)
     }
 
     /// Apply a selection.
-    fn filter(&self, expr: Expr) -> Self {
+    pub(crate) fn filter(&self, expr: Expr) -> Self {
         let plan = Plan::Selection(Selection::new(Box::new(self.plan.clone()), expr));
         DataFrame::new(plan)
     }
 
     /// Apply an aggregation.
-    fn aggregate(&self, group_by: Vec<Expr>, aggregates: Vec<Expr>) -> Self {
+    pub(crate) fn aggregate(&self, group_by: Vec<Expr>, aggregates: Vec<Expr>) -> Self {
         let plan = Plan::Aggregate(Aggregate::new(
             Box::new(self.plan.clone()),
             group_by,
@@ -39,12 +39,12 @@ impl DataFrame {
     }
 
     /// Returns the schema of the data that will be produced by this DataFrame.
-    fn schema(&self) -> Schema {
+    pub(crate) fn schema(&self) -> Schema {
         self.plan.schema()
     }
 
     /// Get the logical plan.
-    fn logical_plan(&self) -> Plan {
+    pub(crate) fn logical_plan(&self) -> Plan {
         self.plan.clone()
     }
 }
