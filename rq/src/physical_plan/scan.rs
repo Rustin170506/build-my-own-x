@@ -28,7 +28,7 @@ impl PhysicalPlan for ScanExec {
             .select(self.projection.iter().map(|s| s.as_str()).collect())
     }
 
-    fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
+    fn execute(&self) -> Result<Vec<RecordBatch>> {
         self.data_source
             .scan(self.projection.iter().map(|s| s.as_str()).collect())
     }
