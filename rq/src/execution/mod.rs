@@ -32,18 +32,14 @@ impl ExecutionContext {
         DataFrame::new(Plan::Scan(scan_plan))
     }
 
-    pub(crate) fn execute_data_frame(
-        &self,
-        df: &DataFrame,
-    ) -> Result<impl Iterator<Item = RecordBatch>> {
+    pub(crate) fn execute_data_frame(&self, df: &DataFrame) -> Result<Vec<RecordBatch>> {
         self.execute(&df.logical_plan())
     }
 
-    fn execute(&self, plan: &Plan) -> Result<impl Iterator<Item = RecordBatch>> {
+    fn execute(&self, plan: &Plan) -> Result<Vec<RecordBatch>> {
         let optimized_plan = Optimizer.optimize(plan);
         let physical_plan = QueryPlanner.create_physical_plan(&optimized_plan)?;
-        let result = physical_plan.execute()?.collect::<Vec<RecordBatch>>();
-        Ok(Box::new(result.into_iter()))
+        physical_plan.execute()
     }
 }
 
@@ -75,8 +71,8 @@ mod tests {
             .project(vec![col("c1"), col("c2"), col("c3")]);
         let batches = ctx.execute_data_frame(&df);
         assert!(batches.is_ok());
-        let mut batches = batches.unwrap();
-        let first = batches.next().unwrap();
+        let batches = batches.unwrap();
+        let first = &batches[0];
         assert_eq!(first.row_count(), 1);
         assert_eq!(first.column_count(), 3);
         assert_eq!(
