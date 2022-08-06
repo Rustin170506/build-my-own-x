@@ -41,22 +41,24 @@ impl PhysicalPlan for SelectionExec {
         self.input.schema()
     }
 
-    fn execute(&self) -> Result<Vec<RecordBatch>> {
+    fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         let batch = self.input.execute()?;
-        batch
-            .iter()
-            .map(|b| {
-                let mut selection = &self.expr.evaluate(b)?;
-                let schema = self.input.schema();
-                let filtered_fields = schema
-                    .fields
-                    .iter()
-                    .enumerate()
-                    .map(|(i, _)| self.filter(b.field(i), selection))
-                    .collect::<Result<Vec<_>, _>>()?;
-                Ok::<RecordBatch, Error>(RecordBatch::new(schema, filtered_fields))
-            })
-            .collect::<Result<Vec<RecordBatch>, _>>()
+        Ok(Box::new(
+            batch
+                .map(|b| {
+                    let mut selection = &self.expr.evaluate(&b)?;
+                    let schema = self.input.schema();
+                    let filtered_fields = schema
+                        .fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, _)| self.filter(b.field(i), selection))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    Ok::<RecordBatch, Error>(RecordBatch::new(schema, filtered_fields))
+                })
+                .collect::<Result<Vec<RecordBatch>, _>>()?
+                .into_iter(),
+        ))
     }
 
     fn children(&self) -> Vec<&Plan> {
@@ -106,7 +108,7 @@ mod tests {
             Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
         ));
         let selection = SelectionExec::new(Plan::Scan(scan), filter);
-        let result = &selection.execute().unwrap()[0];
+        let result = selection.execute().unwrap().next().unwrap();
         let field = result.field(0);
         assert_eq!(field.get_type(), DataType::Float32);
         assert_eq!(field.size(), 2);

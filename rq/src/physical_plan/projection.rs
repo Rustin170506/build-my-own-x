@@ -28,16 +28,15 @@ impl PhysicalPlan for ProjectionExec {
         self.schema.clone()
     }
 
-    fn execute(&self) -> Result<Vec<RecordBatch>> {
-        Ok(Box::new(self.input.execute()?.iter().map(|b| {
+    fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
+        Ok(Box::new(self.input.execute()?.map(|b| {
             let fields = self
                 .expr
                 .iter()
-                .map(|e| e.evaluate(b).expect("evaluate expr failed"))
+                .map(|e| e.evaluate(&b).expect("evaluate expr failed"))
                 .collect::<Vec<_>>();
             RecordBatch::new(self.schema.clone(), fields)
-        }))
-        .collect())
+        })))
     }
 
     fn children(&self) -> Vec<&Plan> {
@@ -84,8 +83,12 @@ mod tests {
         let projection =
             ProjectionExec::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
         assert!(projection.execute().is_ok());
-        assert_eq!(projection.execute().unwrap().len(), 1);
-        assert!(projection.execute().unwrap()[0]
+        assert_eq!(projection.execute().unwrap().count(), 1);
+        assert!(projection
+            .execute()
+            .unwrap()
+            .next()
+            .unwrap()
             .field(0)
             .get_value(0)
             .unwrap()

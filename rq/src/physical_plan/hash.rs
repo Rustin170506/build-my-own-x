@@ -68,7 +68,7 @@ impl PhysicalPlan for HashExec {
         self.schema.clone()
     }
 
-    fn execute(&self) -> anyhow::Result<Vec<RecordBatch>> {
+    fn execute(&self) -> anyhow::Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         let mut accumulator_map: AccumulatorMap = BTreeMap::new();
 
         // For each batch from the input executor.
@@ -132,7 +132,9 @@ impl PhysicalPlan for HashExec {
             .iter_mut()
             .map(|b| Rc::new(ArrowFieldArray::new(Box::new(b.finish().clone()))) as ArrayRef)
             .collect();
-        Ok(vec![RecordBatch::new(self.schema.clone(), fields)])
+        Ok(Box::new(
+            vec![RecordBatch::new(self.schema.clone(), fields)].into_iter(),
+        ))
     }
 
     fn children(&self) -> Vec<&Plan> {
@@ -246,7 +248,7 @@ mod tests {
     #[test]
     fn test_hash_execute() {
         let hash = get_hash_exec();
-        let result = &hash.execute().unwrap()[0];
+        let result = hash.execute().unwrap().next().unwrap();
         assert_eq!(result.row_count(), 3);
         assert_eq!(result.column_count(), 3);
         // Assert the first row.

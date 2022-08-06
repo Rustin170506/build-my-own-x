@@ -13,7 +13,7 @@ pub(crate) trait PhysicalPlan: Display {
     fn schema(&self) -> Schema;
 
     /// Execute a physical plan and produce a series of record batches.
-    fn execute(&self) -> Result<Vec<RecordBatch>>;
+    fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>>;
 
     /// Returns the children (inputs) of this physical plan.
     /// This method is used to enable use of the visitor pattern to walk a query tree
@@ -51,7 +51,7 @@ impl PhysicalPlan for Plan {
         }
     }
 
-    fn execute(&self) -> Result<Vec<RecordBatch>> {
+    fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
         match self {
             Plan::Scan(scan) => scan.execute(),
             Plan::Projection(projection) => projection.execute(),

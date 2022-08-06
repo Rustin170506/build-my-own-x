@@ -28,7 +28,7 @@ impl DataSource for CsvDataSource {
         &self.schema
     }
 
-    fn scan(&self, projections: Vec<&str>) -> Result<Vec<RecordBatch>> {
+    fn scan(&self, projections: Vec<&str>) -> Result<Box<dyn Iterator<Item = RecordBatch>>> {
         let file = File::open(&self.file_name)?;
         let schema = if projections.is_empty() {
             self.schema.clone()
@@ -42,7 +42,7 @@ impl DataSource for CsvDataSource {
         // This will append the name into the first record of reader.
         csv_reader.set_headers(schema.fields.iter().map(|f| f.name.clone()).collect());
         let csv_data_source_reader = CsvDataSourceReader::new(csv_reader, schema, self.batch_size);
-        Ok(csv_data_source_reader.collect())
+        Ok(Box::new(csv_data_source_reader))
     }
 }
 
@@ -219,7 +219,7 @@ mod tests {
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
-        let batch = &reader[0];
+        let batch = reader.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);
         assert_eq!(batch.column_count(), 1);
@@ -261,7 +261,7 @@ mod tests {
         let mut reader = csv_data_source
             .scan(vec!["c1", "c2", "c3", "c4", "c5", "c6"])
             .unwrap();
-        let batch = &reader[0];
+        let batch = reader.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);
         assert_eq!(batch.column_count(), 6);
@@ -287,13 +287,13 @@ mod tests {
             }
         }
 
-        assert_type_and_values::<i8>(batch, 0, DataType::Int8, vec![1, 2, 3]);
-        assert_type_and_values::<i16>(batch, 1, DataType::Int16, vec![9, 10, 11]);
-        assert_type_and_values::<u32>(batch, 2, DataType::UInt32, vec![20, 21, 22]);
-        assert_type_and_values::<u64>(batch, 3, DataType::UInt64, vec![30, 31, 32]);
-        assert_type_and_values::<f32>(batch, 4, DataType::Float32, vec![1.0, 1.1, 1.2]);
+        assert_type_and_values::<i8>(&batch, 0, DataType::Int8, vec![1, 2, 3]);
+        assert_type_and_values::<i16>(&batch, 1, DataType::Int16, vec![9, 10, 11]);
+        assert_type_and_values::<u32>(&batch, 2, DataType::UInt32, vec![20, 21, 22]);
+        assert_type_and_values::<u64>(&batch, 3, DataType::UInt64, vec![30, 31, 32]);
+        assert_type_and_values::<f32>(&batch, 4, DataType::Float32, vec![1.0, 1.1, 1.2]);
         assert_type_and_values::<f64>(
-            batch,
+            &batch,
             5,
             DataType::Float64,
             vec![
@@ -312,7 +312,7 @@ mod tests {
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
-        let batch = &reader[0];
+        let batch = reader.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);
         assert_eq!(batch.column_count(), 1);
