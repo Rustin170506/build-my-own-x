@@ -1,13 +1,9 @@
 use crate::{
     data_source::{csv_data_source::CsvDataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
-    logical_plan::{
-        data_frame::DataFrame,
-        plan::{LogicalPlan, Plan},
-        scan::Scan,
-    },
+    logical_plan::{data_frame::DataFrame, plan::Plan as LogicalPlan, scan::Scan},
     optimizer::Optimizer,
-    physical_plan::plan::PhysicalPlan,
+    physical_plan::plan::Plan as PhysicalPlan,
     query_planner::planner::QueryPlanner,
 };
 use anyhow::Result;
@@ -29,21 +25,12 @@ impl ExecutionContext {
     pub(crate) fn csv(&self, file_path: String, schema: Schema) -> DataFrame {
         let csv_data_source = CsvDataSource::new(file_path.clone(), schema, self.batch_size);
         let scan_plan = Scan::new(file_path, Box::new(Source::Csv(csv_data_source)), vec![]);
-        DataFrame::new(Plan::Scan(scan_plan))
+        DataFrame::new(LogicalPlan::Scan(scan_plan))
     }
 
-    pub(crate) fn execute_data_frame(
-        &self,
-        df: &DataFrame,
-    ) -> Result<impl Iterator<Item = RecordBatch>> {
-        self.execute(&df.logical_plan())
-    }
-
-    fn execute(&self, plan: &Plan) -> Result<impl Iterator<Item = RecordBatch>> {
-        let optimized_plan = Optimizer.optimize(plan);
-        let physical_plan = QueryPlanner.create_physical_plan(&optimized_plan)?;
-        let result = physical_plan.execute()?.collect::<Vec<RecordBatch>>();
-        Ok(Box::new(result.into_iter()))
+    pub(crate) fn create_physical_plan(&self, df: &DataFrame) -> Result<PhysicalPlan> {
+        let optimized_plan = Optimizer.optimize(&df.logical_plan());
+        QueryPlanner.create_physical_plan(&optimized_plan)
     }
 }
 
@@ -53,6 +40,7 @@ mod tests {
     use crate::{
         data_types::schema::Field,
         logical_plan::expr_fn::{col, lit},
+        physical_plan::plan::PhysicalPlan,
     };
     use arrow::datatypes::DataType;
     use std::path::PathBuf;
@@ -73,7 +61,8 @@ mod tests {
             .csv(path, schema)
             .filter(col("c1").eq(lit(1)))
             .project(vec![col("c1"), col("c2"), col("c3")]);
-        let batches = ctx.execute_data_frame(&df);
+        let physical_plan = ctx.create_physical_plan(&df).unwrap();
+        let batches = physical_plan.execute();
         assert!(batches.is_ok());
         let mut batches = batches.unwrap();
         let first = batches.next().unwrap();
