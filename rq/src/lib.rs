@@ -8,5 +8,6 @@ pub(crate) mod logical_plan;
 pub(crate) mod optimizer;
 pub(crate) mod physical_plan;
 pub(crate) mod query_planner;
+pub(crate) mod sql;
 #[cfg(test)]
 mod util;
