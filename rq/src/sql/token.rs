@@ -1,6 +1,7 @@
 use super::{keyword::Keyword, literal::Literal, symbol::Symbol};
 use std::{char, fmt::Display};
 
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub(crate) enum TokenType {
     Literal(Literal),
     Keyword(Keyword),
@@ -17,6 +18,7 @@ impl Display for TokenType {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub(crate) struct Token {
     text: String,
     token_type: TokenType,
@@ -35,5 +37,20 @@ impl Display for Token {
             "Token(\"{}\", {}.{}, {})",
             self.text, token_type, self.token_type, self.end_offset
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_string() {
+        let token = Token {
+            text: "a".to_string(),
+            token_type: TokenType::Literal(Literal::STRING),
+            end_offset: 1,
+        };
+        assert_eq!(token.to_string(), "Token(\"a\", Literal.STRING, 1)");
     }
 }

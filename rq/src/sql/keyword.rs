@@ -248,3 +248,17 @@ pub(crate) enum Keyword {
     CHECK,
     REFERENCES,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Keyword::from_str("SCHEMA"), Ok(Keyword::SCHEMA));
+        assert_eq!(Keyword::from_str("DATABASE"), Ok(Keyword::DATABASE));
+        assert_eq!(Keyword::from_str("TABLE"), Ok(Keyword::TABLE));
+        assert_eq!(Keyword::from_str("COLUMN"), Ok(Keyword::COLUMN));
+    }
+}
