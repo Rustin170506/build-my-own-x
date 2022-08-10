@@ -1,8 +1,8 @@
 use std::any::Any;
 
-use super::column_array::ColumnArray;
+use super::column_array::{ColumnArray, DataType};
+
 use anyhow::{bail, Result};
-use arrow::datatypes::DataType;
 
 /// Represents a literal value
 #[derive(Clone)]

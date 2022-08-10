@@ -4,14 +4,13 @@ use super::{
     plan::{PhysicalPlan, Plan},
 };
 use crate::data_types::{
-    arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
+    arrow_field_array::ArrowFieldArray,
+    column_array::{ArrayRef, DataType},
+    record_batch::RecordBatch,
     schema::Schema,
 };
 use anyhow::{anyhow, Error, Result};
-use arrow::{
-    array::{Array, ArrayBuilder, Float32Builder, Float64Builder, Int64Builder},
-    datatypes::DataType,
-};
+use arrow::array::{Array, ArrayBuilder, Float32Builder, Float64Builder, Int64Builder};
 use ordered_float::OrderedFloat;
 use std::{
     any::{self, Any},

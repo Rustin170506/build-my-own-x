@@ -7,8 +7,9 @@ use anyhow::{Ok, Result};
 use arrow::{
     array::{BooleanArray, PrimitiveArray, StringArray},
     datatypes::{
-        ArrowPrimitiveType, DataType, Float32Type, Float64Type, Int16Type, Int32Type, Int64Type,
-        Int8Type, Schema as ArrowSchema, UInt16Type, UInt32Type, UInt64Type, UInt8Type,
+        ArrowPrimitiveType, DataType as ArrowDataType, Float32Type, Float64Type, Int16Type,
+        Int32Type, Int64Type, Int8Type, Schema as ArrowSchema, UInt16Type, UInt32Type, UInt64Type,
+        UInt8Type,
     },
 };
 use csv::{Reader, ReaderBuilder, StringRecord};
@@ -113,18 +114,12 @@ impl CsvDataSourceReader {
             .iter()
             .enumerate()
             .map(|(col_index, field)| match field.data_type() {
-                DataType::Boolean => build_boolean_array(&rows, col_index),
-                DataType::Int8 => build_primitive_array::<Int8Type>(&rows, col_index),
-                DataType::Int16 => build_primitive_array::<Int16Type>(&rows, col_index),
-                DataType::Int32 => build_primitive_array::<Int32Type>(&rows, col_index),
-                DataType::Int64 => build_primitive_array::<Int64Type>(&rows, col_index),
-                DataType::UInt8 => build_primitive_array::<UInt8Type>(&rows, col_index),
-                DataType::UInt16 => build_primitive_array::<UInt16Type>(&rows, col_index),
-                DataType::UInt32 => build_primitive_array::<UInt32Type>(&rows, col_index),
-                DataType::UInt64 => build_primitive_array::<UInt64Type>(&rows, col_index),
-                DataType::Float32 => build_primitive_array::<Float32Type>(&rows, col_index),
-                DataType::Float64 => build_primitive_array::<Float64Type>(&rows, col_index),
-                DataType::Utf8 => build_string_array(&rows, col_index),
+                ArrowDataType::Boolean => build_boolean_array(&rows, col_index),
+                ArrowDataType::Int32 => build_primitive_array::<Int32Type>(&rows, col_index),
+                ArrowDataType::Int64 => build_primitive_array::<Int64Type>(&rows, col_index),
+                ArrowDataType::Float32 => build_primitive_array::<Float32Type>(&rows, col_index),
+                ArrowDataType::Float64 => build_primitive_array::<Float64Type>(&rows, col_index),
+                ArrowDataType::Utf8 => build_string_array(&rows, col_index),
                 _ => unreachable!(),
             })
             .collect();
@@ -208,7 +203,7 @@ fn build_string_array(rows: &[StringRecord], col_index: usize) -> ArrayRef {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data_types::schema::Field;
+    use crate::data_types::{column_array::DataType, schema::Field};
     use std::{any::Any, fmt::Debug, path::PathBuf};
 
     #[test]
@@ -249,10 +244,10 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/primitive_field.csv");
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int8),
-            Field::new("c2".to_string(), DataType::Int16),
-            Field::new("c3".to_string(), DataType::UInt32),
-            Field::new("c4".to_string(), DataType::UInt64),
+            Field::new("c1".to_string(), DataType::Int32),
+            Field::new("c2".to_string(), DataType::Int32),
+            Field::new("c3".to_string(), DataType::Int64),
+            Field::new("c4".to_string(), DataType::Int64),
             Field::new("c5".to_string(), DataType::Float32),
             Field::new("c6".to_string(), DataType::Float64),
         ]);
@@ -287,10 +282,10 @@ mod tests {
             }
         }
 
-        assert_type_and_values::<i8>(&batch, 0, DataType::Int8, vec![1, 2, 3]);
-        assert_type_and_values::<i16>(&batch, 1, DataType::Int16, vec![9, 10, 11]);
-        assert_type_and_values::<u32>(&batch, 2, DataType::UInt32, vec![20, 21, 22]);
-        assert_type_and_values::<u64>(&batch, 3, DataType::UInt64, vec![30, 31, 32]);
+        assert_type_and_values::<i32>(&batch, 0, DataType::Int32, vec![1, 2, 3]);
+        assert_type_and_values::<i32>(&batch, 1, DataType::Int32, vec![9, 10, 11]);
+        assert_type_and_values::<i64>(&batch, 2, DataType::Int64, vec![20, 21, 22]);
+        assert_type_and_values::<i64>(&batch, 3, DataType::Int64, vec![30, 31, 32]);
         assert_type_and_values::<f32>(&batch, 4, DataType::Float32, vec![1.0, 1.1, 1.2]);
         assert_type_and_values::<f64>(
             &batch,

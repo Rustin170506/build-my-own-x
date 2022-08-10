@@ -34,9 +34,11 @@ mod tests {
 
     use super::*;
     use crate::data_types::{
-        arrow_field_array::ArrowFieldArray, literal_value_array::LiteralValueArray, schema::Field,
+        arrow_field_array::ArrowFieldArray, column_array::DataType,
+        literal_value_array::LiteralValueArray, schema::Field,
     };
-    use arrow::{array::Int32Array, datatypes::DataType};
+
+    use arrow::array::Int32Array;
 
     #[test]
     fn test_new_with_arrow_field_array() {

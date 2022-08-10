@@ -38,11 +38,10 @@ impl ExecutionContext {
 mod tests {
     use super::*;
     use crate::{
-        data_types::schema::Field,
+        data_types::{column_array::DataType, schema::Field},
         logical_plan::expr_fn::{col, lit},
         physical_plan::plan::PhysicalPlan,
     };
-    use arrow::datatypes::DataType;
     use std::path::PathBuf;
 
     #[test]

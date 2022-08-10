@@ -2,9 +2,8 @@ use super::{
     expr_fn::binary_expr,
     plan::{LogicalPlan, Plan},
 };
-use crate::data_types::schema::Field;
+use crate::data_types::{column_array::DataType, schema::Field};
 use anyhow::{anyhow, Result};
-use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
 use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
 
