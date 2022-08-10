@@ -1,5 +1,47 @@
-use anyhow::Error;
 use std::{fmt::Display, str::FromStr};
+
+pub(crate) const ALL_SYMBOLS: &[Symbol] = &[
+    Symbol::LEFT_PAREN,
+    Symbol::RIGHT_PAREN,
+    Symbol::LEFT_BRACE,
+    Symbol::RIGHT_BRACE,
+    Symbol::LEFT_BRACKET,
+    Symbol::RIGHT_BRACKET,
+    Symbol::SEMI,
+    Symbol::COMMA,
+    Symbol::DOT,
+    Symbol::DOUBLE_DOT,
+    Symbol::PLUS,
+    Symbol::SUB,
+    Symbol::STAR,
+    Symbol::SLASH,
+    Symbol::QUESTION,
+    Symbol::EQ,
+    Symbol::GT,
+    Symbol::LT,
+    Symbol::BANG,
+    Symbol::TILDE,
+    Symbol::CARET,
+    Symbol::PERCENT,
+    Symbol::COLON,
+    Symbol::DOUBLE_COLON,
+    Symbol::COLON_EQ,
+    Symbol::LT_EQ,
+    Symbol::GT_EQ,
+    Symbol::LT_EQ_GT,
+    Symbol::LT_GT,
+    Symbol::BANG_EQ,
+    Symbol::BANG_GT,
+    Symbol::BANG_LT,
+    Symbol::AMP,
+    Symbol::BAR,
+    Symbol::DOUBLE_AMP,
+    Symbol::DOUBLE_BAR,
+    Symbol::DOUBLE_LT,
+    Symbol::DOUBLE_GT,
+    Symbol::AT,
+    Symbol::POUND,
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub(crate) struct Symbol(&'static str);
@@ -55,63 +97,69 @@ impl Symbol {
     }
 }
 
-pub(crate) const ALL_SYMBOLS: &[Symbol] = &[
-    Symbol::LEFT_PAREN,
-    Symbol::RIGHT_PAREN,
-    Symbol::LEFT_BRACE,
-    Symbol::RIGHT_BRACE,
-    Symbol::LEFT_BRACKET,
-    Symbol::RIGHT_BRACKET,
-    Symbol::SEMI,
-    Symbol::COMMA,
-    Symbol::DOT,
-    Symbol::DOUBLE_DOT,
-    Symbol::PLUS,
-    Symbol::SUB,
-    Symbol::STAR,
-    Symbol::SLASH,
-    Symbol::QUESTION,
-    Symbol::EQ,
-    Symbol::GT,
-    Symbol::LT,
-    Symbol::BANG,
-    Symbol::TILDE,
-    Symbol::CARET,
-    Symbol::PERCENT,
-    Symbol::COLON,
-    Symbol::DOUBLE_COLON,
-    Symbol::COLON_EQ,
-    Symbol::LT_EQ,
-    Symbol::GT_EQ,
-    Symbol::LT_EQ_GT,
-    Symbol::LT_GT,
-    Symbol::BANG_EQ,
-    Symbol::BANG_GT,
-    Symbol::BANG_LT,
-    Symbol::AMP,
-    Symbol::BAR,
-    Symbol::DOUBLE_AMP,
-    Symbol::DOUBLE_BAR,
-    Symbol::DOUBLE_LT,
-    Symbol::DOUBLE_GT,
-    Symbol::AT,
-    Symbol::POUND,
-];
-
 impl Display for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl FromStr for Symbol {
-    type Err = Error;
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+pub(crate) struct ParseError(String);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl FromStr for Symbol {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, ParseError> {
         if let Some(symbol) = ALL_SYMBOLS.iter().find(|&symbol| symbol.0 == s) {
             Ok(*symbol)
         } else {
-            Err(anyhow::anyhow!("{} is not a valid symbol", s))
+            Err(ParseError(format!("{} is not a valid symbol", s)))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Symbol::from_str("("), Ok(Symbol::LEFT_PAREN));
+        assert_eq!(Symbol::from_str(")"), Ok(Symbol::RIGHT_PAREN));
+        assert_eq!(Symbol::from_str("{"), Ok(Symbol::LEFT_BRACE));
+        assert_eq!(Symbol::from_str("}"), Ok(Symbol::RIGHT_BRACE));
+    }
+
+    #[test]
+    fn test_is_symbol_start() {
+        assert!(Symbol::is_symbol_start('('));
+        assert!(Symbol::is_symbol_start(')'));
+        assert!(Symbol::is_symbol_start('{'));
+        assert!(Symbol::is_symbol_start('}'));
+        assert!(Symbol::is_symbol_start('['));
+        assert!(Symbol::is_symbol_start(']'));
+        assert!(Symbol::is_symbol_start(';'));
+        assert!(Symbol::is_symbol_start(','));
+        assert!(Symbol::is_symbol_start('.'));
+        assert!(Symbol::is_symbol_start('+'));
+        assert!(Symbol::is_symbol_start('-'));
+        assert!(Symbol::is_symbol_start('*'));
+        assert!(Symbol::is_symbol_start('/'));
+        assert!(Symbol::is_symbol_start('?'));
+        assert!(Symbol::is_symbol_start('='));
+        assert!(Symbol::is_symbol_start('>'));
+        assert!(Symbol::is_symbol_start('<'));
+        assert!(Symbol::is_symbol_start('!'));
+        assert!(Symbol::is_symbol_start('~'));
+        assert!(Symbol::is_symbol_start('^'));
+        assert!(Symbol::is_symbol_start('%'));
+        assert!(Symbol::is_symbol_start(':'));
+        assert!(Symbol::is_symbol_start(':'));
+        assert!(Symbol::is_symbol_start('='));
+        assert!(Symbol::is_symbol_start('<'));
+        assert!(Symbol::is_symbol_start('>'));
+        assert!(Symbol::is_symbol_start('<'));
+        assert!(Symbol::is_symbol_start('>'));
+        assert!(!Symbol::is_symbol_start('a'));
     }
 }
