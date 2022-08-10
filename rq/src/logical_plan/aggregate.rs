@@ -69,7 +69,10 @@ impl Aggregate {
 mod tests {
     use super::Aggregate;
     use crate::{
-        data_types::schema::{Field, Schema},
+        data_types::{
+            column_array::DataType,
+            schema::{Field, Schema},
+        },
         logical_plan::{
             expr_fn::{col, max},
             plan::{LogicalPlan, Plan},
@@ -77,7 +80,6 @@ mod tests {
         },
         util::get_data_source,
     };
-    use arrow::datatypes::DataType;
 
     #[test]
     fn test_schema() {
@@ -93,8 +95,8 @@ mod tests {
         assert_eq!(
             agg.schema(),
             Schema::new(vec![
-                Field::new("c1".to_string(), DataType::Int8),
-                Field::new("max".to_string(), DataType::Int16),
+                Field::new("c1".to_string(), DataType::Int32),
+                Field::new("max".to_string(), DataType::Int32),
             ])
         );
     }

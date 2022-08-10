@@ -77,14 +77,16 @@ mod tests {
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
-        data_types::schema::{Field, Schema},
+        data_types::{
+            column_array::DataType,
+            schema::{Field, Schema},
+        },
         logical_plan::expr::Operator,
         physical_plan::{
             expr::{BinaryExpr, Column, ScalarValue},
             scan::ScanExec,
         },
     };
-    use arrow::datatypes::DataType;
     use std::path::PathBuf;
 
     #[test]
@@ -92,10 +94,10 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/f32_field.csv");
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int8),
-            Field::new("c2".to_string(), DataType::Int16),
-            Field::new("c3".to_string(), DataType::UInt32),
-            Field::new("c4".to_string(), DataType::UInt64),
+            Field::new("c1".to_string(), DataType::Int32),
+            Field::new("c2".to_string(), DataType::Int32),
+            Field::new("c3".to_string(), DataType::Int64),
+            Field::new("c4".to_string(), DataType::Int64),
             Field::new("c5".to_string(), DataType::Float32),
             Field::new("c6".to_string(), DataType::Float64),
         ]);
@@ -127,10 +129,10 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/f32_field.csv");
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int8),
-            Field::new("c2".to_string(), DataType::Int16),
-            Field::new("c3".to_string(), DataType::UInt32),
-            Field::new("c4".to_string(), DataType::UInt64),
+            Field::new("c1".to_string(), DataType::Int32),
+            Field::new("c2".to_string(), DataType::Int32),
+            Field::new("c3".to_string(), DataType::Int64),
+            Field::new("c4".to_string(), DataType::Int64),
             Field::new("c5".to_string(), DataType::Float32),
             Field::new("c6".to_string(), DataType::Float64),
         ]);

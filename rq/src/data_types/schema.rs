@@ -1,4 +1,6 @@
-use arrow::datatypes::{DataType, Field as ArrowField, Schema as ArrowSchema};
+use arrow::datatypes::{Field as ArrowField, Schema as ArrowSchema};
+
+use super::column_array::DataType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Field {
@@ -14,7 +16,7 @@ impl Field {
 
 impl From<Field> for ArrowField {
     fn from(field: Field) -> Self {
-        ArrowField::new(field.name.as_str(), field.data_type, false)
+        ArrowField::new(field.name.as_str(), field.data_type.into(), false)
     }
 }
 
@@ -25,11 +27,11 @@ pub(crate) struct Schema {
 }
 
 impl Schema {
-    pub(crate) fn new(fields: Vec<Field>) -> Self {
-        Self { fields }
+    pub(crate) fn new(fields: Vec<Field>) -> Schema {
+        Schema { fields }
     }
 
-    pub(crate) fn select(&self, names: Vec<&str>) -> Self {
+    pub(crate) fn select(&self, names: Vec<&str>) -> Schema {
         let mut filterd_fields = vec![];
         names.into_iter().for_each(|name| {
             let fields: Vec<&Field> = self.fields.iter().filter(|f| f.name == name).collect();
@@ -37,7 +39,7 @@ impl Schema {
             filterd_fields.push(fields[0].clone())
         });
 
-        Self::new(filterd_fields)
+        Schema::new(filterd_fields)
     }
 }
 

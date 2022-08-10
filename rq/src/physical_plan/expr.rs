@@ -1,15 +1,14 @@
 use crate::{
     data_types::{
-        arrow_field_array::ArrowFieldArray, column_array::ArrayRef,
-        literal_value_array::LiteralValueArray, record_batch::RecordBatch,
+        arrow_field_array::ArrowFieldArray,
+        column_array::{ArrayRef, DataType},
+        literal_value_array::LiteralValueArray,
+        record_batch::RecordBatch,
     },
     logical_plan::expr::Operator,
 };
 use anyhow::{Error, Result};
-use arrow::{
-    array::{BooleanArray, Int64Array},
-    datatypes::DataType,
-};
+use arrow::array::{BooleanArray, Int64Array};
 use ordered_float::OrderedFloat;
 use std::{any::Any, fmt::Display, rc::Rc};
 
@@ -476,16 +475,13 @@ mod tests {
     use crate::{
         data_types::{
             arrow_field_array::ArrowFieldArray,
-            column_array::ArrayRef,
+            column_array::{ArrayRef, DataType},
             record_batch::RecordBatch,
             schema::{Field, Schema},
         },
         logical_plan::expr::Operator,
     };
-    use arrow::{
-        array::{BooleanArray, Int64Array},
-        datatypes::DataType,
-    };
+    use arrow::array::{BooleanArray, Int64Array};
     use std::rc::Rc;
 
     #[test]

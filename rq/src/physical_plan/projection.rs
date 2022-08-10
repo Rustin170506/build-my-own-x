@@ -63,10 +63,9 @@ mod tests {
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
-        data_types::schema::Field,
+        data_types::{column_array::DataType, schema::Field},
         physical_plan::{expr::Column, scan::ScanExec},
     };
-    use arrow::datatypes::DataType;
     use std::path::PathBuf;
 
     #[test]

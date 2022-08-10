@@ -34,9 +34,11 @@ impl DataSource for MemoryDataSource {
 mod tests {
     use super::*;
     use crate::data_types::{
-        arrow_field_array::ArrowFieldArray, column_array::ArrayRef, schema::Field,
+        arrow_field_array::ArrowFieldArray,
+        column_array::{ArrayRef, DataType},
+        schema::Field,
     };
-    use arrow::{array::Int32Array, datatypes::DataType};
+    use arrow::array::Int32Array;
     use std::rc::Rc;
 
     #[test]
