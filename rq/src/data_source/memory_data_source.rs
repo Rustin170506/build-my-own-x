@@ -1,5 +1,6 @@
 use super::DataSource;
 use crate::data_types::{record_batch::RecordBatch, schema::Schema};
+
 use anyhow::Result;
 
 #[derive(Clone)]
@@ -18,6 +19,7 @@ impl DataSource for MemoryDataSource {
             .iter()
             .filter_map(|name| self.schema.fields.iter().position(|f| f.name == *name))
             .collect::<Vec<_>>();
+
         Ok(Box::new(self.data.iter().map(move |batch| {
             RecordBatch {
                 schema: self.schema.clone(),
@@ -32,14 +34,16 @@ impl DataSource for MemoryDataSource {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
     use crate::data_types::{
         arrow_field_array::ArrowFieldArray,
         column_array::{ArrayRef, DataType},
         schema::Field,
     };
+
     use arrow::array::Int32Array;
-    use std::rc::Rc;
 
     #[test]
     fn test_get_schema() {
@@ -65,6 +69,8 @@ mod tests {
             schema,
             data: records,
         };
+
+        // None exists in the schema, so we should get an empty iterator.
         let projection = vec!["a"];
         let result: Vec<RecordBatch> = data_source.scan(projection).unwrap().collect();
         assert_eq!(result.len(), 1);

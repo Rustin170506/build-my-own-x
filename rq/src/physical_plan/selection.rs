@@ -109,6 +109,7 @@ mod tests {
             Box::new(Expr::Column(Column::new(0))),
             Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
         ));
+
         let selection = SelectionExec::new(Plan::Scan(scan), filter);
         let result = selection.execute().unwrap().next().unwrap();
         let field = result.field(0);

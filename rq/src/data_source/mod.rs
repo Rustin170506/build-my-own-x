@@ -1,10 +1,11 @@
-use self::{csv_data_source::CsvDataSource, memory_data_source::MemoryDataSource};
-use crate::data_types::{record_batch::RecordBatch, schema::Schema};
-use anyhow::Result;
-
 pub(crate) mod csv_data_source;
 pub(crate) mod memory_data_source;
 pub(crate) mod reader_parser;
+
+use self::{csv_data_source::CsvDataSource, memory_data_source::MemoryDataSource};
+use crate::data_types::{record_batch::RecordBatch, schema::Schema};
+
+use anyhow::Result;
 
 pub(crate) trait DataSource {
     /// Return the schema for the underlying data source.

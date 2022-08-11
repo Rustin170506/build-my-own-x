@@ -29,7 +29,8 @@ impl PhysicalPlan for ProjectionExec {
     }
 
     fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
-        Ok(Box::new(self.input.execute()?.map(|b| {
+        let mut input = self.input.execute()?;
+        Ok(Box::new(input.map(|b| {
             let fields = self
                 .expr
                 .iter()

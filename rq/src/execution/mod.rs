@@ -51,8 +51,8 @@ mod tests {
         data_path.push("tests/data/primitive_field.csv");
         let path = data_path.into_os_string().into_string().unwrap();
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int64),
-            Field::new("c2".to_string(), DataType::Int64),
+            Field::new("c1".to_string(), DataType::Int32),
+            Field::new("c2".to_string(), DataType::Int32),
             Field::new("c3".to_string(), DataType::Int64),
             Field::new("c4".to_string(), DataType::Int64),
         ]);
