@@ -106,6 +106,7 @@ impl QueryPlanner {
             LogicalExpr::Literal(l) => {
                 let l = match l {
                     LogicalScalarValue::String(s) => PhysicalScalarValue::String(s.clone()),
+                    LogicalScalarValue::Int32(i) => PhysicalScalarValue::Int32(*i),
                     LogicalScalarValue::Int64(i) => PhysicalScalarValue::Int64(*i),
                     LogicalScalarValue::Float32(f) => PhysicalScalarValue::Float32(*f),
                     LogicalScalarValue::Float64(b) => PhysicalScalarValue::Float64(*b),
@@ -195,7 +196,7 @@ mod tests {
         assert!(physical_plan.is_ok());
         assert!(matches!(
             physical_plan.unwrap(),
-            PhysicalExpr::Literal(PhysicalScalarValue::Int64(1))
+            PhysicalExpr::Literal(PhysicalScalarValue::Int32(1))
         ));
     }
 }

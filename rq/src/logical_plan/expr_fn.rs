@@ -103,6 +103,12 @@ impl Literal for String {
     }
 }
 
+impl Literal for i32 {
+    fn lit(&self) -> Expr {
+        Expr::Literal(ScalarValue::Int32(*self))
+    }
+}
+
 impl Literal for i64 {
     fn lit(&self) -> Expr {
         Expr::Literal(ScalarValue::Int64(*self))

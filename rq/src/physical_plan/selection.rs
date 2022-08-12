@@ -93,17 +93,10 @@ mod tests {
     fn test_selection_execute() {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/f32_field.csv");
-        let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int32),
-            Field::new("c2".to_string(), DataType::Int32),
-            Field::new("c3".to_string(), DataType::Int64),
-            Field::new("c4".to_string(), DataType::Int64),
-            Field::new("c5".to_string(), DataType::Float32),
-            Field::new("c6".to_string(), DataType::Float64),
-        ]);
+        let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Float32)]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
+        let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
             Box::new(Expr::Column(Column::new(0))),

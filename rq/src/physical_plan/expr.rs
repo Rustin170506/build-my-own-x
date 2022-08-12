@@ -8,7 +8,7 @@ use crate::{
     logical_plan::expr::Operator,
 };
 use anyhow::{Error, Result};
-use arrow::array::{BooleanArray, Int64Array};
+use arrow::array::{BooleanArray, Int32Array, Int64Array};
 use ordered_float::OrderedFloat;
 use std::{any::Any, fmt::Display, rc::Rc};
 
@@ -71,6 +71,7 @@ impl Display for Column {
 /// Represents a dynamically typed single value.
 pub(crate) enum ScalarValue {
     String(String),
+    Int32(i32),
     Int64(i64),
     Float32(f32),
     Float64(f64),
@@ -82,6 +83,11 @@ impl PhysicalExpr for ScalarValue {
             ScalarValue::String(s) => Ok(Rc::new(LiteralValueArray::new(
                 DataType::Utf8,
                 s.clone(),
+                input.row_count(),
+            ))),
+            ScalarValue::Int32(i) => Ok(Rc::new(LiteralValueArray::new(
+                DataType::Int32,
+                *i,
                 input.row_count(),
             ))),
             ScalarValue::Int64(i) => Ok(Rc::new(LiteralValueArray::new(
@@ -107,6 +113,7 @@ impl Display for ScalarValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ScalarValue::String(s) => write!(f, "'{}'", s),
+            ScalarValue::Int32(i) => write!(f, "{}", i),
             ScalarValue::Int64(i) => write!(f, "{}", i),
             ScalarValue::Float32(fv) => write!(f, "{}", fv),
             ScalarValue::Float64(fv) => write!(f, "{}", fv),
@@ -285,6 +292,15 @@ pub(crate) fn evaluate_from_values(
     data_type: &DataType,
 ) -> Result<ArrayRef> {
     match data_type {
+        DataType::Int32 => {
+            let arrow_array = Int32Array::from(
+                array
+                    .iter()
+                    .map(|v| *v.downcast_ref::<i32>().unwrap())
+                    .collect::<Vec<i32>>(),
+            );
+            Ok(Rc::new(ArrowFieldArray::new(Box::new(arrow_array))))
+        }
         DataType::Int64 => {
             let arrow_array = Int64Array::from(
                 array
@@ -375,6 +391,11 @@ fn or(l: &Box<dyn Any>, r: &Box<dyn Any>, data_type: &DataType) -> Box<dyn Any> 
 macro_rules! bool_binary_op {
     ($LEFT: expr, $RIGHT: expr, $DATA_TYPE: expr, $OP: ident) => {
         match $DATA_TYPE {
+            DataType::Int32 => {
+                let l = $LEFT.downcast_ref::<i32>().unwrap();
+                let r = $RIGHT.downcast_ref::<i32>().unwrap();
+                Box::new(l.$OP(r)) as Box<dyn Any>
+            }
             DataType::Int64 => {
                 let l = $LEFT.downcast_ref::<i64>().unwrap();
                 let r = $RIGHT.downcast_ref::<i64>().unwrap();
