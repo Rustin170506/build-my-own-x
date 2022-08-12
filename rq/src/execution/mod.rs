@@ -58,7 +58,7 @@ mod tests {
         ]);
         let df = ctx
             .csv(path, schema)
-            .filter(col("c1").eq(lit(1)))
+            .filter(col("c1").eq(lit(1_i32)))
             .project(vec![col("c1"), col("c2"), col("c3")]);
         let physical_plan = ctx.create_physical_plan(&df).unwrap();
         let batches = physical_plan.execute();
@@ -72,7 +72,7 @@ mod tests {
                 .field(0)
                 .get_value(0)
                 .unwrap()
-                .downcast_ref::<i64>()
+                .downcast_ref::<i32>()
                 .unwrap(),
             &1
         )

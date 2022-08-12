@@ -220,6 +220,7 @@ impl Display for ColumnIndex {
 #[derive(Debug, Clone)]
 pub(crate) enum ScalarValue {
     String(String),
+    Int32(i32),
     Int64(i64),
     Float32(f32),
     Float64(f64),
@@ -229,6 +230,7 @@ impl LogicalExpr for ScalarValue {
     fn to_field(&self, _input: &Plan) -> Result<Field> {
         match &self {
             ScalarValue::String(s) => Ok(Field::new(s.clone(), DataType::Utf8)),
+            ScalarValue::Int32(i) => Ok(Field::new(i.to_string(), DataType::Int32)),
             ScalarValue::Int64(i) => Ok(Field::new(i.to_string(), DataType::Int64)),
             ScalarValue::Float32(f) => Ok(Field::new(f.to_string(), DataType::Float32)),
             ScalarValue::Float64(f) => Ok(Field::new(f.to_string(), DataType::Float64)),
@@ -240,6 +242,7 @@ impl Display for ScalarValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ScalarValue::String(s) => write!(f, "{}", s),
+            ScalarValue::Int32(i) => write!(f, "{}", i),
             ScalarValue::Int64(i) => write!(f, "{}", i),
             ScalarValue::Float32(ft) => write!(f, "{}", ft),
             ScalarValue::Float64(ft) => write!(f, "{}", ft),
@@ -251,6 +254,7 @@ impl std::hash::Hash for ScalarValue {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
             ScalarValue::String(s) => s.hash(state),
+            ScalarValue::Int32(i) => i.hash(state),
             ScalarValue::Int64(i) => i.hash(state),
             ScalarValue::Float32(ft) => {
                 let ft = OrderedFloat(*ft);
@@ -268,6 +272,7 @@ impl PartialEq for ScalarValue {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (ScalarValue::String(s), ScalarValue::String(o)) => s == o,
+            (ScalarValue::Int32(i), ScalarValue::Int32(o)) => i == o,
             (ScalarValue::Int64(i), ScalarValue::Int64(o)) => i == o,
             (ScalarValue::Float32(f), ScalarValue::Float32(o)) => {
                 let v1 = OrderedFloat(*f);
@@ -288,6 +293,7 @@ impl PartialOrd for ScalarValue {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
             (ScalarValue::String(s), ScalarValue::String(o)) => s.partial_cmp(o),
+            (ScalarValue::Int32(i), ScalarValue::Int32(o)) => i.partial_cmp(o),
             (ScalarValue::Int64(i), ScalarValue::Int64(o)) => i.partial_cmp(o),
             (ScalarValue::Float32(f), ScalarValue::Float32(o)) => {
                 let v1 = OrderedFloat(*f);
