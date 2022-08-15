@@ -1,6 +1,7 @@
+use std::fmt::Display;
+
 use super::{aggregate::Aggregate, projection::Projection, scan::Scan, selection::Selection};
 use crate::data_types::schema::Schema;
-use std::fmt::Display;
 
 /// A logical plan represents a data transformation
 /// or action that returns a relation(a set of tuples).

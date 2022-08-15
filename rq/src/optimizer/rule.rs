@@ -25,19 +25,19 @@ impl ProjectionPushDownRule {
             Plan::Projection(p) => {
                 extract_columns(&p.exprs, &p.input, column_names);
                 let input = self.push_down(&p.input, column_names);
-                Plan::Projection(Projection::new(Box::new(input), p.exprs.clone()))
+                Plan::Projection(Projection::new(input, p.exprs.clone()))
             }
             Plan::Selection(s) => {
                 extract_column(&s.expr, &s.input, column_names);
                 let input = self.push_down(&s.input, column_names);
-                Plan::Selection(Selection::new(Box::new(input), s.expr.clone()))
+                Plan::Selection(Selection::new(input, s.expr.clone()))
             }
             Plan::Aggregate(a) => {
                 extract_columns(&a.group_exprs, &a.input, column_names);
                 extract_columns(&a.aggregate_exprs, &a.input, column_names);
                 let input = self.push_down(&a.input, column_names);
                 Plan::Aggregate(Aggregate::new(
-                    Box::new(input),
+                    input,
                     a.group_exprs.clone(),
                     a.aggregate_exprs.clone(),
                 ))

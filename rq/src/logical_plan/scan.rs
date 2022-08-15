@@ -1,14 +1,15 @@
+use std::fmt::Display;
+
 use super::plan::{LogicalPlan, Plan};
 use crate::{
     data_source::{DataSource, Source},
     data_types::schema::Schema,
 };
-use std::fmt::Display;
 
 #[derive(Clone)]
 pub(crate) struct Scan {
     pub(crate) path: String,
-    pub(crate) data_source: Box<Source>,
+    pub(crate) data_source: Source,
     pub(crate) projection: Vec<String>,
 }
 
@@ -48,7 +49,7 @@ impl Display for Scan {
 }
 
 impl Scan {
-    pub(crate) fn new(path: String, data_source: Box<Source>, projection: Vec<String>) -> Self {
+    pub(crate) fn new(path: String, data_source: Source, projection: Vec<String>) -> Self {
         Scan {
             path,
             data_source,

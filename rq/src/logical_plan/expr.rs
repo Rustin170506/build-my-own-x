@@ -1,11 +1,13 @@
+use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
+
 use super::{
     expr_fn::binary_expr,
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::{column_array::DataType, schema::Field};
+
 use anyhow::{anyhow, Result};
 use ordered_float::OrderedFloat;
-use std::{cmp::Ordering, fmt::Display, hash::Hash, ops};
 
 /// Logical Expression for use in logical query plans.
 /// The logical expression provides information needed
@@ -117,7 +119,7 @@ impl ops::Not for Expr {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        Expr::Not(Not::new(Box::new(self)))
+        Expr::Not(Not::new(self))
     }
 }
 
@@ -164,7 +166,7 @@ impl Expr {
 
     /// Return `self as name`
     pub(crate) fn alias(self, name: String) -> Expr {
-        Expr::Alias(Alias::new(Box::new(self), name))
+        Expr::Alias(Alias::new(self, name))
     }
 }
 
@@ -341,11 +343,11 @@ pub(crate) struct Not {
 }
 
 impl Not {
-    fn new(expr: Box<Expr>) -> Self {
+    fn new(expr: Expr) -> Self {
         Not {
             name: "not".to_string(),
             op: "NOT".to_string(),
-            expr,
+            expr: Box::new(expr),
         }
     }
 }
@@ -463,8 +465,11 @@ impl Display for Alias {
 }
 
 impl Alias {
-    pub(crate) fn new(expr: Box<Expr>, alias: String) -> Self {
-        Alias { expr, alias }
+    pub(crate) fn new(expr: Expr, alias: String) -> Self {
+        Alias {
+            expr: Box::new(expr),
+            alias,
+        }
     }
 }
 
@@ -562,8 +567,9 @@ impl Display for AggregateExpr {
 
 #[cfg(test)]
 mod test {
-    use crate::logical_plan::expr_fn::{col, lit};
     use std::ops::{Add, Not};
+
+    use crate::logical_plan::expr_fn::{col, lit};
 
     #[test]
     fn test_add() {

@@ -30,7 +30,7 @@ impl QueryPlanner {
     pub(crate) fn create_physical_plan(&self, plan: &LogicalPlan) -> Result<PhysicalPlan> {
         match plan {
             LogicalPlan::Scan(scan) => {
-                let scan = ScanExec::new(*scan.data_source.clone(), scan.projection.clone());
+                let scan = ScanExec::new(scan.data_source.clone(), scan.projection.clone());
                 Ok(PhysicalPlan::Scan(scan))
             }
             LogicalPlan::Projection(projection) => {
@@ -151,7 +151,7 @@ mod tests {
     };
     use std::path::PathBuf;
 
-    fn get_data_source() -> (String, Box<Source>) {
+    fn get_data_source() -> (String, Source) {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/primitive_field.csv");
         let schema = Schema::new(vec![
@@ -164,7 +164,7 @@ mod tests {
         ]);
         let path = data_path.into_os_string().into_string().unwrap();
         let csv_data_source = CsvDataSource::new(path.clone(), schema, 3);
-        (path, Box::new(Source::Csv(csv_data_source)))
+        (path, Source::Csv(csv_data_source))
     }
 
     #[test]
@@ -174,11 +174,7 @@ mod tests {
         let col1 = col("c1");
         let group_exprs = vec![col1.clone()];
         let aggregate_exprs = vec![max(col1)];
-        let agg = Aggregate::new(
-            Box::new(Plan::Scan(scan_plan)),
-            group_exprs,
-            aggregate_exprs,
-        );
+        let agg = Aggregate::new(Plan::Scan(scan_plan), group_exprs, aggregate_exprs);
         let logical_plan = Plan::Aggregate(agg);
         let planner = QueryPlanner {};
         let physical_plan = planner.create_physical_plan(&logical_plan);

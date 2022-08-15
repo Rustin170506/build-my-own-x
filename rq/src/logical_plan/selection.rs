@@ -1,9 +1,10 @@
+use std::fmt::Display;
+
 use super::{
     expr::Expr,
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
-use std::fmt::Display;
 
 /// Logical plan representing a selection (a.k.a. filter) against an input.
 #[derive(Clone)]
@@ -29,8 +30,8 @@ impl Display for Selection {
 }
 
 impl Selection {
-    pub(crate) fn new(input: Box<Plan>, expr: Expr) -> Self {
-        Selection { input, expr }
+    pub(crate) fn new(input: Plan, expr: Expr) -> Self {
+        Selection { input: Box::new(input), expr }
     }
 }
 
@@ -46,7 +47,7 @@ mod tests {
         let (path, csv_data_source) = get_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let c1 = col("c1");
-        let plan = Selection::new(Box::new(Plan::Scan(scan_plan)), c1);
+        let plan = Selection::new(Plan::Scan(scan_plan), c1);
         assert_eq!(plan.to_string(), "Selection: #c1");
     }
 }

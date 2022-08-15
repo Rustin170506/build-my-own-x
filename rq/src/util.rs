@@ -7,7 +7,7 @@ use crate::{
 };
 use std::path::PathBuf;
 
-pub(crate) fn get_data_source() -> (String, Box<Source>) {
+pub(crate) fn get_data_source() -> (String, Source) {
     let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     data_path.push("tests/data/primitive_field.csv");
     let schema = Schema::new(vec![
@@ -20,5 +20,5 @@ pub(crate) fn get_data_source() -> (String, Box<Source>) {
     ]);
     let path = data_path.into_os_string().into_string().unwrap();
     let csv_data_source = CsvDataSource::new(path.clone(), schema, 3);
-    (path, Box::new(Source::Csv(csv_data_source)))
+    (path, Source::Csv(csv_data_source))
 }

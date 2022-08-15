@@ -18,23 +18,19 @@ impl DataFrame {
     }
     /// Apply a projection.
     pub(crate) fn project(&self, expr: Vec<Expr>) -> Self {
-        let plan = Plan::Projection(Projection::new(Box::new(self.plan.clone()), expr));
+        let plan = Plan::Projection(Projection::new(self.plan.clone(), expr));
         DataFrame::new(plan)
     }
 
     /// Apply a selection.
     pub(crate) fn filter(&self, expr: Expr) -> Self {
-        let plan = Plan::Selection(Selection::new(Box::new(self.plan.clone()), expr));
+        let plan = Plan::Selection(Selection::new(self.plan.clone(), expr));
         DataFrame::new(plan)
     }
 
     /// Apply an aggregation.
     pub(crate) fn aggregate(&self, group_by: Vec<Expr>, aggregates: Vec<Expr>) -> Self {
-        let plan = Plan::Aggregate(Aggregate::new(
-            Box::new(self.plan.clone()),
-            group_by,
-            aggregates,
-        ));
+        let plan = Plan::Aggregate(Aggregate::new(self.plan.clone(), group_by, aggregates));
         DataFrame::new(plan)
     }
 
