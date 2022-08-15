@@ -31,7 +31,10 @@ impl Display for Selection {
 
 impl Selection {
     pub(crate) fn new(input: Plan, expr: Expr) -> Self {
-        Selection { input: Box::new(input), expr }
+        Selection {
+            input: Box::new(input),
+            expr,
+        }
     }
 }
 

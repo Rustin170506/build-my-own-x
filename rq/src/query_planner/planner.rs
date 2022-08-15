@@ -9,7 +9,7 @@ use crate::{
         projection,
     },
     physical_plan::{
-        aggregate_expr::AggregateExpr,
+        aggregate::AggregateExpr,
         expr::{
             BinaryExpr, Cast, Column, Expr as PhysicalExpr, ScalarValue as PhysicalScalarValue,
         },
@@ -118,8 +118,8 @@ impl QueryPlanner {
                 Ok(PhysicalExpr::Cast(Cast::new(expr, c.data_type.clone())))
             }
             LogicalExpr::BinaryExpr(b) => {
-                let l = Box::new(self.create_physical_expr(b.left.as_ref(), input)?);
-                let r = Box::new(self.create_physical_expr(b.right.as_ref(), input)?);
+                let l = self.create_physical_expr(b.left.as_ref(), input)?;
+                let r = self.create_physical_expr(b.right.as_ref(), input)?;
                 let binary_expr = BinaryExpr::new(b.op, l, r);
                 Ok(PhysicalExpr::BinaryExpr(binary_expr))
             }

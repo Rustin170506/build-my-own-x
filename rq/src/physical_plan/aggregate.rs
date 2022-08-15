@@ -1,11 +1,12 @@
-use super::expr::Expr;
-use crate::logical_plan::expr::AggregateFunction;
 use std::{
     any::{Any, TypeId},
     fmt::Display,
     mem,
     ops::DerefMut,
 };
+
+use super::expr::Expr;
+use crate::logical_plan::expr::AggregateFunction;
 
 /// Accumulator for aggregate functions.
 pub(crate) struct Accumulator {

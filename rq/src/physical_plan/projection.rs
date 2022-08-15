@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use super::{
     expr::{Expr, PhysicalExpr},
     plan::{PhysicalPlan, Plan},
 };
 use crate::data_types::{record_batch::RecordBatch, schema::Schema};
+
 use anyhow::Result;
-use std::fmt::Display;
 
 /// Execute a projection.
 pub(crate) struct ProjectionExec {
@@ -61,13 +63,14 @@ impl Display for ProjectionExec {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
         data_types::{column_array::DataType, schema::Field},
         physical_plan::{expr::Column, scan::ScanExec},
     };
-    use std::path::PathBuf;
 
     #[test]
     fn test_projection_execute() {

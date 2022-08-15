@@ -1,3 +1,5 @@
+use std::{any::Any, fmt::Display, rc::Rc};
+
 use crate::{
     data_types::{
         arrow_field_array::ArrowFieldArray,
@@ -7,10 +9,10 @@ use crate::{
     },
     logical_plan::expr::Operator,
 };
+
 use anyhow::{Error, Result};
 use arrow::array::{BooleanArray, Int32Array, Int64Array};
 use ordered_float::OrderedFloat;
-use std::{any::Any, fmt::Display, rc::Rc};
 
 /// Physical representation of an expression.
 pub(crate) trait PhysicalExpr: Display {
@@ -281,8 +283,12 @@ impl Display for BinaryExpr {
 }
 
 impl BinaryExpr {
-    pub(crate) fn new(op: Operator, left: Box<Expr>, right: Box<Expr>) -> Self {
-        Self { op, left, right }
+    pub(crate) fn new(op: Operator, left: Expr, right: Expr) -> Self {
+        Self {
+            op,
+            left: Box::new(left),
+            right: Box::new(right),
+        }
     }
 }
 
@@ -492,6 +498,8 @@ fn cast(value: &ArrayRef, data_type: &DataType) -> Result<Vec<Box<dyn Any>>> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::{BinaryExpr, Cast, Column, Expr, PhysicalExpr, ScalarValue};
     use crate::{
         data_types::{
@@ -502,8 +510,8 @@ mod tests {
         },
         logical_plan::expr::Operator,
     };
+
     use arrow::array::{BooleanArray, Int64Array};
-    use std::rc::Rc;
 
     #[test]
     fn test_column_expr_evaluate() {
@@ -563,8 +571,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Add,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -582,8 +590,8 @@ mod tests {
     fn test_add_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Add,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 + 1");
     }
@@ -596,8 +604,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Subtract,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -615,8 +623,8 @@ mod tests {
     fn test_subtract_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Subtract,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 - 1");
     }
@@ -629,8 +637,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Multiply,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -648,8 +656,8 @@ mod tests {
     fn test_multiply_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Multiply,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 * 1");
     }
@@ -662,8 +670,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Divide,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -681,8 +689,8 @@ mod tests {
     fn test_divide_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Divide,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 / 1");
     }
@@ -695,8 +703,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Modulus,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -714,8 +722,8 @@ mod tests {
     fn test_modulus_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Modulus,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert_eq!(expr.to_string(), "#0 % 2");
     }
@@ -728,8 +736,8 @@ mod tests {
         let input = RecordBatch::new(schema, bool_arrary);
         let expr = BinaryExpr::new(
             Operator::And,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Column(Column::new(0))),
+            Expr::Column(Column::new(0)),
+            Expr::Column(Column::new(0)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -747,8 +755,8 @@ mod tests {
     fn test_and_expr_display() {
         let expr = BinaryExpr::new(
             Operator::And,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Column(Column::new(0))),
+            Expr::Column(Column::new(0)),
+            Expr::Column(Column::new(0)),
         );
         assert_eq!(expr.to_string(), "#0 AND #0");
     }
@@ -761,8 +769,8 @@ mod tests {
         let input = RecordBatch::new(schema, bool_arrary);
         let expr = BinaryExpr::new(
             Operator::Or,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Column(Column::new(0))),
+            Expr::Column(Column::new(0)),
+            Expr::Column(Column::new(0)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -780,8 +788,8 @@ mod tests {
     fn test_or_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Or,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Column(Column::new(0))),
+            Expr::Column(Column::new(0)),
+            Expr::Column(Column::new(0)),
         );
         assert_eq!(expr.to_string(), "#0 OR #0");
     }
@@ -794,8 +802,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Eq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -813,8 +821,8 @@ mod tests {
     fn test_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Eq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 == 1");
     }
@@ -827,8 +835,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Neq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -846,8 +854,8 @@ mod tests {
     fn test_neq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Neq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 != 1");
     }
@@ -860,8 +868,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Lt,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -879,8 +887,8 @@ mod tests {
     fn test_lt_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Lt,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert_eq!(expr.to_string(), "#0 < 2");
     }
@@ -893,8 +901,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::LtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -912,8 +920,8 @@ mod tests {
     fn test_lt_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::LtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert_eq!(expr.to_string(), "#0 <= 2");
     }
@@ -926,8 +934,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::Gt,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -945,8 +953,8 @@ mod tests {
     fn test_gt_expr_display() {
         let expr = BinaryExpr::new(
             Operator::Gt,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(1)),
         );
         assert_eq!(expr.to_string(), "#0 > 1");
     }
@@ -959,8 +967,8 @@ mod tests {
         let input = RecordBatch::new(schema, id_arrary);
         let expr = BinaryExpr::new(
             Operator::GtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert!(expr.evaluate(&input).is_ok());
         assert!(
@@ -978,8 +986,8 @@ mod tests {
     fn test_gt_eq_expr_display() {
         let expr = BinaryExpr::new(
             Operator::GtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Int64(2))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Int64(2)),
         );
         assert_eq!(expr.to_string(), "#0 >= 2");
     }

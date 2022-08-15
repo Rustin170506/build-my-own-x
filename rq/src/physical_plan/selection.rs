@@ -1,3 +1,5 @@
+use std::{fmt::Display, rc::Rc};
+
 use super::{
     expr::{evaluate_from_values, Expr, PhysicalExpr},
     plan::{PhysicalPlan, Plan},
@@ -6,9 +8,9 @@ use crate::data_types::{
     arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
     schema::Schema,
 };
+
 use anyhow::{anyhow, Error, Result};
 use arrow::array::BooleanArray;
-use std::{fmt::Display, rc::Rc};
 
 /// Execute a selection.
 pub(crate) struct SelectionExec {
@@ -74,6 +76,8 @@ impl Display for SelectionExec {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
@@ -87,7 +91,6 @@ mod tests {
             scan::ScanExec,
         },
     };
-    use std::path::PathBuf;
 
     #[test]
     fn test_selection_execute() {
@@ -99,8 +102,8 @@ mod tests {
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Float32(1.1)),
         ));
 
         let selection = SelectionExec::new(Plan::Scan(scan), filter);
@@ -135,8 +138,8 @@ mod tests {
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
-            Box::new(Expr::Column(Column::new(0))),
-            Box::new(Expr::Literal(ScalarValue::Float32(1.1))),
+            Expr::Column(Column::new(0)),
+            Expr::Literal(ScalarValue::Float32(1.1)),
         ));
         let selection = SelectionExec::new(Plan::Scan(scan), filter);
         assert_eq!(selection.to_string(), "SelectionExec: #0 <= 1.1");
