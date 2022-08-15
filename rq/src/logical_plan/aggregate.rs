@@ -1,9 +1,10 @@
+use std::fmt;
+
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
-use std::fmt;
 
 /// Logical plan representing an aggregate query against an input.
 #[derive(Clone)]
@@ -52,13 +53,9 @@ impl fmt::Display for Aggregate {
 }
 
 impl Aggregate {
-    pub(crate) fn new(
-        input: Box<Plan>,
-        group_exprs: Vec<Expr>,
-        aggregate_exprs: Vec<Expr>,
-    ) -> Self {
+    pub(crate) fn new(input: Plan, group_exprs: Vec<Expr>, aggregate_exprs: Vec<Expr>) -> Self {
         Aggregate {
-            input,
+            input: Box::new(input),
             group_exprs,
             aggregate_exprs,
         }
@@ -87,11 +84,7 @@ mod tests {
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let group_exprs = vec![col("c1")];
         let aggregate_exprs = vec![max(col("c2"))];
-        let agg = Aggregate::new(
-            Box::new(Plan::Scan(scan_plan)),
-            group_exprs,
-            aggregate_exprs,
-        );
+        let agg = Aggregate::new(Plan::Scan(scan_plan), group_exprs, aggregate_exprs);
         assert_eq!(
             agg.schema(),
             Schema::new(vec![
@@ -108,11 +101,7 @@ mod tests {
         let col1 = col("c1");
         let group_exprs = vec![col1.clone()];
         let aggregate_exprs = vec![max(col1)];
-        let agg = Aggregate::new(
-            Box::new(Plan::Scan(scan_plan)),
-            group_exprs,
-            aggregate_exprs,
-        );
+        let agg = Aggregate::new(Plan::Scan(scan_plan), group_exprs, aggregate_exprs);
         assert_eq!(
             agg.to_string(),
             "Aggregate: groupExpr=#c1, aggregateExpr=MAX(#c1)"

@@ -24,7 +24,7 @@ impl ExecutionContext {
 
     pub(crate) fn csv(&self, file_path: String, schema: Schema) -> DataFrame {
         let csv_data_source = CsvDataSource::new(file_path.clone(), schema, self.batch_size);
-        let scan_plan = Scan::new(file_path, Box::new(Source::Csv(csv_data_source)), vec![]);
+        let scan_plan = Scan::new(file_path, Source::Csv(csv_data_source), vec![]);
         DataFrame::new(LogicalPlan::Scan(scan_plan))
     }
 

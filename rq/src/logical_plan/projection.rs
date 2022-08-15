@@ -1,9 +1,10 @@
+use std::fmt::Display;
+
 use super::{
     expr::{Expr, LogicalExpr},
     plan::{LogicalPlan, Plan},
 };
 use crate::data_types::schema::Schema;
-use std::fmt::Display;
 
 #[derive(Clone)]
 pub(crate) struct Projection {
@@ -41,8 +42,11 @@ impl Display for Projection {
 }
 
 impl Projection {
-    pub(crate) fn new(input: Box<Plan>, exprs: Vec<Expr>) -> Self {
-        Projection { input, exprs }
+    pub(crate) fn new(input: Plan, exprs: Vec<Expr>) -> Self {
+        Projection {
+            input: Box::new(input),
+            exprs,
+        }
     }
 }
 
@@ -70,10 +74,7 @@ mod tests {
         let c4 = col("c4");
         let c5 = col("c5");
         let c6 = col("c6");
-        let plan = Projection::new(
-            Box::new(Plan::Scan(scan_plan)),
-            vec![c1, c2, c3, c4, c5, c6],
-        );
+        let plan = Projection::new(Plan::Scan(scan_plan), vec![c1, c2, c3, c4, c5, c6]);
         assert_eq!(plan.schema(), schema);
     }
 
@@ -88,10 +89,7 @@ mod tests {
         let c4 = col("c4");
         let c5 = col("c5");
         let c6 = col("c6");
-        let plan = Projection::new(
-            Box::new(Plan::Scan(scan_plan)),
-            vec![c1, c2, c3, c4, c5, c6],
-        );
+        let plan = Projection::new(Plan::Scan(scan_plan), vec![c1, c2, c3, c4, c5, c6]);
         assert_eq!(plan.children().len(), 1);
         assert_eq!(plan.children()[0].schema(), schema);
     }
@@ -106,10 +104,7 @@ mod tests {
         let c4 = col("c4");
         let c5 = col("c5");
         let c6 = col("c6");
-        let plan = Projection::new(
-            Box::new(Plan::Scan(scan_plan)),
-            vec![c1, c2, c3, c4, c5, c6],
-        );
+        let plan = Projection::new(Plan::Scan(scan_plan), vec![c1, c2, c3, c4, c5, c6]);
         assert_eq!(plan.to_string(), "Projection: #c1,#c2,#c3,#c4,#c5,#c6");
     }
 }
