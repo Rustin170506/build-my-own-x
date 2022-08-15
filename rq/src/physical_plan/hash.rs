@@ -19,7 +19,9 @@ use crate::data_types::{
 };
 
 use anyhow::{anyhow, Error, Result};
-use arrow::array::{Array, ArrayBuilder, Float32Builder, Float64Builder, Int64Builder};
+use arrow::array::{
+    Array, ArrayBuilder, Float32Builder, Float64Builder, Int32Builder, Int64Builder,
+};
 use ordered_float::OrderedFloat;
 
 // AccumulatorMap is a map storing the accumulators for each group.
@@ -55,7 +57,8 @@ impl HashExec {
             .fields
             .iter()
             .map(|f| match f.data_type {
-                DataType::Int64 => Box::new(Int64Builder::new(row_count)) as Box<dyn ArrayBuilder>,
+                DataType::Int32 => Box::new(Int32Builder::new(row_count)) as Box<dyn ArrayBuilder>,
+                DataType::Int64 => Box::new(Int64Builder::new(row_count)),
                 DataType::Float32 => Box::new(Float32Builder::new(row_count)),
                 DataType::Float64 => Box::new(Float64Builder::new(row_count)),
                 _ => unreachable!(),
@@ -147,7 +150,9 @@ impl PhysicalPlan for HashExec {
 fn create_hash(values: &Vec<Box<dyn Any>>) -> u64 {
     let mut hasher = DefaultHasher::new();
     for value in values {
-        if value.is::<i64>() {
+        if value.is::<i32>() {
+            hasher.write_i32(*value.downcast_ref::<i32>().unwrap());
+        } else if value.is::<i64>() {
             hasher.write_i64(*value.downcast_ref::<i64>().unwrap());
         } else if value.is::<f32>() {
             let ft = OrderedFloat(*value.downcast_ref::<f32>().unwrap());
@@ -164,7 +169,13 @@ fn create_hash(values: &Vec<Box<dyn Any>>) -> u64 {
 
 // Append the value to the array builder.
 fn append_value(build: &mut Box<dyn ArrayBuilder>, value: &Box<dyn Any>) {
-    if build.as_any().is::<Int64Builder>() {
+    if build.as_any().is::<Int32Builder>() {
+        build
+            .as_any_mut()
+            .downcast_mut::<Int32Builder>()
+            .unwrap()
+            .append_value(*value.downcast_ref::<i32>().unwrap());
+    } else if build.as_any().is::<Int64Builder>() {
         build
             .as_any_mut()
             .downcast_mut::<Int64Builder>()
@@ -222,26 +233,33 @@ mod tests {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data_path.push("tests/data/hash_test_filed.csv");
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int64),
-            Field::new("c2".to_string(), DataType::Float32),
-            Field::new("c3".to_string(), DataType::Float64),
+            Field::new("c1".to_string(), DataType::Int32),
+            Field::new("c2".to_string(), DataType::Int64),
+            Field::new("c3".to_string(), DataType::Float32),
+            Field::new("c4".to_string(), DataType::Float64),
         ]);
         let csv_data_source =
             CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 4);
         let scan = ScanExec::new(
             Source::Csv(csv_data_source),
-            vec!["c1".to_string(), "c2".to_string(), "c3".to_string()],
+            vec![
+                "c1".to_string(),
+                "c2".to_string(),
+                "c3".to_string(),
+                "c4".to_string(),
+            ],
         );
-        let group_expr = vec![Expr::Column(Column::new(0)), Expr::Column(Column::new(1))];
+        let group_expr = vec![Expr::Column(Column::new(1)), Expr::Column(Column::new(2))];
         let aggregate_expr = vec![AggregateExpr::new(
-            Expr::Column(Column::new(0)),
+            Expr::Column(Column::new(1)),
             AggregateFunction::Sum,
         )];
 
+        // The final result should be:
         let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int64),
-            Field::new("c2".to_string(), DataType::Float32),
-            Field::new("c4".to_string(), DataType::Int64),
+            Field::new("c2".to_string(), DataType::Int64),
+            Field::new("c3".to_string(), DataType::Float32),
+            Field::new("c5".to_string(), DataType::Int64),
         ]);
 
         HashExec::new(Plan::Scan(scan), schema, group_expr, aggregate_expr)
@@ -317,7 +335,7 @@ mod tests {
 
         assert_eq!(
             format!("{}", hash),
-            "HashAggregateExec: groupExpr=#0, #1, aggrExpr=SUM(#0)"
+            "HashAggregateExec: groupExpr=#1, #2, aggrExpr=SUM(#1)"
         );
     }
 }

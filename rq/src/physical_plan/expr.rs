@@ -351,6 +351,11 @@ pub(crate) fn evaluate_from_values(
 macro_rules! math_binary_op {
     ($LEFT: expr, $RIGHT: expr, $DATA_TYPE: expr, $OP: tt) => {
         match $DATA_TYPE {
+            DataType::Int32 => {
+                let l = $LEFT.downcast_ref::<i32>().unwrap();
+                let r = $RIGHT.downcast_ref::<i32>().unwrap();
+                Box::new(*l $OP *r) as Box<dyn Any>
+            }
             DataType::Int64 => {
                 let l = $LEFT.downcast_ref::<i64>().unwrap();
                 let r = $RIGHT.downcast_ref::<i64>().unwrap();
@@ -456,10 +461,24 @@ impl Display for Cast {
 
 fn cast(value: &ArrayRef, data_type: &DataType) -> Result<Vec<Box<dyn Any>>> {
     Ok(match value.get_type() {
+        DataType::Int32 => (0..value.size())
+            .map(|i| Ok(*value.get_value(i)?.downcast_ref::<i32>().unwrap()))
+            .map(|v: Result<i32, Error>| match v {
+                Ok(v) => match data_type {
+                    DataType::Int32 => Ok(Box::new(v) as Box<dyn Any>),
+                    DataType::Int64 => Ok(Box::new(v as i64) as Box<dyn Any>),
+                    DataType::Float32 => Ok(Box::new(v as f32) as Box<dyn Any>),
+                    DataType::Float64 => Ok(Box::new(v as f64) as Box<dyn Any>),
+                    _ => unreachable!(),
+                },
+                Err(e) => Err(e),
+            })
+            .collect::<Result<Vec<Box<dyn Any>>, _>>()?,
         DataType::Int64 => (0..value.size())
             .map(|i| Ok(*value.get_value(i)?.downcast_ref::<i64>().unwrap()))
             .map(|v: Result<i64, Error>| match v {
                 Ok(v) => match data_type {
+                    DataType::Int32 => Ok(Box::new(v as i32) as Box<dyn Any>),
                     DataType::Int64 => Ok(Box::new(v) as Box<dyn Any>),
                     DataType::Float32 => Ok(Box::new(v as f32) as Box<dyn Any>),
                     DataType::Float64 => Ok(Box::new(v as f64) as Box<dyn Any>),
@@ -472,6 +491,7 @@ fn cast(value: &ArrayRef, data_type: &DataType) -> Result<Vec<Box<dyn Any>>> {
             .map(|i| Ok(*value.get_value(i)?.downcast_ref::<f32>().unwrap()))
             .map(|v: Result<f32, Error>| match v {
                 Ok(v) => match data_type {
+                    DataType::Int32 => Ok(Box::new(v as i32) as Box<dyn Any>),
                     DataType::Int64 => Ok(Box::new(v as i64) as Box<dyn Any>),
                     DataType::Float32 => Ok(Box::new(v) as Box<dyn Any>),
                     DataType::Float64 => Ok(Box::new(v as f64) as Box<dyn Any>),
@@ -484,6 +504,7 @@ fn cast(value: &ArrayRef, data_type: &DataType) -> Result<Vec<Box<dyn Any>>> {
             .map(|i| Ok(*value.get_value(i)?.downcast_ref::<f64>().unwrap()))
             .map(|v: Result<f64, Error>| match v {
                 Ok(v) => match data_type {
+                    DataType::Int32 => Ok(Box::new(v as i32) as Box<dyn Any>),
                     DataType::Int64 => Ok(Box::new(v as i64) as Box<dyn Any>),
                     DataType::Float32 => Ok(Box::new(v as f32) as Box<dyn Any>),
                     DataType::Float64 => Ok(Box::new(v) as Box<dyn Any>),
@@ -511,7 +532,7 @@ mod tests {
         logical_plan::expr::Operator,
     };
 
-    use arrow::array::{BooleanArray, Int64Array};
+    use arrow::array::{BooleanArray, Int32Array, Int64Array};
 
     #[test]
     fn test_column_expr_evaluate() {
@@ -527,6 +548,22 @@ mod tests {
                 .get_value(0)
                 .unwrap()
                 .downcast_ref::<i64>()
+                .unwrap()
+                == &1
+        );
+
+        let id = Int32Array::from(vec![1, 2, 3, 4, 5]);
+        let id_arrary = vec![Rc::new(ArrowFieldArray::new(Box::new(id))) as ArrayRef];
+        let schema = Schema::new(vec![Field::new("id".to_string(), DataType::Int32)]);
+        let input = RecordBatch::new(schema, id_arrary);
+        let expr = Column::new(0);
+        assert!(expr.evaluate(&input).is_ok());
+        assert!(
+            expr.evaluate(&input)
+                .unwrap()
+                .get_value(0)
+                .unwrap()
+                .downcast_ref::<i32>()
                 .unwrap()
                 == &1
         );
@@ -1013,7 +1050,7 @@ mod tests {
 
     #[test]
     fn test_cast_expr_display() {
-        let expr = Cast::new(Expr::Column(Column::new(0)), DataType::Float64);
-        assert_eq!(expr.to_string(), "CAST(#0 AS Float64)");
+        let expr = Cast::new(Expr::Column(Column::new(0)), DataType::Int32);
+        assert_eq!(expr.to_string(), "CAST(#0 AS Int32)");
     }
 }

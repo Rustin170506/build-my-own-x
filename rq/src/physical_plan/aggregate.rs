@@ -38,7 +38,7 @@ impl Accumulator {
                             self.value = Some(value);
                         }
                     }
-                    _ => unreachable!(),
+                    _ => unimplemented!(),
                 }
             }
         }
@@ -50,6 +50,9 @@ impl Accumulator {
 }
 
 fn is_max(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
+    if l.is::<i32>() {
+        return l.downcast_ref::<i32>().unwrap() > r.downcast_ref::<i32>().unwrap();
+    }
     if l.is::<i64>() {
         return l.downcast_ref::<i64>().unwrap() > r.downcast_ref::<i64>().unwrap();
     }
@@ -63,6 +66,9 @@ fn is_max(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
 }
 
 fn is_min(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
+    if l.is::<i32>() {
+        return l.downcast_ref::<i32>().unwrap() < r.downcast_ref::<i32>().unwrap();
+    }
     if l.is::<i64>() {
         return l.downcast_ref::<i64>().unwrap() < r.downcast_ref::<i64>().unwrap();
     }
@@ -76,6 +82,11 @@ fn is_min(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
 }
 
 fn sum(l: &mut Box<dyn Any>, r: &Box<dyn Any>) {
+    if l.is::<i32>() {
+        let sum = *l.downcast_mut::<i32>().unwrap() + r.downcast_ref::<i32>().unwrap();
+        mem::replace(l, Box::new(sum));
+        return;
+    }
     if l.is::<i64>() {
         let sum = *l.downcast_mut::<i64>().unwrap() + r.downcast_ref::<i64>().unwrap();
         mem::replace(l, Box::new(sum));
@@ -127,6 +138,30 @@ mod tests {
         logical_plan::expr::AggregateFunction,
         physical_plan::expr::{Column, Expr},
     };
+
+    #[test]
+    fn test_max_accumulator_i32() {
+        let mut acc = Accumulator::new(AggregateFunction::Max);
+        acc.accumulate(Some(Box::new(1i32)));
+        assert!(acc.final_value().is_some());
+        assert_eq!(
+            acc.final_value()
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<i32>()
+                .unwrap(),
+            &1
+        );
+        acc.accumulate(Some(Box::new(10i32)));
+        assert_eq!(
+            acc.final_value()
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<i32>()
+                .unwrap(),
+            &10
+        );
+    }
 
     #[test]
     fn test_max_accumulator_i64() {
