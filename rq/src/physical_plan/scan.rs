@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use super::plan::{PhysicalPlan, Plan};
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
 };
+
 use anyhow::Result;
-use std::fmt::Display;
 
 // Scan a data source with optional push-down projection.
 pub(crate) struct ScanExec {
@@ -54,6 +56,8 @@ impl Display for ScanExec {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::ScanExec;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, DataSource, Source},
@@ -62,7 +66,6 @@ mod tests {
             schema::{Field, Schema},
         },
     };
-    use std::path::PathBuf;
 
     #[test]
     fn test_scan_display() {

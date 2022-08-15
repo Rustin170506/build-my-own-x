@@ -1,11 +1,13 @@
+use std::fmt::Display;
+
 use super::{hash::HashExec, projection::ProjectionExec, scan::ScanExec, selection::SelectionExec};
 use crate::{
     data_source::{DataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
     logical_plan::expr::Expr,
 };
+
 use anyhow::Result;
-use std::fmt::Display;
 
 /// A physical plan represents an executable piece of code that will produce data.
 pub(crate) trait PhysicalPlan: Display {

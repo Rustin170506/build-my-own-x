@@ -1,5 +1,13 @@
+use std::{
+    any::{self, Any},
+    collections::{hash_map::DefaultHasher, BTreeMap},
+    fmt::Display,
+    hash::{Hash, Hasher},
+    rc::Rc,
+};
+
 use super::{
-    aggregate_expr::{Accumulator, AggregateExpr},
+    aggregate::{Accumulator, AggregateExpr},
     expr::{Expr, PhysicalExpr},
     plan::{PhysicalPlan, Plan},
 };
@@ -9,16 +17,10 @@ use crate::data_types::{
     record_batch::RecordBatch,
     schema::Schema,
 };
+
 use anyhow::{anyhow, Error, Result};
 use arrow::array::{Array, ArrayBuilder, Float32Builder, Float64Builder, Int64Builder};
 use ordered_float::OrderedFloat;
-use std::{
-    any::{self, Any},
-    collections::{hash_map::DefaultHasher, BTreeMap},
-    fmt::Display,
-    hash::{Hash, Hasher},
-    rc::Rc,
-};
 
 // AccumulatorMap is a map storing the accumulators for each group.
 // GroupKey -> (GroupValues, Accumulators).
@@ -206,6 +208,8 @@ impl Display for HashExec {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
@@ -213,7 +217,6 @@ mod tests {
         logical_plan::expr::AggregateFunction,
         physical_plan::{expr::Column, scan::ScanExec},
     };
-    use std::path::PathBuf;
 
     fn get_hash_exec() -> HashExec {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
