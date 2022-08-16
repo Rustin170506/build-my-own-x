@@ -110,12 +110,12 @@ mod tests {
             plan::Plan,
             scan::Scan,
         },
-        util::get_data_source,
+        test_util::get_primitive_field_data_source,
     };
     use std::collections::HashSet;
 
     fn csv() -> DataFrame {
-        let (_, csv_data_source) = get_data_source();
+        let (_, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(
             "push_down_test".to_string(),
             csv_data_source,
@@ -136,7 +136,7 @@ mod tests {
         let mut accum: HashSet<String> = HashSet::new();
 
         let expr = vec![col("c1"), col("c2"), lit(1), and(col("c3"), col("c4"))];
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let schema = csv_data_source.get_schema().clone();
         let plan = Plan::Scan(Scan::new(path, csv_data_source, vec![]));
         assert_eq!(accum.len(), 0);

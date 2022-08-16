@@ -61,11 +61,14 @@ impl Scan {
 #[cfg(test)]
 mod tests {
     use super::Scan;
-    use crate::{data_source::DataSource, logical_plan::plan::LogicalPlan, util::get_data_source};
+    use crate::{
+        data_source::DataSource, logical_plan::plan::LogicalPlan,
+        test_util::get_primitive_field_data_source,
+    };
 
     #[test]
     fn test_schema_without_projection() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let schema = csv_data_source.get_schema().clone();
         let plan = Scan::new(path, csv_data_source, vec![]);
         assert_eq!(plan.schema(), schema);
@@ -73,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_schema_with_projection() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let schema = csv_data_source.get_schema().select(vec!["c1", "c2"]);
         let plan = Scan::new(
             path,
@@ -85,21 +88,21 @@ mod tests {
 
     #[test]
     fn test_children() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let plan = Scan::new(path, csv_data_source, vec![]);
         assert_eq!(plan.children().len(), 0);
     }
 
     #[test]
     fn test_display_without_projection() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let plan = Scan::new(path.clone(), csv_data_source, vec![]);
         assert_eq!(plan.to_string(), format!("Scan: {}; projection=None", path));
     }
 
     #[test]
     fn test_display_with_projection() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let plan = Scan::new(
             path.clone(),
             csv_data_source,

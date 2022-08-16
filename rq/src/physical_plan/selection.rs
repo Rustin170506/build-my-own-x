@@ -90,15 +90,14 @@ mod tests {
             expr::{BinaryExpr, Column, ScalarValue},
             scan::ScanExec,
         },
+        test_util::rq_test_data,
     };
 
     #[test]
     fn test_selection_execute() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/f32_field.csv");
+        let data_path = rq_test_data("f32_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Float32)]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,
@@ -123,8 +122,7 @@ mod tests {
 
     #[test]
     fn test_selection_display() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/f32_field.csv");
+        let data_path = rq_test_data("f32_field.csv");
         let schema = Schema::new(vec![
             Field::new("c1".to_string(), DataType::Int32),
             Field::new("c2".to_string(), DataType::Int32),
@@ -133,8 +131,7 @@ mod tests {
             Field::new("c5".to_string(), DataType::Float32),
             Field::new("c6".to_string(), DataType::Float64),
         ]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c5".to_string()]);
         let filter = Expr::BinaryExpr(BinaryExpr::new(
             Operator::LtEq,

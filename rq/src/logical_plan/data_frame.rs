@@ -54,11 +54,11 @@ mod tests {
             plan::{LogicalPlan, Plan},
             scan::Scan,
         },
-        util::get_data_source,
+        test_util::get_primitive_field_data_source,
     };
 
     fn csv() -> (DataFrame) {
-        let (_, csv_data_source) = get_data_source();
+        let (_, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(
             "data_frame_test".to_string(),
             csv_data_source,

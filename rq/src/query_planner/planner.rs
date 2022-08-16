@@ -149,27 +149,12 @@ mod tests {
             plan::Plan,
             scan::Scan,
         },
+        test_util::get_primitive_field_data_source,
     };
-
-    fn get_data_source() -> (String, Source) {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/primitive_field.csv");
-        let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int32),
-            Field::new("c2".to_string(), DataType::Int32),
-            Field::new("c3".to_string(), DataType::Int64),
-            Field::new("c4".to_string(), DataType::Int64),
-            Field::new("c5".to_string(), DataType::Float32),
-            Field::new("c6".to_string(), DataType::Float64),
-        ]);
-        let path = data_path.into_os_string().into_string().unwrap();
-        let csv_data_source = CsvDataSource::new(path.clone(), schema, 3);
-        (path, Source::Csv(csv_data_source))
-    }
 
     #[test]
     fn test_create_physical_plan() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let col1 = col("c1");
         let group_exprs = vec![col1.clone()];
@@ -184,7 +169,7 @@ mod tests {
     #[test]
     fn test_create_physical_expr() {
         let logical_expr = lit(1);
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let physical_plan =
             QueryPlanner::create_physical_expr(&logical_expr, &Plan::Scan(scan_plan));
