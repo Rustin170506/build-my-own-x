@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     data_source::{csv_data_source::CsvDataSource, Source},
     data_types::{record_batch::RecordBatch, schema::Schema},
@@ -6,8 +8,8 @@ use crate::{
     physical_plan::plan::Plan as PhysicalPlan,
     query_planner::planner::QueryPlanner,
 };
+
 use anyhow::Result;
-use std::collections::HashMap;
 
 pub(crate) struct ExecutionContext {
     batch_size: usize,
@@ -36,13 +38,14 @@ impl ExecutionContext {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::{
         data_types::{column_array::DataType, schema::Field},
         logical_plan::expr_fn::{col, lit},
         physical_plan::plan::PhysicalPlan,
     };
-    use std::path::PathBuf;
 
     #[test]
     fn test_execute_data_frame() {

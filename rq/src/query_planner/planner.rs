@@ -20,6 +20,7 @@ use crate::{
         selection::SelectionExec,
     },
 };
+
 use anyhow::{anyhow, Error, Result};
 
 /// The query planner creates a physical query plan from a logical query plan.
@@ -138,6 +139,8 @@ impl QueryPlanner {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
@@ -149,7 +152,6 @@ mod tests {
             scan::Scan,
         },
     };
-    use std::path::PathBuf;
 
     fn get_data_source() -> (String, Source) {
         let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
