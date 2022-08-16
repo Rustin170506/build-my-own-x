@@ -1,27 +1,22 @@
-use std::{
-    any::{Any, TypeId},
-    fmt::Display,
-    mem,
-    ops::DerefMut,
-};
+use std::{any::Any, fmt::Display};
 
 use super::expr::Expr;
 use crate::logical_plan::expr::AggregateFunction;
 
 /// Accumulator for aggregate functions.
-pub(crate) struct Accumulator {
-    pub(crate) fun: AggregateFunction,
-    pub(crate) value: Option<Box<dyn Any>>,
+pub struct Accumulator {
+    pub fun: AggregateFunction,
+    pub value: Option<Box<dyn Any>>,
 }
 
 impl Accumulator {
-    pub(crate) fn new(fun: AggregateFunction) -> Self {
+    pub fn new(fun: AggregateFunction) -> Self {
         Self { fun, value: None }
     }
 }
 
 impl Accumulator {
-    pub(crate) fn accumulate(&mut self, value: Option<Box<dyn Any>>) {
+    pub fn accumulate(&mut self, value: Option<Box<dyn Any>>) {
         if let Some(value) = value {
             if self.value.is_none() {
                 self.value = Some(value);
@@ -44,7 +39,7 @@ impl Accumulator {
         }
     }
 
-    pub(crate) fn final_value(&self) -> &Option<Box<dyn Any>> {
+    pub fn final_value(&self) -> &Option<Box<dyn Any>> {
         &self.value
     }
 }
@@ -84,43 +79,43 @@ fn is_min(l: &Box<dyn Any>, r: &Box<dyn Any>) -> bool {
 fn sum(l: &mut Box<dyn Any>, r: &Box<dyn Any>) {
     if l.is::<i32>() {
         let sum = *l.downcast_mut::<i32>().unwrap() + r.downcast_ref::<i32>().unwrap();
-        mem::replace(l, Box::new(sum));
+        *l = Box::new(sum);
         return;
     }
     if l.is::<i64>() {
         let sum = *l.downcast_mut::<i64>().unwrap() + r.downcast_ref::<i64>().unwrap();
-        mem::replace(l, Box::new(sum));
+        *l = Box::new(sum);
         return;
     }
     if l.is::<f32>() {
         let sum = *l.downcast_mut::<f32>().unwrap() + r.downcast_ref::<f32>().unwrap();
-        mem::replace(l, Box::new(sum));
+        *l = Box::new(sum);
         return;
     }
     if l.is::<f64>() {
         let sum = *l.downcast_mut::<f64>().unwrap() + r.downcast_ref::<f64>().unwrap();
-        mem::replace(l, Box::new(sum));
+        *l = Box::new(sum);
         return;
     }
     unreachable!()
 }
 
 /// AggregateExpr is an expression that aggregates a group of rows.
-pub(crate) struct AggregateExpr {
-    pub(crate) expr: Expr,
-    pub(crate) fun: AggregateFunction,
+pub struct AggregateExpr {
+    pub expr: Expr,
+    pub fun: AggregateFunction,
 }
 
 impl AggregateExpr {
-    pub(crate) fn new(expr: Expr, fun: AggregateFunction) -> Self {
+    pub fn new(expr: Expr, fun: AggregateFunction) -> Self {
         Self { expr, fun }
     }
 
-    pub(crate) fn input_expr(&self) -> &Expr {
+    pub fn input_expr(&self) -> &Expr {
         &self.expr
     }
 
-    pub(crate) fn create_accumulator(&self) -> Accumulator {
+    pub fn create_accumulator(&self) -> Accumulator {
         Accumulator::new(self.fun.clone())
     }
 }

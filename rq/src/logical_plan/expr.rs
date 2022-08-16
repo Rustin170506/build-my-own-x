@@ -12,7 +12,7 @@ use ordered_float::OrderedFloat;
 /// Logical Expression for use in logical query plans.
 /// The logical expression provides information needed
 /// during the planning phase such as the name and data type of the expression.
-pub(crate) trait LogicalExpr: Display {
+pub trait LogicalExpr: Display {
     /// Return meta-data about the value that will be produced by this expression when evaluated
     /// against a particular input.
     fn to_field(&self, input: &Plan) -> Result<Field>;
@@ -21,7 +21,7 @@ pub(crate) trait LogicalExpr: Display {
 /// `Expr` represent logical expressions such as `A + 1`, or `CAST(c1 AS
 /// int)`.
 #[derive(Debug, PartialEq, PartialOrd, Clone, Hash)]
-pub(crate) enum Expr {
+pub enum Expr {
     /// A named reference to a qualified filed in a schema.
     Column(Column),
     /// A indexed reference to a qualified filed in a schema.
@@ -125,55 +125,55 @@ impl ops::Not for Expr {
 
 impl Expr {
     /// Return `self == other`
-    pub(crate) fn eq(self, other: Expr) -> Expr {
+    pub fn eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Eq, other)
     }
 
     /// Return `self != other`
-    pub(crate) fn not_eq(self, other: Expr) -> Expr {
+    pub fn not_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Neq, other)
     }
 
     /// Return `self > other`
-    pub(crate) fn gt(self, other: Expr) -> Expr {
+    pub fn gt(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Gt, other)
     }
 
     /// Return `self >= other`
-    pub(crate) fn gt_eq(self, other: Expr) -> Expr {
+    pub fn gt_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::GtEq, other)
     }
 
     /// Return `self < other`
-    pub(crate) fn lt(self, other: Expr) -> Expr {
+    pub fn lt(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Lt, other)
     }
 
     /// Return `self <= other`
-    pub(crate) fn lt_eq(self, other: Expr) -> Expr {
+    pub fn lt_eq(self, other: Expr) -> Expr {
         binary_expr(self, Operator::LtEq, other)
     }
 
     /// Return `self && other`
-    pub(crate) fn and(self, other: Expr) -> Expr {
+    pub fn and(self, other: Expr) -> Expr {
         binary_expr(self, Operator::And, other)
     }
 
     /// Return `self || other`
-    pub(crate) fn or(self, other: Expr) -> Expr {
+    pub fn or(self, other: Expr) -> Expr {
         binary_expr(self, Operator::Or, other)
     }
 
     /// Return `self as name`
-    pub(crate) fn alias(self, name: String) -> Expr {
+    pub fn alias(self, name: String) -> Expr {
         Expr::Alias(Alias::new(self, name))
     }
 }
 
 /// Logical expression representing a reference to a column by name.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) struct Column {
-    pub(crate) name: String,
+pub struct Column {
+    pub name: String,
 }
 
 impl LogicalExpr for Column {
@@ -201,9 +201,9 @@ impl From<&str> for Column {
 }
 
 /// Logical expression representing a reference to a column by index.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct ColumnIndex {
-    pub(crate) index: usize,
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub struct ColumnIndex {
+    pub index: usize,
 }
 
 impl LogicalExpr for ColumnIndex {
@@ -220,7 +220,7 @@ impl Display for ColumnIndex {
 
 /// Represents a dynamically typed single value.
 #[derive(Debug, Clone)]
-pub(crate) enum ScalarValue {
+pub enum ScalarValue {
     String(String),
     Int32(i32),
     Int64(i64),
@@ -316,9 +316,9 @@ impl Eq for ScalarValue {}
 
 /// Cast a given expression to a given data type field.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct Cast {
-    pub(crate) expr: Box<Expr>,
-    pub(crate) data_type: DataType,
+pub struct Cast {
+    pub expr: Box<Expr>,
+    pub data_type: DataType,
 }
 
 impl LogicalExpr for Cast {
@@ -336,10 +336,10 @@ impl Display for Cast {
 
 /// Logical expression representing a logical NOT.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct Not {
+pub struct Not {
     name: String,
     op: String,
-    pub(crate) expr: Box<Expr>,
+    pub expr: Box<Expr>,
 }
 
 impl Not {
@@ -366,7 +366,7 @@ impl Display for Not {
 
 /// Operators applied to expressions
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Hash)]
-pub(crate) enum Operator {
+pub enum Operator {
     And,
     Or,
     Eq,
@@ -425,10 +425,10 @@ impl Display for Operator {
 
 /// Binary expressions that return a boolean type.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct BinaryExpr {
-    pub(crate) op: Operator,
-    pub(crate) left: Box<Expr>,
-    pub(crate) right: Box<Expr>,
+pub struct BinaryExpr {
+    pub op: Operator,
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
 }
 
 impl LogicalExpr for BinaryExpr {
@@ -444,9 +444,9 @@ impl Display for BinaryExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct Alias {
-    pub(crate) expr: Box<Expr>,
-    pub(crate) alias: String,
+pub struct Alias {
+    pub expr: Box<Expr>,
+    pub alias: String,
 }
 
 impl LogicalExpr for Alias {
@@ -465,7 +465,7 @@ impl Display for Alias {
 }
 
 impl Alias {
-    pub(crate) fn new(expr: Expr, alias: String) -> Self {
+    pub fn new(expr: Expr, alias: String) -> Self {
         Alias {
             expr: Box::new(expr),
             alias,
@@ -474,10 +474,10 @@ impl Alias {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct ScalarFunction {
-    pub(crate) name: String,
-    pub(crate) args: Vec<Expr>,
-    pub(crate) return_type: DataType,
+pub struct ScalarFunction {
+    pub name: String,
+    pub args: Vec<Expr>,
+    pub return_type: DataType,
 }
 
 impl LogicalExpr for ScalarFunction {
@@ -501,8 +501,8 @@ impl Display for ScalarFunction {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) enum AggregateFunction {
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
+pub enum AggregateFunction {
     Sum,
     Min,
     Max,
@@ -540,10 +540,10 @@ impl Display for AggregateFunction {
 
 /// AggregateFunction is a logical expression that represents an aggregate function.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
-pub(crate) struct AggregateExpr {
-    pub(crate) fun: AggregateFunction,
-    pub(crate) expr: Box<Expr>,
-    pub(crate) is_distinct: bool,
+pub struct AggregateExpr {
+    pub fun: AggregateFunction,
+    pub expr: Box<Expr>,
+    pub is_distinct: bool,
 }
 
 impl LogicalExpr for AggregateExpr {

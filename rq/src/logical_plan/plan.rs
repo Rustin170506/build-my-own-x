@@ -5,7 +5,7 @@ use crate::data_types::schema::Schema;
 
 /// A logical plan represents a data transformation
 /// or action that returns a relation(a set of tuples).
-pub(crate) trait LogicalPlan: Display {
+pub trait LogicalPlan: Display {
     /// Returns the schema of the data that will be produced by this logical plan.
     fn schema(&self) -> Schema;
     /// Returns the children (inputs) of this logical plan.
@@ -28,7 +28,7 @@ pub(crate) trait LogicalPlan: Display {
 }
 
 #[derive(Clone)]
-pub(crate) enum Plan {
+pub enum Plan {
     Scan(Scan),
     Projection(Projection),
     Selection(Selection),

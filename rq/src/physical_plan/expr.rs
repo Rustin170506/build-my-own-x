@@ -15,11 +15,11 @@ use arrow::array::{BooleanArray, Int32Array, Int64Array};
 use ordered_float::OrderedFloat;
 
 /// Physical representation of an expression.
-pub(crate) trait PhysicalExpr: Display {
+pub trait PhysicalExpr: Display {
     fn evaluate(&self, input: &RecordBatch) -> Result<ArrayRef>;
 }
 
-pub(crate) enum Expr {
+pub enum Expr {
     Column(Column),
     Literal(ScalarValue),
     BinaryExpr(BinaryExpr),
@@ -48,12 +48,12 @@ impl Display for Expr {
     }
 }
 
-pub(crate) struct Column {
-    pub(crate) i: usize,
+pub struct Column {
+    pub i: usize,
 }
 
 impl Column {
-    pub(crate) fn new(i: usize) -> Self {
+    pub fn new(i: usize) -> Self {
         Self { i }
     }
 }
@@ -71,7 +71,7 @@ impl Display for Column {
 }
 
 /// Represents a dynamically typed single value.
-pub(crate) enum ScalarValue {
+pub enum ScalarValue {
     String(String),
     Int32(i32),
     Int64(i64),
@@ -125,10 +125,10 @@ impl Display for ScalarValue {
 
 /// For binary expressions we need to evaluate the left and right input expressions
 /// and then evaluate the specific binary operator against those input values.
-pub(crate) struct BinaryExpr {
-    pub(crate) op: Operator,
-    pub(crate) left: Box<Expr>,
-    pub(crate) right: Box<Expr>,
+pub struct BinaryExpr {
+    pub op: Operator,
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
 }
 
 impl PhysicalExpr for BinaryExpr {
@@ -283,7 +283,7 @@ impl Display for BinaryExpr {
 }
 
 impl BinaryExpr {
-    pub(crate) fn new(op: Operator, left: Expr, right: Expr) -> Self {
+    pub fn new(op: Operator, left: Expr, right: Expr) -> Self {
         Self {
             op,
             left: Box::new(left),
@@ -293,10 +293,7 @@ impl BinaryExpr {
 }
 
 // Build the arrow array from the values.
-pub(crate) fn evaluate_from_values(
-    array: &[Box<dyn Any>],
-    data_type: &DataType,
-) -> Result<ArrayRef> {
+pub fn evaluate_from_values(array: &[Box<dyn Any>], data_type: &DataType) -> Result<ArrayRef> {
     match data_type {
         DataType::Int32 => {
             let arrow_array = Int32Array::from(
@@ -431,13 +428,13 @@ macro_rules! bool_binary_op {
     };
 }
 
-pub(crate) struct Cast {
+pub struct Cast {
     expr: Box<Expr>,
     data_type: DataType,
 }
 
 impl Cast {
-    pub(crate) fn new(expr: Expr, data_type: DataType) -> Self {
+    pub fn new(expr: Expr, data_type: DataType) -> Self {
         Self {
             expr: Box::new(expr),
             data_type,

@@ -4,15 +4,12 @@ use super::column_array::{ColumnArray, DataType};
 
 use anyhow::Result;
 use arrow::{
-    array::{
-        Array, BooleanArray, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array,
-        Int8Array, StringArray, UInt16Array, UInt32Array, UInt64Array, UInt8Array,
-    },
+    array::{Array, BooleanArray, Float32Array, Float64Array, Int32Array, Int64Array, StringArray},
     datatypes::DataType as ArrayDataType,
 };
 
 /// Wrapper around Arrow Array.
-pub(crate) struct ArrowFieldArray {
+pub struct ArrowFieldArray {
     field: Box<dyn Array>,
 }
 
@@ -84,7 +81,7 @@ impl ColumnArray for ArrowFieldArray {
 }
 
 impl ArrowFieldArray {
-    pub(crate) fn new(value: Box<dyn Array>) -> Self {
+    pub fn new(value: Box<dyn Array>) -> Self {
         ArrowFieldArray { field: value }
     }
 }

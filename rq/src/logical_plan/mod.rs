@@ -1,8 +1,8 @@
-pub(crate) mod aggregate;
-pub(crate) mod data_frame;
-pub(crate) mod expr;
-pub(crate) mod expr_fn;
-pub(crate) mod plan;
-pub(crate) mod projection;
-pub(crate) mod scan;
-pub(crate) mod selection;
+pub mod aggregate;
+pub mod data_frame;
+pub mod expr;
+pub mod expr_fn;
+pub mod plan;
+pub mod projection;
+pub mod scan;
+pub mod selection;

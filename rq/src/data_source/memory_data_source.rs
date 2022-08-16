@@ -4,7 +4,7 @@ use crate::data_types::{record_batch::RecordBatch, schema::Schema};
 use anyhow::Result;
 
 #[derive(Clone)]
-pub(crate) struct MemoryDataSource {
+pub struct MemoryDataSource {
     schema: Schema,
     data: Vec<RecordBatch>,
 }

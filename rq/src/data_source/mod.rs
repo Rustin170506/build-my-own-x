@@ -1,13 +1,13 @@
-pub(crate) mod csv_data_source;
-pub(crate) mod memory_data_source;
-pub(crate) mod reader_parser;
+pub mod csv_data_source;
+pub mod memory_data_source;
+pub mod reader_parser;
 
 use self::{csv_data_source::CsvDataSource, memory_data_source::MemoryDataSource};
 use crate::data_types::{record_batch::RecordBatch, schema::Schema};
 
 use anyhow::Result;
 
-pub(crate) trait DataSource {
+pub trait DataSource {
     /// Return the schema for the underlying data source.
     fn get_schema(&self) -> &Schema;
     /// Scan the data source, selecting the specified columns.
@@ -15,7 +15,7 @@ pub(crate) trait DataSource {
 }
 
 #[derive(Clone)]
-pub(crate) enum Source {
+pub enum Source {
     Csv(CsvDataSource),
     Mem(MemoryDataSource),
 }

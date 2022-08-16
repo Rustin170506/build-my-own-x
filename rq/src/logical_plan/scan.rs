@@ -7,10 +7,10 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub(crate) struct Scan {
-    pub(crate) path: String,
-    pub(crate) data_source: Source,
-    pub(crate) projection: Vec<String>,
+pub struct Scan {
+    pub path: String,
+    pub data_source: Source,
+    pub projection: Vec<String>,
 }
 
 impl LogicalPlan for Scan {
@@ -49,7 +49,7 @@ impl Display for Scan {
 }
 
 impl Scan {
-    pub(crate) fn new(path: String, data_source: Source, projection: Vec<String>) -> Self {
+    pub fn new(path: String, data_source: Source, projection: Vec<String>) -> Self {
         Scan {
             path,
             data_source,

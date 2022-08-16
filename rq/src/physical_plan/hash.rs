@@ -1,5 +1,5 @@
 use std::{
-    any::{self, Any},
+    any::Any,
     collections::{hash_map::DefaultHasher, BTreeMap},
     fmt::Display,
     hash::{Hash, Hasher},
@@ -18,10 +18,8 @@ use crate::data_types::{
     schema::Schema,
 };
 
-use anyhow::{anyhow, Error, Result};
-use arrow::array::{
-    Array, ArrayBuilder, Float32Builder, Float64Builder, Int32Builder, Int64Builder,
-};
+use anyhow::Result;
+use arrow::array::{ArrayBuilder, Float32Builder, Float64Builder, Int32Builder, Int64Builder};
 use ordered_float::OrderedFloat;
 
 // AccumulatorMap is a map storing the accumulators for each group.
@@ -29,7 +27,7 @@ use ordered_float::OrderedFloat;
 type AccumulatorMap = BTreeMap<u64, (Vec<Box<dyn Any>>, Vec<Accumulator>)>;
 
 /// HashExec will hash the input record batches and group them by the hash value.
-pub(crate) struct HashExec {
+pub struct HashExec {
     input: Box<Plan>,
     schema: Schema,
     group_expr: Vec<Expr>,
@@ -37,7 +35,7 @@ pub(crate) struct HashExec {
 }
 
 impl HashExec {
-    pub(crate) fn new(
+    pub fn new(
         input: Plan,
         schema: Schema,
         group_expr: Vec<Expr>,
@@ -120,7 +118,7 @@ impl PhysicalPlan for HashExec {
         accumulator_map
             .iter()
             .enumerate()
-            .for_each(|(row_index, (_, (values, accumulators)))| {
+            .for_each(|(_row_index, (_, (values, accumulators)))| {
                 self.group_expr
                     .iter()
                     .enumerate()
@@ -174,25 +172,29 @@ fn append_value(build: &mut Box<dyn ArrayBuilder>, value: &Box<dyn Any>) {
             .as_any_mut()
             .downcast_mut::<Int32Builder>()
             .unwrap()
-            .append_value(*value.downcast_ref::<i32>().unwrap());
+            .append_value(*value.downcast_ref::<i32>().unwrap())
+            .unwrap();
     } else if build.as_any().is::<Int64Builder>() {
         build
             .as_any_mut()
             .downcast_mut::<Int64Builder>()
             .unwrap()
-            .append_value(*value.downcast_ref::<i64>().unwrap());
+            .append_value(*value.downcast_ref::<i64>().unwrap())
+            .unwrap();
     } else if build.as_any().is::<Float32Builder>() {
         build
             .as_any_mut()
             .downcast_mut::<Float32Builder>()
             .unwrap()
-            .append_value(*value.downcast_ref::<f32>().unwrap());
+            .append_value(*value.downcast_ref::<f32>().unwrap())
+            .unwrap();
     } else if build.as_any().is::<Float64Builder>() {
         build
             .as_any_mut()
             .downcast_mut::<Float64Builder>()
             .unwrap()
-            .append_value(*value.downcast_ref::<f64>().unwrap());
+            .append_value(*value.downcast_ref::<f64>().unwrap())
+            .unwrap();
     } else {
         unreachable!()
     }
@@ -219,12 +221,11 @@ impl Display for HashExec {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::*;
     use crate::{
         data_source::{csv_data_source::CsvDataSource, Source},
-        data_types::schema::{self, Field},
+        data_types::schema::Field,
         logical_plan::expr::AggregateFunction,
         physical_plan::{expr::Column, scan::ScanExec},
         test_util::rq_test_data,

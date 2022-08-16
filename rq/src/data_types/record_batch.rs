@@ -4,26 +4,26 @@ use super::{
 };
 
 #[derive(Clone)]
-pub(crate) struct RecordBatch {
-    pub(crate) schema: Schema,
-    pub(crate) fields: Vec<ArrayRef>,
+pub struct RecordBatch {
+    pub schema: Schema,
+    pub fields: Vec<ArrayRef>,
 }
 
 /// Batch of data organized in columns.
 impl RecordBatch {
-    pub(crate) fn new(schema: Schema, fields: Vec<ArrayRef>) -> Self {
+    pub fn new(schema: Schema, fields: Vec<ArrayRef>) -> Self {
         Self { schema, fields }
     }
     /// Access one column by index.
-    pub(crate) fn field(&self, index: usize) -> &ArrayRef {
+    pub fn field(&self, index: usize) -> &ArrayRef {
         &self.fields[index]
     }
 
-    pub(crate) fn row_count(&self) -> usize {
+    pub fn row_count(&self) -> usize {
         self.fields[0].size()
     }
 
-    pub(crate) fn column_count(&self) -> usize {
+    pub fn column_count(&self) -> usize {
         self.fields.len()
     }
 }

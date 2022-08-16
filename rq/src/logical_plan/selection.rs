@@ -8,9 +8,9 @@ use crate::data_types::schema::Schema;
 
 /// Logical plan representing a selection (a.k.a. filter) against an input.
 #[derive(Clone)]
-pub(crate) struct Selection {
-    pub(crate) input: Box<Plan>,
-    pub(crate) expr: Expr,
+pub struct Selection {
+    pub input: Box<Plan>,
+    pub expr: Expr,
 }
 
 impl LogicalPlan for Selection {
@@ -30,7 +30,7 @@ impl Display for Selection {
 }
 
 impl Selection {
-    pub(crate) fn new(input: Plan, expr: Expr) -> Self {
+    pub fn new(input: Plan, expr: Expr) -> Self {
         Selection {
             input: Box::new(input),
             expr,

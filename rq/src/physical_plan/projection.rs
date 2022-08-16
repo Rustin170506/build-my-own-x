@@ -9,14 +9,14 @@ use crate::data_types::{record_batch::RecordBatch, schema::Schema};
 use anyhow::Result;
 
 /// Execute a projection.
-pub(crate) struct ProjectionExec {
+pub struct ProjectionExec {
     input: Box<Plan>,
     schema: Schema,
     expr: Vec<Expr>,
 }
 
 impl ProjectionExec {
-    pub(crate) fn new(input: Plan, schema: Schema, expr: Vec<Expr>) -> Self {
+    pub fn new(input: Plan, schema: Schema, expr: Vec<Expr>) -> Self {
         Self {
             input: Box::new(input),
             schema,
@@ -31,7 +31,7 @@ impl PhysicalPlan for ProjectionExec {
     }
 
     fn execute(&self) -> Result<Box<dyn Iterator<Item = RecordBatch> + '_>> {
-        let mut input = self.input.execute()?;
+        let input = self.input.execute()?;
         Ok(Box::new(input.map(|b| {
             let fields = self
                 .expr
@@ -63,7 +63,6 @@ impl Display for ProjectionExec {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::*;
     use crate::{
@@ -75,7 +74,7 @@ mod tests {
 
     #[test]
     fn test_projection_execute() {
-        let mut data_path = rq_test_data("boolean_field.csv");
+        let data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source = CsvDataSource::new(data_path, schema.clone(), 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
@@ -97,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_display() {
-        let mut data_path = rq_test_data("boolean_field.csv");
+        let data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source = CsvDataSource::new(data_path, schema.clone(), 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);

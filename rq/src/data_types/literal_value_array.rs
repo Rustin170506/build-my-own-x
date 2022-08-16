@@ -6,7 +6,7 @@ use anyhow::{bail, Result};
 
 /// Represents a literal value
 #[derive(Clone)]
-pub(crate) struct LiteralValueArray<T> {
+pub struct LiteralValueArray<T> {
     arrow_type: DataType,
     value: T,
     size: usize,
@@ -30,7 +30,7 @@ impl<T: Clone + Any> ColumnArray for LiteralValueArray<T> {
 }
 
 impl<T: Clone + Any> LiteralValueArray<T> {
-    pub(crate) fn new(arrow_type: DataType, value: T, size: usize) -> Self {
+    pub fn new(arrow_type: DataType, value: T, size: usize) -> Self {
         Self {
             arrow_type,
             value,

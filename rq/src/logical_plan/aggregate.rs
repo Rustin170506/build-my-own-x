@@ -8,10 +8,10 @@ use crate::data_types::schema::Schema;
 
 /// Logical plan representing an aggregate query against an input.
 #[derive(Clone)]
-pub(crate) struct Aggregate {
-    pub(crate) input: Box<Plan>,
-    pub(crate) group_exprs: Vec<Expr>,
-    pub(crate) aggregate_exprs: Vec<Expr>,
+pub struct Aggregate {
+    pub input: Box<Plan>,
+    pub group_exprs: Vec<Expr>,
+    pub aggregate_exprs: Vec<Expr>,
 }
 
 impl LogicalPlan for Aggregate {
@@ -53,7 +53,7 @@ impl fmt::Display for Aggregate {
 }
 
 impl Aggregate {
-    pub(crate) fn new(input: Plan, group_exprs: Vec<Expr>, aggregate_exprs: Vec<Expr>) -> Self {
+    pub fn new(input: Plan, group_exprs: Vec<Expr>, aggregate_exprs: Vec<Expr>) -> Self {
         Aggregate {
             input: Box::new(input),
             group_exprs,

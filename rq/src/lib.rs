@@ -1,12 +1,9 @@
-// FIXME: This is a temporary solution to get the tests working.
-#![allow(dead_code)]
-#![allow(unused)]
-pub(crate) mod data_source;
-pub(crate) mod data_types;
-pub(crate) mod execution;
-pub(crate) mod logical_plan;
-pub(crate) mod optimizer;
-pub(crate) mod physical_plan;
-pub(crate) mod query_planner;
+pub mod data_source;
+pub mod data_types;
+pub mod execution;
+pub mod logical_plan;
+pub mod optimizer;
+pub mod physical_plan;
+pub mod query_planner;
 #[cfg(test)]
 mod test_util;
