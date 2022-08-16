@@ -227,19 +227,18 @@ mod tests {
         data_types::schema::{self, Field},
         logical_plan::expr::AggregateFunction,
         physical_plan::{expr::Column, scan::ScanExec},
+        test_util::rq_test_data,
     };
 
     fn get_hash_exec() -> HashExec {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/hash_test_filed.csv");
+        let data_path = rq_test_data("hash_test_filed.csv");
         let schema = Schema::new(vec![
             Field::new("c1".to_string(), DataType::Int32),
             Field::new("c2".to_string(), DataType::Int64),
             Field::new("c3".to_string(), DataType::Float32),
             Field::new("c4".to_string(), DataType::Float64),
         ]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 4);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 4);
         let scan = ScanExec::new(
             Source::Csv(csv_data_source),
             vec![

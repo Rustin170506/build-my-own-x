@@ -45,14 +45,13 @@ mod tests {
         data_types::{column_array::DataType, schema::Field},
         logical_plan::expr_fn::{col, lit},
         physical_plan::plan::PhysicalPlan,
+        test_util::rq_test_data,
     };
 
     #[test]
     fn test_execute_data_frame() {
         let ctx = ExecutionContext::new(3);
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/primitive_field.csv");
-        let path = data_path.into_os_string().into_string().unwrap();
+        let mut data_path = rq_test_data("primitive_field.csv");
         let schema = Schema::new(vec![
             Field::new("c1".to_string(), DataType::Int32),
             Field::new("c2".to_string(), DataType::Int32),
@@ -60,7 +59,7 @@ mod tests {
             Field::new("c4".to_string(), DataType::Int64),
         ]);
         let df = ctx
-            .csv(path, schema)
+            .csv(data_path, schema)
             .filter(col("c1").eq(lit(1_i32)))
             .project(vec![col("c1"), col("c2"), col("c3")]);
         let physical_plan = ctx.create_physical_plan(&df).unwrap();

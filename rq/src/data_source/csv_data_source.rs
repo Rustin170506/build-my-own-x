@@ -226,7 +226,10 @@ mod tests {
     use std::{any::Any, fmt::Debug, path::PathBuf};
 
     use super::*;
-    use crate::data_types::{column_array::DataType, schema::Field};
+    use crate::{
+        data_types::{column_array::DataType, schema::Field},
+        test_util::{get_primitive_field_data_source, rq_test_data},
+    };
 
     fn assert_type_and_values<T: Any + PartialEq + Debug>(
         batch: &RecordBatch,
@@ -251,11 +254,9 @@ mod tests {
 
     #[test]
     fn test_boolean_field_csv_data_source() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/boolean_field.csv");
+        let mut data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
         let batch = reader.next().unwrap();
 
@@ -284,22 +285,11 @@ mod tests {
 
     #[test]
     fn test_primitive_field_csv_data_source() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/primitive_field.csv");
-        let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int32),
-            Field::new("c2".to_string(), DataType::Int32),
-            Field::new("c3".to_string(), DataType::Int64),
-            Field::new("c4".to_string(), DataType::Int64),
-            Field::new("c5".to_string(), DataType::Float32),
-            Field::new("c6".to_string(), DataType::Float64),
-        ]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
-        let mut reader = csv_data_source
+        let (_, csv_data_source) = get_primitive_field_data_source();
+        let mut batchs = csv_data_source
             .scan(vec!["c1", "c2", "c3", "c4", "c5", "c6"])
             .unwrap();
-        let batch = reader.next().unwrap();
+        let batch = batchs.next().unwrap();
 
         assert_eq!(batch.row_count(), 3);
         assert_eq!(batch.column_count(), 6);
@@ -323,11 +313,9 @@ mod tests {
 
     #[test]
     fn test_string_field_csv_data_source() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/string_field.csv");
+        let mut data_path = rq_test_data("string_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Utf8)]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
         let batch = reader.next().unwrap();
 
@@ -365,18 +353,7 @@ mod tests {
 
     #[test]
     fn test_field_with_projection() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/primitive_field.csv");
-        let schema = Schema::new(vec![
-            Field::new("c1".to_string(), DataType::Int32),
-            Field::new("c2".to_string(), DataType::Int32),
-            Field::new("c3".to_string(), DataType::Int64),
-            Field::new("c4".to_string(), DataType::Int64),
-            Field::new("c5".to_string(), DataType::Float32),
-            Field::new("c6".to_string(), DataType::Float64),
-        ]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let (_, csv_data_source) = get_primitive_field_data_source();
         let mut reader = csv_data_source.scan(vec!["c4", "c5", "c6"]).unwrap();
         let batch = reader.next().unwrap();
 

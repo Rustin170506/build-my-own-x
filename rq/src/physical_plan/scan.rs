@@ -65,15 +65,14 @@ mod tests {
             column_array::DataType,
             schema::{Field, Schema},
         },
+        test_util::rq_test_data,
     };
 
     #[test]
     fn test_scan_display() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/boolean_field.csv");
+        let mut data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
-        let csv_data_source =
-            CsvDataSource::new(data_path.into_os_string().into_string().unwrap(), schema, 3);
+        let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         assert_eq!(scan.to_string(), "ScanExec: projection=c1");
     }

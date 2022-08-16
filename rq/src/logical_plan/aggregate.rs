@@ -75,12 +75,12 @@ mod tests {
             plan::{LogicalPlan, Plan},
             scan::Scan,
         },
-        util::get_data_source,
+        test_util::get_primitive_field_data_source,
     };
 
     #[test]
     fn test_schema() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let group_exprs = vec![col("c1")];
         let aggregate_exprs = vec![max(col("c2"))];
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_display() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let col1 = col("c1");
         let group_exprs = vec![col1.clone()];

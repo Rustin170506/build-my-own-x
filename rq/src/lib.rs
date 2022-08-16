@@ -9,4 +9,4 @@ pub(crate) mod optimizer;
 pub(crate) mod physical_plan;
 pub(crate) mod query_planner;
 #[cfg(test)]
-mod util;
+mod test_util;

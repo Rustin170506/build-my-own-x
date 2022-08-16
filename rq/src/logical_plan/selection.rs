@@ -42,12 +42,12 @@ impl Selection {
 mod tests {
     use crate::{
         logical_plan::{expr_fn::col, plan::Plan, scan::Scan, selection::Selection},
-        util::get_data_source,
+        test_util::get_primitive_field_data_source,
     };
 
     #[test]
     fn test_display() {
-        let (path, csv_data_source) = get_data_source();
+        let (path, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
         let c1 = col("c1");
         let plan = Selection::new(Plan::Scan(scan_plan), c1);

@@ -70,18 +70,14 @@ mod tests {
         data_source::{csv_data_source::CsvDataSource, Source},
         data_types::{column_array::DataType, schema::Field},
         physical_plan::{expr::Column, scan::ScanExec},
+        test_util::rq_test_data,
     };
 
     #[test]
     fn test_projection_execute() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/boolean_field.csv");
+        let mut data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema.clone(),
-            3,
-        );
+        let csv_data_source = CsvDataSource::new(data_path, schema.clone(), 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let projection =
             ProjectionExec::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
@@ -101,14 +97,9 @@ mod tests {
 
     #[test]
     fn test_display() {
-        let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        data_path.push("tests/data/boolean_field.csv");
+        let mut data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
-        let csv_data_source = CsvDataSource::new(
-            data_path.into_os_string().into_string().unwrap(),
-            schema.clone(),
-            3,
-        );
+        let csv_data_source = CsvDataSource::new(data_path, schema.clone(), 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);
         let projection =
             ProjectionExec::new(Plan::Scan(scan), schema, vec![Expr::Column(Column::new(0))]);
