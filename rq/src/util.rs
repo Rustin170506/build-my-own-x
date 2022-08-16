@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     data_source::{csv_data_source::CsvDataSource, Source},
     data_types::{
@@ -5,7 +7,6 @@ use crate::{
         schema::{Field, Schema},
     },
 };
-use std::path::PathBuf;
 
 pub(crate) fn get_data_source() -> (String, Source) {
     let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
