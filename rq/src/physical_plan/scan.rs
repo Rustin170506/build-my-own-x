@@ -9,13 +9,13 @@ use crate::{
 use anyhow::Result;
 
 // Scan a data source with optional push-down projection.
-pub(crate) struct ScanExec {
+pub struct ScanExec {
     data_source: Source,
     projection: Vec<String>,
 }
 
 impl ScanExec {
-    pub(crate) fn new(data_source: Source, projection: Vec<String>) -> Self {
+    pub fn new(data_source: Source, projection: Vec<String>) -> Self {
         ScanExec {
             data_source,
             projection,
@@ -56,11 +56,10 @@ impl Display for ScanExec {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::ScanExec;
     use crate::{
-        data_source::{csv_data_source::CsvDataSource, DataSource, Source},
+        data_source::{csv_data_source::CsvDataSource, Source},
         data_types::{
             column_array::DataType,
             schema::{Field, Schema},
@@ -70,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_scan_display() {
-        let mut data_path = rq_test_data("boolean_field.csv");
+        let data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let scan = ScanExec::new(Source::Csv(csv_data_source), vec!["c1".to_string()]);

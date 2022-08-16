@@ -8,39 +8,39 @@ use super::{
 use crate::data_types::schema::Schema;
 
 #[derive(Clone)]
-pub(crate) struct DataFrame {
+pub struct DataFrame {
     plan: Plan,
 }
 
 impl DataFrame {
-    pub(crate) fn new(plan: Plan) -> Self {
+    pub fn new(plan: Plan) -> Self {
         DataFrame { plan }
     }
     /// Apply a projection.
-    pub(crate) fn project(&self, expr: Vec<Expr>) -> Self {
+    pub fn project(&self, expr: Vec<Expr>) -> Self {
         let plan = Plan::Projection(Projection::new(self.plan.clone(), expr));
         DataFrame::new(plan)
     }
 
     /// Apply a selection.
-    pub(crate) fn filter(&self, expr: Expr) -> Self {
+    pub fn filter(&self, expr: Expr) -> Self {
         let plan = Plan::Selection(Selection::new(self.plan.clone(), expr));
         DataFrame::new(plan)
     }
 
     /// Apply an aggregation.
-    pub(crate) fn aggregate(&self, group_by: Vec<Expr>, aggregates: Vec<Expr>) -> Self {
+    pub fn aggregate(&self, group_by: Vec<Expr>, aggregates: Vec<Expr>) -> Self {
         let plan = Plan::Aggregate(Aggregate::new(self.plan.clone(), group_by, aggregates));
         DataFrame::new(plan)
     }
 
     /// Returns the schema of the data that will be produced by this DataFrame.
-    pub(crate) fn schema(&self) -> Schema {
+    pub fn schema(&self) -> Schema {
         self.plan.schema()
     }
 
     /// Get the logical plan.
-    pub(crate) fn logical_plan(&self) -> Plan {
+    pub fn logical_plan(&self) -> Plan {
         self.plan.clone()
     }
 }
@@ -57,7 +57,7 @@ mod tests {
         test_util::get_primitive_field_data_source,
     };
 
-    fn csv() -> (DataFrame) {
+    fn csv() -> DataFrame {
         let (_, csv_data_source) = get_primitive_field_data_source();
         let scan_plan = Scan::new(
             "data_frame_test".to_string(),

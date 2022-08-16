@@ -7,9 +7,9 @@ use super::{
 use crate::data_types::schema::Schema;
 
 #[derive(Clone)]
-pub(crate) struct Projection {
-    pub(crate) input: Box<Plan>,
-    pub(crate) exprs: Vec<Expr>,
+pub struct Projection {
+    pub input: Box<Plan>,
+    pub exprs: Vec<Expr>,
 }
 
 impl LogicalPlan for Projection {
@@ -42,7 +42,7 @@ impl Display for Projection {
 }
 
 impl Projection {
-    pub(crate) fn new(input: Plan, exprs: Vec<Expr>) -> Self {
+    pub fn new(input: Plan, exprs: Vec<Expr>) -> Self {
         Projection {
             input: Box::new(input),
             exprs,

@@ -1,7 +1,7 @@
-pub(crate) mod aggregate;
-pub(crate) mod expr;
-pub(crate) mod hash;
-pub(crate) mod plan;
-pub(crate) mod projection;
-pub(crate) mod scan;
-pub(crate) mod selection;
+pub mod aggregate;
+pub mod expr;
+pub mod hash;
+pub mod plan;
+pub mod projection;
+pub mod scan;
+pub mod selection;

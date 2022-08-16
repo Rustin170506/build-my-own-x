@@ -3,7 +3,7 @@ use arrow::datatypes::*;
 
 /// Specialized parsing implementations
 /// used by csv reader
-pub(crate) trait Parser: ArrowPrimitiveType {
+pub trait Parser: ArrowPrimitiveType {
     fn parse(string: &str) -> Option<Self::Native> {
         string.parse::<Self::Native>().ok()
     }

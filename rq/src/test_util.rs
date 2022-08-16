@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-pub(crate) fn get_primitive_field_data_source() -> (String, Source) {
+pub fn get_primitive_field_data_source() -> (String, Source) {
     let schema = Schema::new(vec![
         Field::new("c1".to_string(), DataType::Int32),
         Field::new("c2".to_string(), DataType::Int32),
@@ -23,7 +23,7 @@ pub(crate) fn get_primitive_field_data_source() -> (String, Source) {
 }
 
 /// Returns the rq test data directory.
-pub(crate) fn rq_test_data(file_name: &str) -> String {
+pub fn rq_test_data(file_name: &str) -> String {
     let mut data_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     data_path.push(format!("tests/data/{}", file_name));
     data_path

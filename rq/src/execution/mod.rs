@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use crate::{
     data_source::{csv_data_source::CsvDataSource, Source},
-    data_types::{record_batch::RecordBatch, schema::Schema},
+    data_types::schema::Schema,
     logical_plan::{data_frame::DataFrame, plan::Plan as LogicalPlan, scan::Scan},
     optimizer::Optimizer,
     physical_plan::plan::Plan as PhysicalPlan,
@@ -11,26 +9,22 @@ use crate::{
 
 use anyhow::Result;
 
-pub(crate) struct ExecutionContext {
+pub struct ExecutionContext {
     batch_size: usize,
-    tables: HashMap<String, DataFrame>,
 }
 
 impl ExecutionContext {
-    pub(crate) fn new(batch_size: usize) -> Self {
-        ExecutionContext {
-            batch_size,
-            tables: HashMap::new(),
-        }
+    pub fn new(batch_size: usize) -> Self {
+        ExecutionContext { batch_size }
     }
 
-    pub(crate) fn csv(&self, file_path: String, schema: Schema) -> DataFrame {
+    pub fn csv(&self, file_path: String, schema: Schema) -> DataFrame {
         let csv_data_source = CsvDataSource::new(file_path.clone(), schema, self.batch_size);
         let scan_plan = Scan::new(file_path, Source::Csv(csv_data_source), vec![]);
         DataFrame::new(LogicalPlan::Scan(scan_plan))
     }
 
-    pub(crate) fn create_physical_plan(&self, df: &DataFrame) -> Result<PhysicalPlan> {
+    pub fn create_physical_plan(&self, df: &DataFrame) -> Result<PhysicalPlan> {
         let optimized_plan = Optimizer::optimize(&df.logical_plan());
         QueryPlanner::create_physical_plan(&optimized_plan)
     }
@@ -38,7 +32,6 @@ impl ExecutionContext {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::*;
     use crate::{
@@ -51,7 +44,7 @@ mod tests {
     #[test]
     fn test_execute_data_frame() {
         let ctx = ExecutionContext::new(3);
-        let mut data_path = rq_test_data("primitive_field.csv");
+        let data_path = rq_test_data("primitive_field.csv");
         let schema = Schema::new(vec![
             Field::new("c1".to_string(), DataType::Int32),
             Field::new("c2".to_string(), DataType::Int32),

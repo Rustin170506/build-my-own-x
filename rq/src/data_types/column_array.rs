@@ -6,7 +6,7 @@ use arrow::datatypes::DataType as ArrowDataType;
 // Data type of the column.
 // We only support the following types.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub(crate) enum DataType {
+pub enum DataType {
     Boolean,
     Int32,
     Int64,
@@ -42,7 +42,7 @@ impl Display for DataType {
 }
 
 /// Abstraction over different implementations of a column vector.
-pub(crate) trait ColumnArray {
+pub trait ColumnArray {
     /// Return the type of the column.
     fn get_type(&self) -> DataType;
     /// Return the value at the given index.
@@ -51,7 +51,7 @@ pub(crate) trait ColumnArray {
     fn size(&self) -> usize;
 }
 
-pub(crate) type ArrayRef = Rc<dyn ColumnArray>;
+pub type ArrayRef = Rc<dyn ColumnArray>;
 
 impl ColumnArray for ArrayRef {
     fn get_type(&self) -> DataType {

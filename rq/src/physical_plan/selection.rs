@@ -1,25 +1,21 @@
-use std::{fmt::Display, rc::Rc};
+use std::fmt::Display;
 
 use super::{
     expr::{evaluate_from_values, Expr, PhysicalExpr},
     plan::{PhysicalPlan, Plan},
 };
-use crate::data_types::{
-    arrow_field_array::ArrowFieldArray, column_array::ArrayRef, record_batch::RecordBatch,
-    schema::Schema,
-};
+use crate::data_types::{column_array::ArrayRef, record_batch::RecordBatch, schema::Schema};
 
-use anyhow::{anyhow, Error, Result};
-use arrow::array::BooleanArray;
+use anyhow::{Error, Result};
 
 /// Execute a selection.
-pub(crate) struct SelectionExec {
+pub struct SelectionExec {
     input: Box<Plan>,
     expr: Expr,
 }
 
 impl SelectionExec {
-    pub(crate) fn new(input: Plan, expr: Expr) -> Self {
+    pub fn new(input: Plan, expr: Expr) -> Self {
         Self {
             input: Box::new(input),
             expr,
@@ -48,7 +44,7 @@ impl PhysicalPlan for SelectionExec {
         Ok(Box::new(
             batch
                 .map(|b| {
-                    let mut selection = &self.expr.evaluate(&b)?;
+                    let selection = &self.expr.evaluate(&b)?;
                     let schema = self.input.schema();
                     let filtered_fields = schema
                         .fields
@@ -76,7 +72,6 @@ impl Display for SelectionExec {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::*;
     use crate::{

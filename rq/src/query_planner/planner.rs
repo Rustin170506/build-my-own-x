@@ -1,12 +1,8 @@
 use crate::{
     data_types::schema::{Field, Schema},
     logical_plan::{
-        expr::{
-            AggregateFunction, Expr as LogicalExpr, LogicalExpr as _, Operator,
-            ScalarValue as LogicalScalarValue,
-        },
+        expr::{Expr as LogicalExpr, LogicalExpr as _, ScalarValue as LogicalScalarValue},
         plan::{LogicalPlan as _, Plan as LogicalPlan},
-        projection,
     },
     physical_plan::{
         aggregate::AggregateExpr,
@@ -24,11 +20,11 @@ use crate::{
 use anyhow::{anyhow, Error, Result};
 
 /// The query planner creates a physical query plan from a logical query plan.
-pub(crate) struct QueryPlanner;
+pub struct QueryPlanner;
 
 impl QueryPlanner {
     /// Create a physical plan from a logical plan.
-    pub(crate) fn create_physical_plan(plan: &LogicalPlan) -> Result<PhysicalPlan> {
+    pub fn create_physical_plan(plan: &LogicalPlan) -> Result<PhysicalPlan> {
         match plan {
             LogicalPlan::Scan(scan) => {
                 let scan = ScanExec::new(scan.data_source.clone(), scan.projection.clone());
@@ -129,7 +125,7 @@ impl QueryPlanner {
                 return QueryPlanner::create_physical_expr(a.expr.as_ref(), input);
             }
             LogicalExpr::Not(_) => unreachable!(),
-            LogicalExpr::ScalarFunction(s) => unreachable!(),
+            LogicalExpr::ScalarFunction(_s) => unreachable!(),
             LogicalExpr::AggregateFunction(_) => unreachable!(),
         }
     }
@@ -137,12 +133,9 @@ impl QueryPlanner {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use super::*;
     use crate::{
-        data_source::{csv_data_source::CsvDataSource, Source},
-        data_types::column_array::DataType,
         logical_plan::{
             aggregate::Aggregate,
             expr_fn::{col, lit, max},

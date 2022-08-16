@@ -1,16 +1,12 @@
 use std::fmt::Display;
 
 use super::{hash::HashExec, projection::ProjectionExec, scan::ScanExec, selection::SelectionExec};
-use crate::{
-    data_source::{DataSource, Source},
-    data_types::{record_batch::RecordBatch, schema::Schema},
-    logical_plan::expr::Expr,
-};
+use crate::data_types::{record_batch::RecordBatch, schema::Schema};
 
 use anyhow::Result;
 
 /// A physical plan represents an executable piece of code that will produce data.
-pub(crate) trait PhysicalPlan: Display {
+pub trait PhysicalPlan: Display {
     /// Return the schema.
     fn schema(&self) -> Schema;
 
@@ -36,7 +32,7 @@ pub(crate) trait PhysicalPlan: Display {
     }
 }
 
-pub(crate) enum Plan {
+pub enum Plan {
     Scan(ScanExec),
     Projection(ProjectionExec),
     Selection(SelectionExec),

@@ -3,13 +3,13 @@ use arrow::datatypes::{Field as ArrowField, Schema as ArrowSchema};
 use super::column_array::DataType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Field {
-    pub(crate) name: String,
-    pub(crate) data_type: DataType,
+pub struct Field {
+    pub name: String,
+    pub data_type: DataType,
 }
 
 impl Field {
-    pub(crate) fn new(name: String, data_type: DataType) -> Self {
+    pub fn new(name: String, data_type: DataType) -> Self {
         Self { name, data_type }
     }
 }
@@ -22,16 +22,16 @@ impl From<Field> for ArrowField {
 
 /// A schema is a list of fields.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Schema {
-    pub(crate) fields: Vec<Field>,
+pub struct Schema {
+    pub fields: Vec<Field>,
 }
 
 impl Schema {
-    pub(crate) fn new(fields: Vec<Field>) -> Schema {
+    pub fn new(fields: Vec<Field>) -> Schema {
         Schema { fields }
     }
 
-    pub(crate) fn select(&self, names: Vec<&str>) -> Schema {
+    pub fn select(&self, names: Vec<&str>) -> Schema {
         let mut filterd_fields = vec![];
         names.into_iter().for_each(|name| {
             let fields: Vec<&Field> = self.fields.iter().filter(|f| f.name == name).collect();

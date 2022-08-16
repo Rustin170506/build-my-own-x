@@ -12,12 +12,12 @@ use crate::{
 use std::collections::HashSet;
 
 /// Rule for optimizing a logical plan.
-pub(crate) trait OptimizerRule {
+pub trait OptimizerRule {
     fn optimize(plan: &Plan) -> Plan;
 }
 
 /// Rule for pushing down projections.
-pub(crate) struct ProjectionPushDownRule;
+pub struct ProjectionPushDownRule;
 
 impl ProjectionPushDownRule {
     fn push_down(plan: &Plan, column_names: &mut HashSet<String>) -> Plan {
@@ -137,7 +137,7 @@ mod tests {
 
         let expr = vec![col("c1"), col("c2"), lit(1), and(col("c3"), col("c4"))];
         let (path, csv_data_source) = get_primitive_field_data_source();
-        let schema = csv_data_source.get_schema().clone();
+        let _schema = csv_data_source.get_schema().clone();
         let plan = Plan::Scan(Scan::new(path, csv_data_source, vec![]));
         assert_eq!(accum.len(), 0);
         extract_columns(&expr, &plan, &mut accum);

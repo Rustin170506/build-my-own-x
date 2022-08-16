@@ -10,16 +10,15 @@ use anyhow::{Ok, Result};
 use arrow::{
     array::{BooleanArray, PrimitiveArray, StringArray},
     datatypes::{
-        ArrowPrimitiveType, DataType as ArrowDataType, Field, Float32Type, Float64Type, Int16Type,
-        Int32Type, Int64Type, Int8Type, Schema as ArrowSchema, UInt16Type, UInt32Type, UInt64Type,
-        UInt8Type,
+        ArrowPrimitiveType, DataType as ArrowDataType, Field, Float32Type, Float64Type, Int32Type,
+        Int64Type, Schema as ArrowSchema,
     },
 };
 use csv::{Reader, ReaderBuilder, StringRecord};
 
 // A data source that reads from a CSV file.
 #[derive(Clone)]
-pub(crate) struct CsvDataSource {
+pub struct CsvDataSource {
     file_path: String,
     schema: Schema,
     // The total number of rows in the CSV file.
@@ -55,7 +54,7 @@ impl DataSource for CsvDataSource {
 }
 
 impl CsvDataSource {
-    pub(crate) fn new(file_name: String, schema: Schema, batch_size: usize) -> Self {
+    pub fn new(file_name: String, schema: Schema, batch_size: usize) -> Self {
         Self {
             file_path: file_name,
             schema,
@@ -223,7 +222,7 @@ fn build_string_array(rows: &[StringRecord], col_index: usize) -> ArrayRef {
 
 #[cfg(test)]
 mod tests {
-    use std::{any::Any, fmt::Debug, path::PathBuf};
+    use std::{any::Any, fmt::Debug};
 
     use super::*;
     use crate::{
@@ -254,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_boolean_field_csv_data_source() {
-        let mut data_path = rq_test_data("boolean_field.csv");
+        let data_path = rq_test_data("boolean_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Boolean)]);
         let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
@@ -313,7 +312,7 @@ mod tests {
 
     #[test]
     fn test_string_field_csv_data_source() {
-        let mut data_path = rq_test_data("string_field.csv");
+        let data_path = rq_test_data("string_field.csv");
         let schema = Schema::new(vec![Field::new("c1".to_string(), DataType::Utf8)]);
         let csv_data_source = CsvDataSource::new(data_path, schema, 3);
         let mut reader = csv_data_source.scan(vec!["c1"]).unwrap();
