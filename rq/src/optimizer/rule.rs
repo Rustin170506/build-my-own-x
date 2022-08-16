@@ -13,29 +13,29 @@ use std::collections::HashSet;
 
 /// Rule for optimizing a logical plan.
 pub(crate) trait OptimizerRule {
-    fn optimize(&self, plan: &Plan) -> Plan;
+    fn optimize(plan: &Plan) -> Plan;
 }
 
 /// Rule for pushing down projections.
 pub(crate) struct ProjectionPushDownRule;
 
 impl ProjectionPushDownRule {
-    fn push_down(&self, plan: &Plan, column_names: &mut HashSet<String>) -> Plan {
+    fn push_down(plan: &Plan, column_names: &mut HashSet<String>) -> Plan {
         match plan {
             Plan::Projection(p) => {
                 extract_columns(&p.exprs, &p.input, column_names);
-                let input = self.push_down(&p.input, column_names);
+                let input = ProjectionPushDownRule::push_down(&p.input, column_names);
                 Plan::Projection(Projection::new(input, p.exprs.clone()))
             }
             Plan::Selection(s) => {
                 extract_column(&s.expr, &s.input, column_names);
-                let input = self.push_down(&s.input, column_names);
+                let input = ProjectionPushDownRule::push_down(&s.input, column_names);
                 Plan::Selection(Selection::new(input, s.expr.clone()))
             }
             Plan::Aggregate(a) => {
                 extract_columns(&a.group_exprs, &a.input, column_names);
                 extract_columns(&a.aggregate_exprs, &a.input, column_names);
-                let input = self.push_down(&a.input, column_names);
+                let input = ProjectionPushDownRule::push_down(&a.input, column_names);
                 Plan::Aggregate(Aggregate::new(
                     input,
                     a.group_exprs.clone(),
@@ -64,8 +64,8 @@ impl ProjectionPushDownRule {
 }
 
 impl OptimizerRule for ProjectionPushDownRule {
-    fn optimize(&self, plan: &Plan) -> Plan {
-        self.push_down(plan, &mut HashSet::new())
+    fn optimize(plan: &Plan) -> Plan {
+        ProjectionPushDownRule::push_down(plan, &mut HashSet::new())
     }
 }
 
@@ -151,8 +151,7 @@ mod tests {
             vec![min(col("c2")), max(col("c2")), count(col("c2"))],
         );
 
-        let rule = ProjectionPushDownRule;
-        let optimized_plan = rule.optimize(&df.logical_plan());
+        let optimized_plan = ProjectionPushDownRule::optimize(&df.logical_plan());
         assert_eq!(
             "Aggregate: groupExpr=#c1, aggregateExpr=MIN(#c2),MAX(#c2),COUNT(#c2)\n\tScan: push_down_test; projection=[c1,c2]\n",
             optimized_plan.pretty(0)
@@ -165,8 +164,7 @@ mod tests {
             .filter(col("c1").eq(lit(1)))
             .project(vec![col("c1"), col("c2"), col("c3")]);
 
-        let rule = ProjectionPushDownRule;
-        let optimized_plan = rule.optimize(&df.logical_plan());
+        let optimized_plan = ProjectionPushDownRule::optimize(&df.logical_plan());
         assert_eq!(
             "Projection: #c1,#c2,#c3\n\tSelection: #c1 = 1\n\t\tScan: push_down_test; projection=[c1,c2,c3]\n",
             optimized_plan.pretty(0)
