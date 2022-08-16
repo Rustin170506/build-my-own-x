@@ -7,8 +7,7 @@ use crate::logical_plan::plan::Plan;
 pub(crate) struct Optimizer;
 
 impl Optimizer {
-    pub(crate) fn optimize(&self, plan: &Plan) -> Plan {
-        let rule = ProjectionPushDownRule;
-        rule.optimize(plan)
+    pub(crate) fn optimize(plan: &Plan) -> Plan {
+        ProjectionPushDownRule::optimize(plan)
     }
 }

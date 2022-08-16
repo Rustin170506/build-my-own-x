@@ -28,18 +28,18 @@ pub(crate) struct QueryPlanner;
 
 impl QueryPlanner {
     /// Create a physical plan from a logical plan.
-    pub(crate) fn create_physical_plan(&self, plan: &LogicalPlan) -> Result<PhysicalPlan> {
+    pub(crate) fn create_physical_plan(plan: &LogicalPlan) -> Result<PhysicalPlan> {
         match plan {
             LogicalPlan::Scan(scan) => {
                 let scan = ScanExec::new(scan.data_source.clone(), scan.projection.clone());
                 Ok(PhysicalPlan::Scan(scan))
             }
             LogicalPlan::Projection(projection) => {
-                let input = self.create_physical_plan(projection.input.as_ref())?;
+                let input = QueryPlanner::create_physical_plan(projection.input.as_ref())?;
                 let projection_exprs = projection
                     .exprs
                     .iter()
-                    .map(|expr| self.create_physical_expr(expr, projection.input.as_ref()))
+                    .map(|expr| QueryPlanner::create_physical_expr(expr, projection.input.as_ref()))
                     .collect::<Result<Vec<PhysicalExpr>, _>>()?;
                 let projection_schema = Schema::new(
                     projection
@@ -53,25 +53,27 @@ impl QueryPlanner {
                 Ok(PhysicalPlan::Projection(projection_exec))
             }
             LogicalPlan::Selection(s) => {
-                let input = self.create_physical_plan(s.input.as_ref())?;
-                let filer_expr = self.create_physical_expr(&s.expr, s.input.as_ref())?;
+                let input = QueryPlanner::create_physical_plan(s.input.as_ref())?;
+                let filer_expr = QueryPlanner::create_physical_expr(&s.expr, s.input.as_ref())?;
                 let selection_exec = SelectionExec::new(input, filer_expr);
                 Ok(PhysicalPlan::Selection(selection_exec))
             }
             LogicalPlan::Aggregate(a) => {
-                let input = self.create_physical_plan(a.input.as_ref())?;
+                let input = QueryPlanner::create_physical_plan(a.input.as_ref())?;
                 let group_exprs = a
                     .group_exprs
                     .iter()
-                    .map(|expr| self.create_physical_expr(expr, a.input.as_ref()))
+                    .map(|expr| QueryPlanner::create_physical_expr(expr, a.input.as_ref()))
                     .collect::<Result<Vec<PhysicalExpr>, _>>()?;
                 let aggr_exprs = a
                     .aggregate_exprs
                     .iter()
                     .map(|expr| match expr {
                         LogicalExpr::AggregateFunction(agg) => {
-                            let expr =
-                                self.create_physical_expr(agg.expr.as_ref(), a.input.as_ref())?;
+                            let expr = QueryPlanner::create_physical_expr(
+                                agg.expr.as_ref(),
+                                a.input.as_ref(),
+                            )?;
                             Ok::<_, Error>(AggregateExpr::new(expr, agg.fun.clone()))
                         }
                         _ => unreachable!(),
@@ -84,11 +86,7 @@ impl QueryPlanner {
     }
 
     /// Create a physical expression from a logical expression.
-    fn create_physical_expr(
-        &self,
-        expr: &LogicalExpr,
-        input: &LogicalPlan,
-    ) -> Result<PhysicalExpr> {
+    fn create_physical_expr(expr: &LogicalExpr, input: &LogicalPlan) -> Result<PhysicalExpr> {
         match expr {
             LogicalExpr::Column(c) => {
                 let index = input.schema().fields.iter().position(|f| f.name == c.name);
@@ -115,12 +113,12 @@ impl QueryPlanner {
                 Ok(PhysicalExpr::Literal(l))
             }
             LogicalExpr::Cast(c) => {
-                let expr = self.create_physical_expr(c.expr.as_ref(), input)?;
+                let expr = QueryPlanner::create_physical_expr(c.expr.as_ref(), input)?;
                 Ok(PhysicalExpr::Cast(Cast::new(expr, c.data_type.clone())))
             }
             LogicalExpr::BinaryExpr(b) => {
-                let l = self.create_physical_expr(b.left.as_ref(), input)?;
-                let r = self.create_physical_expr(b.right.as_ref(), input)?;
+                let l = QueryPlanner::create_physical_expr(b.left.as_ref(), input)?;
+                let r = QueryPlanner::create_physical_expr(b.right.as_ref(), input)?;
                 let binary_expr = BinaryExpr::new(b.op, l, r);
                 Ok(PhysicalExpr::BinaryExpr(binary_expr))
             }
@@ -128,7 +126,7 @@ impl QueryPlanner {
                 // Note that there is no physical expression for an alias since the alias
                 // only affects the name using in the planning phase and not how the aliased
                 // expression is executed
-                return self.create_physical_expr(a.expr.as_ref(), input);
+                return QueryPlanner::create_physical_expr(a.expr.as_ref(), input);
             }
             LogicalExpr::Not(_) => unreachable!(),
             LogicalExpr::ScalarFunction(s) => unreachable!(),
@@ -178,8 +176,7 @@ mod tests {
         let aggregate_exprs = vec![max(col1)];
         let agg = Aggregate::new(Plan::Scan(scan_plan), group_exprs, aggregate_exprs);
         let logical_plan = Plan::Aggregate(agg);
-        let planner = QueryPlanner {};
-        let physical_plan = planner.create_physical_plan(&logical_plan);
+        let physical_plan = QueryPlanner::create_physical_plan(&logical_plan);
         assert!(physical_plan.is_ok());
         assert!(matches!(physical_plan.unwrap(), PhysicalPlan::Hash(_)));
     }
@@ -189,8 +186,8 @@ mod tests {
         let logical_expr = lit(1);
         let (path, csv_data_source) = get_data_source();
         let scan_plan = Scan::new(path, csv_data_source, vec![]);
-        let planner = QueryPlanner {};
-        let physical_plan = planner.create_physical_expr(&logical_expr, &Plan::Scan(scan_plan));
+        let physical_plan =
+            QueryPlanner::create_physical_expr(&logical_expr, &Plan::Scan(scan_plan));
         assert!(physical_plan.is_ok());
         assert!(matches!(
             physical_plan.unwrap(),

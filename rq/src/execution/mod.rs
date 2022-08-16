@@ -31,8 +31,8 @@ impl ExecutionContext {
     }
 
     pub(crate) fn create_physical_plan(&self, df: &DataFrame) -> Result<PhysicalPlan> {
-        let optimized_plan = Optimizer.optimize(&df.logical_plan());
-        QueryPlanner.create_physical_plan(&optimized_plan)
+        let optimized_plan = Optimizer::optimize(&df.logical_plan());
+        QueryPlanner::create_physical_plan(&optimized_plan)
     }
 }
 
