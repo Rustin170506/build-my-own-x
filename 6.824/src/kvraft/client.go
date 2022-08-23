@@ -8,7 +8,7 @@ import "crypto/rand"
 import "math/big"
 
 // retryInterval is the interval between retries to send an RPC.
-const retryInterval = time.Millisecond * 100
+const retryInterval = time.Millisecond * 60
 
 type Clerk struct {
 	servers []*labrpc.ClientEnd
@@ -49,8 +49,13 @@ func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
 // arguments. and reply must be passed as a pointer.
 //
 func (ck *Clerk) Get(key string) string {
-	args := GetArgs{Key: key}
-	DPrintf("%d get key: %s", ck.clientID, key)
+	args := GetArgs{
+		Key:       key,
+		RequestID: ck.requestID,
+		ClientID:  ck.clientID,
+	}
+	ck.requestID++
+	DPrintf("%d get key: %s", ck.clientID, args.Key)
 	for {
 		var reply GetReply
 		if ck.callLeader("KVServer.Get", &args, &reply) {
@@ -79,7 +84,7 @@ func (ck *Clerk) Get(key string) string {
 func (ck *Clerk) PutAppend(key string, value string, op string) {
 	args := PutAppendArgs{Key: key, Value: value, Op: op, RequestID: ck.requestID, ClientID: ck.clientID}
 	ck.requestID++
-	DPrintf("%d put/append args: %v", ck.clientID, args)
+	DPrintf("%d put/append key: %s, value: %s", ck.clientID, args.Key, args.Value)
 	for {
 		var reply PutAppendReply
 		if ck.callLeader("KVServer.PutAppend", &args, &reply) {
@@ -93,10 +98,10 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 }
 
 func (ck *Clerk) Put(key string, value string) {
-	ck.PutAppend(key, value, "Put")
+	ck.PutAppend(key, value, PutOp)
 }
 func (ck *Clerk) Append(key string, value string) {
-	ck.PutAppend(key, value, "Append")
+	ck.PutAppend(key, value, AppendOp)
 }
 
 func (ck *Clerk) callLeader(rpcname string, args interface{}, reply interface{}) bool {

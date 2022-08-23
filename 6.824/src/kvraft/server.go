@@ -1,15 +1,25 @@
 package kvraft
 
 import (
-	"../labgob"
-	"../labrpc"
 	"log"
-	"../raft"
 	"sync"
 	"sync/atomic"
+	"time"
+
+	"../labgob"
+	"../labrpc"
+	"../raft"
 )
 
-const Debug = 0
+const (
+	GetOp    = "Get"
+	PutOp    = "Put"
+	AppendOp = "Append"
+)
+
+const Timeout = 100 * time.Millisecond
+
+const Debug = 1
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
 	if Debug > 0 {
@@ -18,11 +28,12 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 	return
 }
 
-
 type Op struct {
-	// Your definitions here.
-	// Field names must start with capital letters,
-	// otherwise RPC will break.
+	Type      string
+	Key       string
+	Value     string
+	ClientID  int64
+	RequestID int64
 }
 
 type KVServer struct {
@@ -32,18 +43,117 @@ type KVServer struct {
 	applyCh chan raft.ApplyMsg
 	dead    int32 // set by Kill()
 
-	maxraftstate int // snapshot if log grows this big
+	db               map[string]string // KV database
+	opMap            map[int]chan Op   // CommandIndex -> Channel
+	lastrequestIDMap map[int64]int64   // ClientID -> RequestID
 
-	// Your definitions here.
+	maxraftstate int // snapshot if log grows this big
 }
 
-
 func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
-	// Your code here.
+	op := Op{
+		Type:      GetOp,
+		Key:       args.Key,
+		Value:     "",
+		ClientID:  args.ClientID,
+		RequestID: args.RequestID,
+	}
+	isLeader := kv.startOp(op, Timeout)
+	if !isLeader {
+		reply.Err = ErrWrongLeader
+		return
+	}
+	kv.mu.Lock()
+	reply.Value = kv.db[args.Key]
+	kv.mu.Unlock()
+	DPrintf("got key: %s, value: %s", args.Key, reply.Value)
+	reply.Err = OK
 }
 
 func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
-	// Your code here.
+	op := Op{
+		Type:      args.Op,
+		Key:       args.Key,
+		Value:     args.Value,
+		ClientID:  args.ClientID,
+		RequestID: args.RequestID,
+	}
+	isLeader := kv.startOp(op, Timeout)
+	if !isLeader {
+		reply.Err = ErrWrongLeader
+		return
+	}
+	DPrintf("putted/appended key: %s, value: %s", args.Key, args.Value)
+	reply.Err = OK
+}
+
+func (kv *KVServer) startOp(op Op, timeout time.Duration) (isLeader bool) {
+	kv.mu.Lock()
+	index, _, isLeader := kv.rf.Start(op)
+	if !isLeader {
+		kv.mu.Unlock()
+		return
+	}
+	if _, ok := kv.opMap[index]; !ok {
+		DPrintf("create op channel, index: %d", index)
+		kv.opMap[index] = make(chan Op, 1)
+	}
+
+	ch := kv.opMap[index]
+	kv.mu.Unlock()
+
+	select {
+	case opRecv := <-ch:
+		{
+			kv.mu.Lock()
+			delete(kv.opMap, index)
+			DPrintf("drop the op channel, index: %d", index)
+			if opRecv.RequestID != op.RequestID || opRecv.ClientID != op.ClientID {
+				isLeader = false
+			}
+			kv.mu.Unlock()
+		}
+	case <-time.After(timeout):
+		isLeader = false
+	}
+
+	return isLeader
+}
+
+func (kv *KVServer) receive() {
+	for msg := range kv.applyCh {
+		DPrintf("receive op...")
+		if !msg.CommandValid {
+			continue
+		}
+		kv.mu.Lock()
+		op := msg.Command.(Op)
+		lastRequestID, ok := kv.lastrequestIDMap[op.ClientID]
+		if !ok || lastRequestID < op.RequestID {
+			DPrintf("update last request ID, Client: %d, Request: %d", op.ClientID, op.RequestID)
+			kv.lastrequestIDMap[op.ClientID] = op.RequestID
+			switch op.Type {
+			case PutOp:
+				DPrintf("db put key: %s, value: %s", op.Key, op.Value)
+				kv.db[op.Key] = op.Value
+			case AppendOp:
+				DPrintf("db append key: %s, value: %s", op.Key, op.Value)
+				kv.db[op.Key] += op.Value
+			case GetOp:
+				// do nothing
+			default:
+				DPrintf("unknown type op: %s", op.Type)
+			}
+		}
+		ch, ok := kv.opMap[msg.CommandIndex]
+		kv.mu.Unlock()
+		if ok {
+			ch <- op
+		} else {
+			DPrintf("can not find op channel, index: %d", msg.CommandIndex)
+		}
+		DPrintf("receive op done...")
+	}
 }
 
 //
@@ -59,7 +169,6 @@ func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 func (kv *KVServer) Kill() {
 	atomic.StoreInt32(&kv.dead, 1)
 	kv.rf.Kill()
-	// Your code here, if desired.
 }
 
 func (kv *KVServer) killed() bool {
@@ -90,12 +199,15 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	kv.me = me
 	kv.maxraftstate = maxraftstate
 
-	// You may need initialization code here.
+	kv.lastrequestIDMap = make(map[int64]int64)
+	kv.db = make(map[string]string)
+	kv.opMap = make(map[int]chan Op)
 
-	kv.applyCh = make(chan raft.ApplyMsg)
+	// FIXME: It shouldn't be a buffer channel.
+	kv.applyCh = make(chan raft.ApplyMsg, 1024)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
 
-	// You may need initialization code here.
+	go kv.receive()
 
 	return kv
 }
