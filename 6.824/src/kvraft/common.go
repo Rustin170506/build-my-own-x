@@ -22,7 +22,9 @@ type PutAppendReply struct {
 }
 
 type GetArgs struct {
-	Key string
+	Key       string
+	RequestID int64
+	ClientID  int64
 }
 
 type GetReply struct {

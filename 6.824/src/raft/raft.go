@@ -394,7 +394,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.matchedIndexes = make([]int, len(peers))
 	rf.nextIndexes = make([]int, len(peers))
 	rf.lastReceiveTime = time.Now()
-	// Your initialization code here (2C).
 	// Start leader election.
 	go rf.startLeaderElection()
 	// Start apply message.
