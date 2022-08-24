@@ -7,3 +7,4 @@ mod q_021_merge_two_sorted_lists;
 mod q_026_remove_duplicates_from_sorted_array;
 mod q_027_remove_element;
 mod q_028_implement_strstr;
+mod q_035_search_insert_position;
