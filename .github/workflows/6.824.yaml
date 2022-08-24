@@ -36,3 +36,7 @@ jobs:
         working-directory: ./6.824/src/raft
         run: |
           go test -run 2C
+      - name: Build and Test 3A
+        working-directory: ./6.824/src/kvraft
+        run: |
+          go test -run 3A -timeout 30m -short
