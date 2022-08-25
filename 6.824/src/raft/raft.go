@@ -46,12 +46,12 @@ type Raft struct {
 	log             []LogEntry  // Log entries
 
 	// Volatile state on all servers:
-	commitIndex      int // Index of highest log entry known to be committed(initialized to 0, increases monotonically).
-	lastAppliedIndex int // Index of highest log entry applied to state machine(initialized to 0, increases monotonically).
+	commitIndex      int // Index of the highest log entry known to be committed(initialized to 0, increases monotonically).
+	lastAppliedIndex int // Index of the highest log entry applied to state machine(initialized to 0, increases monotonically).
 
 	// Volatile state on leaders:
 	nextIndexes    []int // For each server, index of the next log entry to send to that server(initialized to leader last log index +1 ).
-	matchedIndexes []int // For each server, index of highest log entry to be replicated on server(initialized to 0, increases monotonically).
+	matchedIndexes []int // For each server, index of the highest log entry to be replicated on server(initialized to 0, increases monotonically).
 
 	applyCh chan ApplyMsg // Is a channel on which the tester or service expects Raft to send ApplyMsg messages
 }
@@ -176,7 +176,6 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 //
 func (rf *Raft) Kill() {
 	atomic.StoreInt32(&rf.dead, 1)
-	// Your code here, if desired.
 }
 
 // Is the server killed.
@@ -322,7 +321,7 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 			// So we need to fast back up.
 			prevIndex := args.PrevLogIndex // Get the previous log index.
 
-			// We will back up to a index which is first index of previous log term.
+			// We will back up to an index which is first index of previous log term.
 			for prevIndex > 0 && rf.log[prevIndex].Term == args.PrevLogTerm {
 				prevIndex--
 			}
@@ -353,14 +352,23 @@ func (rf *Raft) updateCommittedIndex(matchedIndexes []int) {
 func (rf *Raft) startApply() {
 	for {
 		time.Sleep(5 * time.Millisecond)
+		var entries []LogEntry
 		rf.mu.Lock()
-		for rf.lastAppliedIndex < rf.commitIndex {
+		for rf.lastAppliedIndex < rf.commitIndex && rf.lastAppliedIndex < len(rf.log)-1 {
 			rf.lastAppliedIndex++
-			rf.persist()
+			DPrintf("%d apply log entry %d", rf.me, rf.lastAppliedIndex)
 			DPrintf("%v apply command %v", rf.me, rf.log[rf.lastAppliedIndex].Command)
-			rf.applyCh <- ApplyMsg{CommandValid: true, CommandIndex: rf.lastAppliedIndex, Command: rf.log[rf.lastAppliedIndex].Command}
+			entries = append(entries, rf.log[rf.lastAppliedIndex])
 		}
+		rf.persist()
 		rf.mu.Unlock()
+		for _, entry := range entries {
+			rf.applyCh <- ApplyMsg{
+				CommandValid: true,
+				Command:      entry.Command,
+				CommandIndex: entry.Index,
+			}
+		}
 	}
 }
 
@@ -394,11 +402,11 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.matchedIndexes = make([]int, len(peers))
 	rf.nextIndexes = make([]int, len(peers))
 	rf.lastReceiveTime = time.Now()
+	// initialize from state persisted before a crash
+	rf.readPersist(persister.ReadRaftState())
 	// Start leader election.
 	go rf.startLeaderElection()
 	// Start apply message.
 	go rf.startApply()
-	// initialize from state persisted before a crash
-	rf.readPersist(persister.ReadRaftState())
 	return rf
 }

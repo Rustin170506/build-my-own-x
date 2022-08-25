@@ -20,8 +20,8 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 func getMajoritySameIndex(matchedIndexes []int) int {
 	tmp := make([]int, len(matchedIndexes))
 	copy(tmp, matchedIndexes)
-	sort.Sort(sort.Reverse(sort.IntSlice(tmp)))
-	idx := len(tmp) / 2
+	sort.Ints(tmp)
+	idx := (len(tmp) - 1) / 2
 	return tmp[idx]
 }
 
