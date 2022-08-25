@@ -19,7 +19,7 @@ const (
 
 const Timeout = 100 * time.Millisecond
 
-const Debug = 1
+const Debug = 0
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
 	if Debug > 0 {
@@ -203,8 +203,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	kv.db = make(map[string]string)
 	kv.opMap = make(map[int]chan Op)
 
-	// FIXME: It shouldn't be a buffer channel.
-	kv.applyCh = make(chan raft.ApplyMsg, 1024)
+	kv.applyCh = make(chan raft.ApplyMsg)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
 
 	go kv.receive()

@@ -29,7 +29,11 @@ func (rf *Raft) convertToLeader() {
 // Init index when became the leader.
 func (rf *Raft) initIndex() {
 	for i := 0; i < len(rf.peers); i++ {
-		rf.matchedIndexes[i] = 0
+		if i == rf.me {
+			rf.matchedIndexes[rf.me] = len(rf.log) - 1
+		} else {
+			rf.matchedIndexes[i] = 0
+		}
 		rf.nextIndexes[i] = len(rf.log)
 	}
 }
