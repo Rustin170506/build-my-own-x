@@ -9,3 +9,4 @@ mod q_027_remove_element;
 mod q_028_implement_strstr;
 mod q_035_search_insert_position;
 mod q_058_length_of_last_word;
+mod q_066_plus_one;
