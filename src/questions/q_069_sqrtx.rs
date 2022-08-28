@@ -8,12 +8,16 @@ pub fn my_sqrt(x: i32) -> i32 {
     while left < right {
         let mid: i64 = left + (right - left) / 2 + 1;
         let square: i64 = mid * mid;
-        if square == x as i64 {
-            return mid as i32;
-        } else if square < x as i64 {
-            left = mid;
-        } else {
-            right = mid - 1;
+        match (x as i64).cmp(&square) {
+            std::cmp::Ordering::Less => {
+                right = mid - 1;
+            }
+            std::cmp::Ordering::Equal => {
+                return mid as i32;
+            }
+            std::cmp::Ordering::Greater => {
+                left = mid;
+            }
         }
     }
 
