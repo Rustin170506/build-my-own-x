@@ -14,7 +14,7 @@ mod tests {
     use super::remove_element;
 
     #[test]
-    fn test_remove_duplicates() {
+    fn test_remove_element() {
         assert_eq!(remove_element(&mut vec![1], 1), 0);
         assert_eq!(remove_element(&mut vec![2], 3), 1);
         assert_eq!(remove_element(&mut vec![3, 3], 3), 0);

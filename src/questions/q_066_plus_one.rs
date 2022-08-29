@@ -33,7 +33,7 @@ mod tests {
     use super::plus_one;
 
     #[test]
-    fn test_str_str() {
+    fn test_plus_one() {
         assert_eq!(plus_one(vec![]), vec![]);
         assert_eq!(plus_one(vec![1, 2, 3]), vec![1, 2, 4]);
         assert_eq!(plus_one(vec![4, 3, 2, 1]), vec![4, 3, 2, 2]);

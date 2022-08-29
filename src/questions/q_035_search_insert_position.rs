@@ -26,7 +26,7 @@ mod tests {
     use super::search_insert;
 
     #[test]
-    fn test_str_str() {
+    fn test_search_insert() {
         assert_eq!(search_insert(vec![], 0), -1);
         assert_eq!(search_insert(vec![1, 3, 5, 6], 0), 0);
         assert_eq!(search_insert(vec![1, 3, 5, 6], 5), 2);

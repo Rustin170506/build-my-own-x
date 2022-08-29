@@ -29,7 +29,7 @@ mod tests {
     use super::my_sqrt;
 
     #[test]
-    fn test_str_str() {
+    fn test_my_sqrt() {
         assert_eq!(my_sqrt(0), 0);
         assert_eq!(my_sqrt(2), 1);
         assert_eq!(my_sqrt(4), 2);

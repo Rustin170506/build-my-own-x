@@ -8,7 +8,7 @@ mod tests {
     use super::length_of_last_word;
 
     #[test]
-    fn test_str_str() {
+    fn test_length_of_last_word() {
         assert_eq!(length_of_last_word("Today is a nice day".to_string()), 3);
         assert_eq!(length_of_last_word("A".to_string()), 1);
         assert_eq!(length_of_last_word("H ".to_string()), 1);
