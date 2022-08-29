@@ -12,3 +12,4 @@ mod q_058_length_of_last_word;
 mod q_066_plus_one;
 mod q_067_add_binary;
 mod q_069_sqrtx;
+mod q_070_climbing_stairs;
