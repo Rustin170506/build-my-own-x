@@ -96,7 +96,7 @@ mod tests {
     use super::add_binary;
 
     #[test]
-    fn test_str_str() {
+    fn test_add_binary() {
         assert_eq!(add_binary("".to_string(), "".to_string()), "".to_string());
         assert_eq!(add_binary("1".to_string(), "".to_string()), "1".to_string());
         assert_eq!(add_binary("".to_string(), "1".to_string()), "1".to_string());
