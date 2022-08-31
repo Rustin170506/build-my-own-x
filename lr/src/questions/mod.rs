@@ -14,3 +14,4 @@ mod q_067_add_binary;
 mod q_069_sqrtx;
 mod q_070_climbing_stairs;
 mod q_083_remove_duplicates_from_sorted_list;
+mod q_088_merge_sorted_array;
