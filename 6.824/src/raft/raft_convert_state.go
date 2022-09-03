@@ -30,10 +30,10 @@ func (rf *Raft) convertToLeader() {
 func (rf *Raft) initIndex() {
 	for i := 0; i < len(rf.peers); i++ {
 		if i == rf.me {
-			rf.matchedIndexes[rf.me] = len(rf.log) - 1
+			rf.matchedIndexes[rf.me] = rf.getLastLogEntryIndex()
 		} else {
 			rf.matchedIndexes[i] = 0
 		}
-		rf.nextIndexes[i] = len(rf.log)
+		rf.nextIndexes[i] = rf.getLogLen()
 	}
 }

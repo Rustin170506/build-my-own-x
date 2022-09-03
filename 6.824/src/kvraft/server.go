@@ -1,6 +1,7 @@
 package kvraft
 
 import (
+	"bytes"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -17,7 +18,12 @@ const (
 	AppendOp = "Append"
 )
 
-const Timeout = 100 * time.Millisecond
+const (
+	// timeout is the timeout for an op.
+	timeout = 100 * time.Millisecond
+	// compactInterval is the interval for compact.
+	compactInterval = 1 * time.Millisecond
+)
 
 const Debug = 0
 
@@ -45,9 +51,10 @@ type KVServer struct {
 
 	db               map[string]string // KV database
 	opMap            map[int]chan Op   // CommandIndex -> Channel
-	lastrequestIDMap map[int64]int64   // ClientID -> RequestID
+	lastRequestIDMap map[int64]int64   // ClientID -> RequestID
 
-	maxraftstate int // snapshot if log grows this big
+	maxRaftState     int // snapshot if log grows this big
+	lastAppliedIndex int // last index that has been applied
 }
 
 func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
@@ -58,7 +65,7 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 		ClientID:  args.ClientID,
 		RequestID: args.RequestID,
 	}
-	isLeader := kv.startOp(op, Timeout)
+	isLeader := kv.startOp(op, timeout)
 	if !isLeader {
 		reply.Err = ErrWrongLeader
 		return
@@ -66,7 +73,7 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	kv.mu.Lock()
 	reply.Value = kv.db[args.Key]
 	kv.mu.Unlock()
-	DPrintf("got key: %s, value: %s", args.Key, reply.Value)
+	DPrintf("[%d] got key: %s, value: %s", kv.me, args.Key, reply.Value)
 	reply.Err = OK
 }
 
@@ -78,12 +85,13 @@ func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 		ClientID:  args.ClientID,
 		RequestID: args.RequestID,
 	}
-	isLeader := kv.startOp(op, Timeout)
+	isLeader := kv.startOp(op, timeout)
 	if !isLeader {
+		DPrintf("[%d] putted/appended key: %s, value: %s failed", kv.me, args.Key, args.Value)
 		reply.Err = ErrWrongLeader
 		return
 	}
-	DPrintf("putted/appended key: %s, value: %s", args.Key, args.Value)
+	DPrintf("[%d] putted/appended key: %s, value: %s", kv.me, args.Key, args.Value)
 	reply.Err = OK
 }
 
@@ -95,7 +103,7 @@ func (kv *KVServer) startOp(op Op, timeout time.Duration) (isLeader bool) {
 		return
 	}
 	if _, ok := kv.opMap[index]; !ok {
-		DPrintf("create op channel, index: %d", index)
+		DPrintf("[%d] create op channel, index: %d, op: %v", kv.me, index, op)
 		kv.opMap[index] = make(chan Op, 1)
 	}
 
@@ -107,13 +115,17 @@ func (kv *KVServer) startOp(op Op, timeout time.Duration) (isLeader bool) {
 		{
 			kv.mu.Lock()
 			delete(kv.opMap, index)
-			DPrintf("drop the op channel, index: %d", index)
+			DPrintf("[%d] drop the op channel, index: %d", kv.me, index)
 			if opRecv.RequestID != op.RequestID || opRecv.ClientID != op.ClientID {
+				DPrintf("[%d] receive not match opRecv: %v, op: %v", kv.me, opRecv, op)
 				isLeader = false
+			} else {
+				kv.lastAppliedIndex = index
 			}
 			kv.mu.Unlock()
 		}
 	case <-time.After(timeout):
+		DPrintf("[%d] timeout, index: %d, op: %v", kv.me, index, op)
 		isLeader = false
 	}
 
@@ -122,22 +134,26 @@ func (kv *KVServer) startOp(op Op, timeout time.Duration) (isLeader bool) {
 
 func (kv *KVServer) receive() {
 	for msg := range kv.applyCh {
-		DPrintf("receive op...")
+		DPrintf("[%d] receive op...", kv.me)
+		kv.mu.Lock()
 		if !msg.CommandValid {
+			DPrintf("[%d] receive snapshot, lastAppliedIndex: %d", kv.me, kv.lastAppliedIndex)
+			kv.readSnapshot(msg.Snapshot)
+			kv.lastAppliedIndex = msg.CommandIndex
+			kv.mu.Unlock()
 			continue
 		}
-		kv.mu.Lock()
 		op := msg.Command.(Op)
-		lastRequestID, ok := kv.lastrequestIDMap[op.ClientID]
+		lastRequestID, ok := kv.lastRequestIDMap[op.ClientID]
 		if !ok || lastRequestID < op.RequestID {
-			DPrintf("update last request ID, Client: %d, Request: %d", op.ClientID, op.RequestID)
-			kv.lastrequestIDMap[op.ClientID] = op.RequestID
+			DPrintf("[%d] update last request ID, Client: %d, Request: %d", kv.me, op.ClientID, op.RequestID)
+			kv.lastRequestIDMap[op.ClientID] = op.RequestID
 			switch op.Type {
 			case PutOp:
-				DPrintf("db put key: %s, value: %s", op.Key, op.Value)
+				DPrintf("[%d] db put key: %s, value: %s", kv.me, op.Key, op.Value)
 				kv.db[op.Key] = op.Value
 			case AppendOp:
-				DPrintf("db append key: %s, value: %s", op.Key, op.Value)
+				DPrintf("[%d] db append key: %s, value: %s", kv.me, op.Key, op.Value)
 				kv.db[op.Key] += op.Value
 			case GetOp:
 				// do nothing
@@ -150,10 +166,71 @@ func (kv *KVServer) receive() {
 		if ok {
 			ch <- op
 		} else {
-			DPrintf("can not find op channel, index: %d", msg.CommandIndex)
+			DPrintf("[%d] can not find op channel, index: %d", kv.me, msg.CommandIndex)
 		}
-		DPrintf("receive op done...")
+		DPrintf("[%d] receive op done...", kv.me)
 	}
+}
+
+// readSnapshot reads snapshot and recover the db and lastRequestIDMap.
+func (kv *KVServer) readSnapshot(snapshot []byte) {
+	DPrintf("[%d] try to read snapshot...", kv.me)
+	if len(snapshot) == 0 {
+		return
+	}
+
+	r := bytes.NewBuffer(snapshot)
+	d := labgob.NewDecoder(r)
+	var db map[string]string
+	var lastRequestIDMap map[int64]int64
+
+	err := d.Decode(&db)
+	if err != nil {
+		DPrintf("[%d] decode db error: %v", kv.me, err)
+	}
+	err = d.Decode(&lastRequestIDMap)
+	if err != nil {
+		DPrintf("[%d] decode lastRequestIDMap error: %v", kv.me, err)
+	}
+
+	DPrintf("[%d] read snapshot, db: %v, lastRequestIDMap: %v", kv.me, db, lastRequestIDMap)
+	kv.db, kv.lastRequestIDMap = db, lastRequestIDMap
+}
+
+// compact the log and saves the snapshot.
+func (kv *KVServer) compact() {
+	for {
+		if kv.killed() || kv.maxRaftState == -1 {
+			return
+		}
+		if kv.rf.IsExceedMaxRaftState(kv.maxRaftState) {
+			kv.mu.Lock()
+			snapshot := kv.generateSnapshot()
+			lastAppliedIndex := kv.lastAppliedIndex
+			kv.mu.Unlock()
+			if len(snapshot) > 0 {
+				kv.rf.CompactLog(lastAppliedIndex, snapshot)
+			}
+		}
+		// Avoid cpu spin.
+		time.Sleep(compactInterval)
+	}
+}
+
+// generateSnapshot generates the snapshot it includes the db and lastRequestIDMap.
+func (kv *KVServer) generateSnapshot() []byte {
+	w := new(bytes.Buffer)
+	e := labgob.NewEncoder(w)
+	err := e.Encode(kv.db)
+	if err != nil {
+		DPrintf("[%d] encode db error: %v", kv.me, err)
+	}
+	err = e.Encode(kv.lastRequestIDMap)
+	if err != nil {
+		DPrintf("[%d] encode lastRequestIDMap error: %v", kv.me, err)
+	}
+
+	return w.Bytes()
 }
 
 //
@@ -184,29 +261,35 @@ func (kv *KVServer) killed() bool {
 // the k/v server should store snapshots through the underlying Raft
 // implementation, which should call persister.SaveStateAndSnapshot() to
 // atomically save the Raft state along with the snapshot.
-// the k/v server should snapshot when Raft's saved state exceeds maxraftstate bytes,
-// in order to allow Raft to garbage-collect its log. if maxraftstate is -1,
+// the k/v server should snapshot when Raft's saved state exceeds maxRaftState bytes,
+// in order to allow Raft to garbage-collect its log. if maxRaftState is -1,
 // you don't need to snapshot.
 // StartKVServer() must return quickly, so it should start goroutines
 // for any long-running work.
 //
-func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxraftstate int) *KVServer {
+func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxRaftState int) *KVServer {
 	// call labgob.Register on structures you want
 	// Go's RPC library to marshall/unmarshall.
 	labgob.Register(Op{})
 
 	kv := new(KVServer)
 	kv.me = me
-	kv.maxraftstate = maxraftstate
+	kv.maxRaftState = maxRaftState
 
-	kv.lastrequestIDMap = make(map[int64]int64)
+	kv.lastRequestIDMap = make(map[int64]int64)
 	kv.db = make(map[string]string)
 	kv.opMap = make(map[int]chan Op)
 
 	kv.applyCh = make(chan raft.ApplyMsg)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
+	// Try to recover from snapshot.
+	snapshot := persister.ReadSnapshot()
+	kv.mu.Lock()
+	kv.readSnapshot(snapshot)
+	kv.mu.Unlock()
 
 	go kv.receive()
+	go kv.compact()
 
 	return kv
 }
