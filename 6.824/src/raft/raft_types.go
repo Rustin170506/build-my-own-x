@@ -27,6 +27,11 @@ type LogEntry struct {
 	Index   int // The log index.
 }
 
+// Is more up to date.
+func (l LogEntry) isMoreUpToDate(r LogEntry) bool {
+	return (l.Term == r.Term && l.Index >= r.Index) || l.Term > r.Term
+}
+
 // Append entries RPC args.
 // Invoked by leader to replicate log entries, also used as heartbeat.
 type AppendEntriesArgs struct {
@@ -44,6 +49,20 @@ type AppendEntriesReply struct {
 	Success bool // true if follower contained entry matching prevLogIndex and prevLogTerm.
 }
 
+// Install snapshot RPC args.
+type InstallSnapshotArgs struct {
+	Term              int    // Leader's term.
+	LeaderId          int    // Leader's id.
+	LastIncludedIndex int    // The snapshot replaces all entries up through and including this index.
+	LastIncludedTerm  int    // The term of lastIncludedIndex.
+	Snapshot          []byte // The actual snapshot data.
+}
+
+type InstallSnapshotReply struct {
+	Term    int  // Current term, for leader to update itself.
+	Success bool // true if follower install the snapshot.
+}
+
 //
 // as each Raft peer becomes aware that successive log entries are
 // committed, the peer should send an ApplyMsg to the service (or
@@ -59,6 +78,7 @@ type ApplyMsg struct {
 	CommandValid bool
 	Command      interface{}
 	CommandIndex int
+	Snapshot     []byte
 }
 
 // Raft server state.

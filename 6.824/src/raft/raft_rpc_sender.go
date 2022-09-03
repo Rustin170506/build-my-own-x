@@ -39,3 +39,9 @@ func (rf *Raft) sendAppendEntryRPC(serverId int, args *AppendEntriesArgs, reply 
 	ok := rf.peers[serverId].Call("Raft.AppendEntries", args, reply)
 	return ok
 }
+
+// Send install snapshot RPC.
+func (rf *Raft) sendInstallSnapshotRPC(serverId int, args *InstallSnapshotArgs, reply *InstallSnapshotReply) bool {
+	ok := rf.peers[serverId].Call("Raft.InstallSnapshot", args, reply)
+	return ok
+}
