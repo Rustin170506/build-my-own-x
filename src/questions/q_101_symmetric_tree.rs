@@ -44,7 +44,6 @@ mod tests {
 
     #[test]
     fn test_is_symmetric() {
-        assert!(!is_symmetric(tree!([2, 3, 3, 4, 5, None, 4])));
         assert!(!is_symmetric(tree!(1, 2, 3)));
         assert!(is_symmetric(tree!()));
         assert!(is_symmetric(tree!(1, 2, 2, 3, 4, 4, 3)));
