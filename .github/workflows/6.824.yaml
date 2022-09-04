@@ -40,3 +40,7 @@ jobs:
         working-directory: ./6.824/src/kvraft
         run: |
           go test -run 3A -timeout 30m -short
+      - name: Build and Test 3B
+        working-directory: ./6.824/src/kvraft
+        run: |
+          go test -run 3B -timeout 30m -short

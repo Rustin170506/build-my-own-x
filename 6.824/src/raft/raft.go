@@ -273,7 +273,7 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 				prevIndex--
 			}
 
-			if prevIndex >= rf.lastIncludedIndex {
+			if prevIndex > rf.lastIncludedIndex {
 				rf.nextIndexes[peerId] = prevIndex + 1
 			} else {
 				rf.nextIndexes[peerId] = rf.lastIncludedIndex + 1
