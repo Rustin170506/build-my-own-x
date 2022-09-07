@@ -20,3 +20,4 @@ mod q_100_same_tree;
 mod q_101_symmetric_tree;
 mod q_104_maximum_depth_of_binary_tree;
 mod q_108_convert_sorted_array_to_binary_search_tree;
+mod q_110_balanced_binary_tree;
