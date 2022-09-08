@@ -1,7 +1,7 @@
 package kvraft
 
-import "../linearizability"
-
+import "../porcupine"
+import "../models"
 import "testing"
 import "strconv"
 import "time"
@@ -10,6 +10,8 @@ import "log"
 import "strings"
 import "sync"
 import "sync/atomic"
+import "fmt"
+import "io/ioutil"
 
 // The tester generously allows solutions to complete elections in one second
 // (much more than the paper's range of timeouts).
@@ -146,8 +148,8 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 // particular key.  If unreliable is set, RPCs may fail.  If crash is set, the
 // servers crash after the period is over and restart.  If partitions is set,
 // the test repartitions the network concurrently with the clients and servers. If
-// maxRaftState is a positive number, the size of the state for Raft (i.e., log
-// size) shouldn't exceed 2*maxRaftState. If maxRaftState is negative,
+// maxraftstate is a positive number, the size of the state for Raft (i.e., log
+// size) shouldn't exceed 8*maxraftstate. If maxraftstate is negative,
 // snapshots shouldn't be used.
 func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash bool, partitions bool, maxraftstate int) {
 
@@ -273,15 +275,15 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 			// Check maximum after the servers have processed all client
 			// requests and had time to checkpoint.
 			sz := cfg.LogSize()
-			if sz > 2*maxraftstate {
-				t.Fatalf("logs were not trimmed (%v > 2*%v)", sz, maxraftstate)
+			if sz > 8*maxraftstate {
+				t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
 			}
 		}
 		if maxraftstate < 0 {
 			// Check that snapshots are not used
 			ssz := cfg.SnapshotSize()
 			if ssz > 0 {
-				t.Fatalf("snapshot too large (%v), should not be used when maxRaftState = %d", ssz, maxraftstate)
+				t.Fatalf("snapshot too large (%v), should not be used when maxraftstate = %d", ssz, maxraftstate)
 			}
 		}
 	}
@@ -322,7 +324,7 @@ func GenericTestLinearizability(t *testing.T, part string, nclients int, nserver
 	cfg.begin(title)
 
 	begin := time.Now()
-	var operations []linearizability.Operation
+	var operations []porcupine.Operation
 	var opMu sync.Mutex
 
 	done_partitioner := int32(0)
@@ -344,24 +346,24 @@ func GenericTestLinearizability(t *testing.T, part string, nclients int, nserver
 			for atomic.LoadInt32(&done_clients) == 0 {
 				key := strconv.Itoa(rand.Int() % nclients)
 				nv := "x " + strconv.Itoa(cli) + " " + strconv.Itoa(j) + " y"
-				var inp linearizability.KvInput
-				var out linearizability.KvOutput
+				var inp models.KvInput
+				var out models.KvOutput
 				start := int64(time.Since(begin))
 				if (rand.Int() % 1000) < 500 {
 					Append(cfg, myck, key, nv)
-					inp = linearizability.KvInput{Op: 2, Key: key, Value: nv}
+					inp = models.KvInput{Op: 2, Key: key, Value: nv}
 					j++
 				} else if (rand.Int() % 1000) < 100 {
 					Put(cfg, myck, key, nv)
-					inp = linearizability.KvInput{Op: 1, Key: key, Value: nv}
+					inp = models.KvInput{Op: 1, Key: key, Value: nv}
 					j++
 				} else {
 					v := Get(cfg, myck, key)
-					inp = linearizability.KvInput{Op: 0, Key: key}
-					out = linearizability.KvOutput{Value: v}
+					inp = models.KvInput{Op: 0, Key: key}
+					out = models.KvOutput{Value: v}
 				}
 				end := int64(time.Since(begin))
-				op := linearizability.Operation{Input: inp, Call: start, Output: out, Return: end}
+				op := porcupine.Operation{Input: inp, Call: start, Output: out, Return: end, ClientId: cli}
 				opMu.Lock()
 				operations = append(operations, op)
 				opMu.Unlock()
@@ -415,21 +417,31 @@ func GenericTestLinearizability(t *testing.T, part string, nclients int, nserver
 			// Check maximum after the servers have processed all client
 			// requests and had time to checkpoint.
 			sz := cfg.LogSize()
-			if sz > 2*maxraftstate {
-				t.Fatalf("logs were not trimmed (%v > 2*%v)", sz, maxraftstate)
+			if sz > 8*maxraftstate {
+				t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
 			}
 		}
 	}
 
 	cfg.end()
 
-	// log.Printf("Checking linearizability of %d operations", len(operations))
-	// start := time.Now()
-	ok := linearizability.CheckOperationsTimeout(linearizability.KvModel(), operations, linearizabilityCheckTimeout)
-	// dur := time.Since(start)
-	// log.Printf("Linearizability check done in %s; result: %t", time.Since(start).String(), ok)
-	if !ok {
+	res, info := porcupine.CheckOperationsVerbose(models.KvModel, operations, linearizabilityCheckTimeout)
+	if res == porcupine.Illegal {
+		file, err := ioutil.TempFile("", "*.html")
+		if err != nil {
+			fmt.Printf("info: failed to create temp file for visualization")
+		} else {
+			err = porcupine.Visualize(models.KvModel, info, file)
+			if err != nil {
+				fmt.Printf("info: failed to write history visualization to %s\n", file.Name())
+			} else {
+				fmt.Printf("info: wrote history visualization to %s\n", file.Name())
+			}
+		}
 		t.Fatal("history is not linearizable")
+		t.Fatal("history is not linearizable")
+	} else if res == porcupine.Unknown {
+		fmt.Println("info: linearizability check timed out, assuming history is ok")
 	}
 }
 
@@ -594,9 +606,6 @@ func TestPersistPartitionUnreliable3A(t *testing.T) {
 }
 
 func TestPersistPartitionUnreliableLinearizable3A(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping the long test on CI")
-	}
 	// Test: unreliable net, restarts, partitions, linearizability checks (3A) ...
 	GenericTestLinearizability(t, "3A", 15, 7, true, true, true, -1)
 }
@@ -634,8 +643,8 @@ func TestSnapshotRPC3B(t *testing.T) {
 	// check that the majority partition has thrown away
 	// most of its log entries.
 	sz := cfg.LogSize()
-	if sz > 2*maxraftstate {
-		t.Fatalf("logs were not trimmed (%v > 2*%v)", sz, maxraftstate)
+	if sz > 8*maxraftstate {
+		t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
 	}
 
 	// now make group that requires participation of
@@ -684,8 +693,8 @@ func TestSnapshotSize3B(t *testing.T) {
 
 	// check that servers have thrown away most of their log entries
 	sz := cfg.LogSize()
-	if sz > 2*maxraftstate {
-		t.Fatalf("logs were not trimmed (%v > 2*%v)", sz, maxraftstate)
+	if sz > 8*maxraftstate {
+		t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
 	}
 
 	// check that the snapshots are not unreasonably large
