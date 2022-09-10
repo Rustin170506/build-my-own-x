@@ -43,7 +43,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	DPrintf("[%d] start process append entries request from %d, args term: %d peer term: %d", rf.me, args.LeaderId, args.Term, rf.currentTerm)
+	DPrintf("[%d] start process append entries request from %d, args term: %d peer term: %d args: %v", rf.me, args.LeaderId, args.Term, rf.currentTerm, args)
 
 	reply.Term = rf.currentTerm
 
@@ -64,19 +64,24 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		rf.convertToFollower(args.Term)
 	}
 
-	if args.PrevLogTerm < rf.lastIncludedIndex {
-		reply.Success = false
+	if args.PrevLogIndex < rf.lastIncludedIndex {
+		DPrintf("[%d] get append entries from %d, but the prev log term less than last included index", rf.me, args.LeaderId)
+		reply.Success = true
+		reply.ConflictIndex = rf.lastIncludedIndex + 1
 		return
 	}
 
 	// Log got a conflict with leader log.
 	if args.PrevLogIndex >= rf.getLogLen() || rf.getLogTermWithOffset(args.PrevLogIndex) != args.PrevLogTerm {
-		// If our log length longer than leader log, we need to delete the useless log.
-		if args.PrevLogIndex < rf.getLogLen() {
-			rf.log = rf.log[0:rf.getLogIndexWithOffset(args.PrevLogIndex)] // Delete the log in prevLogIndex and after it.
-			rf.persist()
+		// From big to small, find the first index that has the same term with leader.
+		conflictIndex := min(rf.getLastLogEntryIndex(), args.PrevLogIndex)
+		conflictTerm := rf.getLogTermWithOffset(conflictIndex)
+		lowBound := max(rf.lastIncludedIndex, rf.commitIndex)
+		for conflictIndex > lowBound && rf.getLogTermWithOffset(conflictIndex-1) == conflictTerm {
+			conflictIndex--
 		}
 		reply.Success = false
+		reply.ConflictIndex = conflictIndex
 		return
 	}
 	// If no conflict with leader's log.
@@ -85,6 +90,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	rf.persist()
 	// Update the committed index.
 	if args.LeaderCommit > rf.commitIndex {
+		DPrintf("[%d] update commit index from %d to %d", rf.me, rf.commitIndex, args.LeaderCommit)
 		rf.commitIndex = min(args.LeaderCommit, rf.getLastLogEntryIndex())
 	}
 	reply.Success = true
@@ -102,7 +108,6 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 	// If we got a term less than ourselves term, we need reject the append request.
 	if args.Term < rf.currentTerm {
 		DPrintf("get install snapshot form %d, but the term less than [%d]", args.LeaderId, rf.me)
-		reply.Success = false
 		return
 	}
 
@@ -118,25 +123,26 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 
 	// If we already have this snapshot, we just return.
 	if args.LastIncludedIndex <= rf.lastIncludedIndex {
-		reply.Success = false
 		return
 	}
 
-	// If we have more log than the snapshot, we need to delete the useless log.
-	if args.LastIncludedIndex < rf.getLogLen() {
-		// If in the same term, we need to delete the log after the snapshot.
-		if rf.getLogTermWithOffset(args.LastIncludedIndex) == args.LastIncludedTerm {
-			rf.log = append(make([]LogEntry, 0), rf.log[args.LastIncludedIndex-rf.lastIncludedIndex:]...)
-		} else {
-			// If in different term, we need to delete all the log.
-			rf.log = make([]LogEntry, 0)
+	newLog := []LogEntry{{nil, 0, 0}}
+	// If the snapshot is more than our log, we need to create a new log and drop the old log.
+	if args.LastIncludedIndex >= rf.getLastLogEntryIndex() {
+		if rf.commitIndex < args.LastIncludedIndex {
+			rf.commitIndex = args.LastIncludedIndex
 		}
+	} else if rf.getLogTermWithOffset(args.LastIncludedIndex) != args.LastIncludedTerm {
+		rf.commitIndex = args.LastIncludedIndex
 	} else {
-		// If the snapshot is more than our log, we need to create a new log and drop the old log.
-		rf.log = make([]LogEntry, 0)
+		newLog = append(newLog, rf.log[rf.getLogIndexWithOffset(args.LastIncludedIndex)+1:]...)
+		if rf.commitIndex < args.LastIncludedIndex {
+			rf.commitIndex = args.LastIncludedIndex
+		}
 	}
 
 	// Persist the snapshot.
+	rf.log = newLog
 	rf.lastIncludedIndex = args.LastIncludedIndex
 	rf.lastIncludedTerm = args.LastIncludedTerm
 	rf.persistStateAndSnapshot(args.Snapshot)
@@ -149,5 +155,4 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		rf.applyCh <- msg
 		DPrintf("[%d] send snapshot to server", rf.me)
 	}
-	reply.Success = true
 }

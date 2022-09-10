@@ -45,8 +45,9 @@ type AppendEntriesArgs struct {
 
 // Append RPC reply.
 type AppendEntriesReply struct {
-	Term    int  // Current term, for leader to update itself.
-	Success bool // true if follower contained entry matching prevLogIndex and prevLogTerm.
+	Term          int  // Current term, for leader to update itself.
+	Success       bool // true if follower contained entry matching prevLogIndex and prevLogTerm.
+	ConflictIndex int  // In case of conflicting, follower include the first index it store for conflict term.
 }
 
 // Install snapshot RPC args.
@@ -59,8 +60,7 @@ type InstallSnapshotArgs struct {
 }
 
 type InstallSnapshotReply struct {
-	Term    int  // Current term, for leader to update itself.
-	Success bool // true if follower install the snapshot.
+	Term int // Current term, for leader to update itself.
 }
 
 //
