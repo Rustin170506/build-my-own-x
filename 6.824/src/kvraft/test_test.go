@@ -606,6 +606,9 @@ func TestPersistPartitionUnreliable3A(t *testing.T) {
 }
 
 func TestPersistPartitionUnreliableLinearizable3A(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping the long test on CI")
+	}
 	// Test: unreliable net, restarts, partitions, linearizability checks (3A) ...
 	GenericTestLinearizability(t, "3A", 15, 7, true, true, true, -1)
 }
@@ -732,6 +735,9 @@ func TestSnapshotUnreliableRecoverConcurrentPartition3B(t *testing.T) {
 }
 
 func TestSnapshotUnreliableRecoverConcurrentPartitionLinearizable3B(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping the long test on CI")
+	}
 	// Test: unreliable net, restarts, partitions, snapshots, linearizability checks (3B) ...
 	GenericTestLinearizability(t, "3B", 15, 7, true, true, true, 1000)
 }
