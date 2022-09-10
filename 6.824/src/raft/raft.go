@@ -104,8 +104,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 		DPrintf("[%d] add command %v to self", rf.me, entry.Command)
 		rf.log = append(rf.log, entry)
 		// Update ourselves next indexes and matched indexes after we add a new log.
-		rf.nextIndexes[rf.me] = rf.getLogLen()
-		rf.matchedIndexes[rf.me] = rf.getLastLogEntryIndex()
+		rf.matchedIndexes[rf.me] = index
 		rf.persist()
 	}
 	return index, term, isLeader
@@ -211,10 +210,13 @@ func (rf *Raft) replicaLogToPeer(peerId int) {
 			return
 		}
 		gotSnapshot := rf.nextIndexes[peerId] <= rf.lastIncludedIndex
+		DPrintf("%d next index: %d, last included index: %d", peerId, rf.nextIndexes[peerId], rf.lastIncludedIndex)
 		rf.mu.Unlock()
 		if gotSnapshot {
+			DPrintf("[%d] send snapshot to %d", rf.me, peerId)
 			go rf.sendSnapshot(peerId)
 		} else {
+			DPrintf("[%d] append logs to %d, not snapshot", rf.me, peerId)
 			go rf.sendAppendEntry(peerId)
 		}
 		time.Sleep(HeartbeatInterval * time.Millisecond)
@@ -253,37 +255,27 @@ func (rf *Raft) sendAppendEntry(peerId int) {
 	defer rf.mu.Unlock()
 	if reply.Success {
 		// Update matched indexes and next indexes.
-		rf.matchedIndexes[peerId] = args.PrevLogIndex + len(args.Entries)
-		rf.nextIndexes[peerId] = rf.matchedIndexes[peerId] + 1
-		DPrintf("[%d] success send a append to %d", rf.me, peerId)
-		rf.updateCommittedIndex()
-		return
+		if args.PrevLogIndex+len(args.Entries) >= rf.nextIndexes[peerId] {
+			rf.matchedIndexes[peerId] = args.PrevLogIndex + len(args.Entries)
+			rf.nextIndexes[peerId] = rf.matchedIndexes[peerId] + 1
+			DPrintf("[%d] success send a append to %d", rf.me, peerId)
+			rf.updateCommittedIndex()
+		}
 	} else {
 		// If reply term more than current term, we should convert ourselves be a follower.
 		if reply.Term > rf.currentTerm {
 			rf.convertToFollower(reply.Term)
 			return
 		} else {
-			// It means follower's log conflict with leader log.
-			// So we need to fast back up.
-			prevIndex := args.PrevLogIndex // Get the previous log index.
-
-			// We will back up to an index which is first index of previous log term.
-			for prevIndex > rf.lastIncludedIndex && rf.getLogTermWithOffset(prevIndex) == args.PrevLogTerm {
-				prevIndex--
-			}
-
-			if prevIndex > rf.lastIncludedIndex {
-				rf.nextIndexes[peerId] = prevIndex + 1
-			} else {
-				rf.nextIndexes[peerId] = rf.lastIncludedIndex + 1
-			}
+			DPrintf("[%d] failed send a append to %d", rf.me, peerId)
+			rf.nextIndexes[peerId] = max(1, min(reply.ConflictIndex, rf.getLogLen()))
 		}
 	}
 }
 
 // Update committed index.
 func (rf *Raft) updateCommittedIndex() {
+	DPrintf("[%d] try to update committed index, %v", rf.me, rf.matchedIndexes)
 	majorityIndex := getMajoritySameIndex(rf.matchedIndexes)
 	if rf.state == Leader && majorityIndex > rf.commitIndex && rf.getLogTermWithOffset(majorityIndex) == rf.currentTerm {
 		rf.commitIndex = majorityIndex
@@ -297,7 +289,7 @@ func (rf *Raft) startApply() {
 		time.Sleep(5 * time.Millisecond)
 		var entries []LogEntry
 		rf.mu.Lock()
-		DPrintf("[%d] start apply, commit index: %d, last applied: %d", rf.me, rf.commitIndex, rf.lastAppliedIndex)
+		DPrintf("[%d] start apply, commit index: %d, last applied: %d, last log index: %d", rf.me, rf.commitIndex, rf.lastAppliedIndex, rf.getLastLogEntryIndex())
 		for rf.lastAppliedIndex < rf.getLastLogEntryIndex() && rf.lastAppliedIndex < rf.commitIndex {
 			rf.lastAppliedIndex++
 			DPrintf("[%d] apply log entry %d", rf.me, rf.lastAppliedIndex)
@@ -327,11 +319,11 @@ func (rf *Raft) CompactLog(lastAppliedIndex int, snapshot []byte) {
 		return
 	}
 
-	compactLen := lastAppliedIndex - rf.lastIncludedIndex
-
-	rf.lastIncludedTerm = rf.getLogTermWithOffset(lastAppliedIndex)
+	newLog := []LogEntry{{nil, 0, 0}}
+	newLog = append(newLog, rf.log[rf.getLogIndexWithOffset(lastAppliedIndex)+1:]...)
 	rf.lastIncludedIndex = lastAppliedIndex
-	rf.log = append(make([]LogEntry, 0), rf.log[compactLen:]...)
+	rf.lastIncludedTerm = rf.getLogTermWithOffset(lastAppliedIndex)
+	rf.log = newLog
 
 	rf.persistStateAndSnapshot(snapshot)
 }
@@ -347,8 +339,8 @@ func (rf *Raft) sendSnapshot(peerId int) {
 		Snapshot:          rf.persister.ReadSnapshot(),
 	}
 	rf.mu.Unlock()
-	replay := InstallSnapshotReply{}
-	ok := rf.sendInstallSnapshotRPC(peerId, &args, &replay)
+	reply := InstallSnapshotReply{}
+	ok := rf.sendInstallSnapshotRPC(peerId, &args, &reply)
 	if !ok {
 		DPrintf("[%d] send install snapshot to %d failed", rf.me, peerId)
 		return
@@ -356,12 +348,16 @@ func (rf *Raft) sendSnapshot(peerId int) {
 
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	if rf.currentTerm != args.Term || rf.currentTerm < replay.Term {
-		return
+	if rf.currentTerm == args.Term {
+		if rf.currentTerm < reply.Term {
+			rf.convertToFollower(reply.Term)
+			rf.persist()
+			return
+		}
+		rf.matchedIndexes[peerId] = args.LastIncludedIndex
+		rf.nextIndexes[peerId] = args.LastIncludedIndex + 1
+		rf.updateCommittedIndex()
 	}
-	rf.matchedIndexes[peerId] = rf.lastIncludedIndex
-	rf.nextIndexes[peerId] = rf.getLogLen()
-	rf.updateCommittedIndex()
 }
 
 //

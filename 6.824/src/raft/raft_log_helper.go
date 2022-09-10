@@ -21,11 +21,7 @@ func (rf *Raft) getOriginalIndex(index int) int {
 //
 // Get the last log entry.
 func (rf *Raft) getLastLogEntry() LogEntry {
-	if len(rf.log) > 0 {
-		return rf.log[len(rf.log)-1]
-	} else {
-		return LogEntry{nil, -1, -1}
-	}
+	return rf.log[len(rf.log)-1]
 }
 
 // Get the log index with offset. It is a relative index in the current log entries.
