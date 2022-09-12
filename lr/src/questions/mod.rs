@@ -26,3 +26,4 @@ mod q_112_path_sum;
 mod q_118_pascals_triangle;
 mod q_119_pascals_triangle_ii;
 mod q_121_best_time_to_buy_and_sell_stock;
+mod q_125_valid_palindrome;
