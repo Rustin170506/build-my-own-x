@@ -1,5 +1,5 @@
 pub fn single_number(nums: Vec<i32>) -> i32 {
-    assert!(nums.len() != 0);
+    assert!(!nums.is_empty());
     if nums.len() == 1 {
         return nums[0];
     }
