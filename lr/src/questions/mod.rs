@@ -29,6 +29,7 @@ mod q_119_pascals_triangle_ii;
 mod q_121_best_time_to_buy_and_sell_stock;
 mod q_125_valid_palindrome;
 mod q_136_single_number;
+mod q_167_two_sum_ii_input_array_is_sorted;
 mod q_217_contains_duplicate;
 mod q_242_valid_anagram;
 mod q_347_top_k_frequent_elements;
