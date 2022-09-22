@@ -11,6 +11,7 @@ mod q_027_remove_element;
 mod q_028_implement_strstr;
 mod q_035_search_insert_position;
 mod q_036_valid_sudoku;
+mod q_042_trapping_rain_water;
 mod q_049_group_anagrams;
 mod q_058_length_of_last_word;
 mod q_066_plus_one;
