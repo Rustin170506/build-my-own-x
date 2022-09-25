@@ -1,34 +1,43 @@
-use std::collections::HashMap;
-
 pub fn check_inclusion(s1: String, s2: String) -> bool {
     if s1.len() > s2.len() {
         return false;
     }
     assert!(!s1.is_empty());
     assert!(!s2.is_empty());
-    let mut s1_map: HashMap<char, i32> = HashMap::new();
-    for c in s1.chars() {
-        s1_map.entry(c).and_modify(|count| *count += 1).or_insert(1);
+    let (mut s1_count, mut s2_count) = ([0; 26], [0; 26]);
+    for i in 0..s1.len() {
+        s1_count[s1.chars().nth(i).unwrap() as usize - 'a' as usize] += 1;
+        s2_count[s2.chars().nth(i).unwrap() as usize - 'a' as usize] += 1;
     }
-    let mut s2_map: HashMap<char, i32> = HashMap::new();
+    let mut matches = 0;
 
-    for i in 0..s2.len() {
-        let mut j = i;
-        s2_map.clear();
-        while j - i < s1.len() && j < s2.len() {
-            s2_map
-                .entry(s2.chars().nth(j).unwrap())
-                .and_modify(|count| *count += 1)
-                .or_insert(1);
-            j += 1;
-        }
+    for i in 0..26 {
+        matches += if s1_count[i] == s2_count[i] { 1 } else { 0 };
+    }
 
-        if s1_map == s2_map {
+    for (left, right) in (s1.len()..s2.len()).enumerate() {
+        if matches == 26 {
             return true;
         }
+
+        let index = s2.chars().nth(right).unwrap() as usize - 'a' as usize;
+        s2_count[index] += 1;
+        if s1_count[index] == s2_count[index] {
+            matches += 1;
+        } else if s1_count[index] + 1 == s2_count[index] {
+            matches -= 1;
+        }
+
+        let index = s2.chars().nth(left).unwrap() as usize - 'a' as usize;
+        s2_count[index] -= 1;
+        if s1_count[index] == s2_count[index] {
+            matches += 1;
+        } else if s1_count[index] - 1 == s2_count[index] {
+            matches -= 1;
+        }
     }
 
-    false
+    matches == 26
 }
 
 #[cfg(test)]
