@@ -19,7 +19,7 @@ mod q_066_plus_one;
 mod q_067_add_binary;
 mod q_069_sqrtx;
 mod q_070_climbing_stairs;
-mod q_078_minimum_window_substring;
+mod q_076_minimum_window_substring;
 mod q_083_remove_duplicates_from_sorted_list;
 mod q_088_merge_sorted_array;
 mod q_094_binary_tree_inorder_traversal;
