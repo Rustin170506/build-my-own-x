@@ -39,6 +39,7 @@ mod q_136_single_number;
 mod q_167_two_sum_ii_input_array_is_sorted;
 mod q_217_contains_duplicate;
 mod q_238_product_of_array_except_self;
+mod q_239_sliding_window_maximum;
 mod q_242_valid_anagram;
 mod q_347_top_k_frequent_elements;
 mod q_424_longest_repeating_character_replacement;
