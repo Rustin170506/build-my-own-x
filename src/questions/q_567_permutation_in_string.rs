@@ -12,7 +12,7 @@ pub fn check_inclusion(s1: String, s2: String) -> bool {
     let mut matches = 0;
 
     for i in 0..26 {
-        matches += if s1_count[i] == s2_count[i] { 1 } else { 0 };
+        matches += i32::from(s1_count[i] == s2_count[i]);
     }
 
     for (left, right) in (s1.len()..s2.len()).enumerate() {
