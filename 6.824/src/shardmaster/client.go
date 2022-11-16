@@ -9,9 +9,17 @@ import "time"
 import "crypto/rand"
 import "math/big"
 
+// retryInterval is the interval between retries to send an RPC.
+const retryInterval = time.Millisecond * 60
+
 type Clerk struct {
 	servers []*labrpc.ClientEnd
-	// Your data here.
+	// Cache the leaderID.
+	leaderID int64
+	// clientID is used to distinguish different clients.
+	clientID int64
+	// requestID is used to distinguish different requests.
+	requestID int64
 }
 
 func nrand() int64 {
@@ -24,78 +32,103 @@ func nrand() int64 {
 func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
 	ck := new(Clerk)
 	ck.servers = servers
-	// Your code here.
+	ck.clientID = nrand()
+	ck.leaderID = 0
+	ck.requestID = 0
 	return ck
 }
 
 func (ck *Clerk) Query(num int) Config {
-	args := &QueryArgs{}
-	// Your code here.
-	args.Num = num
+	args := &QueryArgs{
+		Num:       num,
+		RequestID: ck.requestID,
+		ClientID:  ck.clientID,
+	}
+	ck.requestID++
 	for {
-		// try each known server.
-		for _, srv := range ck.servers {
-			var reply QueryReply
-			ok := srv.Call("ShardMaster.Query", args, &reply)
-			if ok && reply.WrongLeader == false {
+		var reply QueryReply
+
+		if ck.callLeader("ShardMaster.Query", args, &reply) {
+			if reply.Err == OK {
 				return reply.Config
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		ck.changeLeader()
+		time.Sleep(retryInterval)
 	}
 }
 
 func (ck *Clerk) Join(servers map[int][]string) {
-	args := &JoinArgs{}
-	// Your code here.
-	args.Servers = servers
+	args := &JoinArgs{
+		Servers:   servers,
+		RequestID: ck.requestID,
+		ClientID:  ck.clientID,
+	}
+	ck.requestID++
 
 	for {
-		// try each known server.
-		for _, srv := range ck.servers {
-			var reply JoinReply
-			ok := srv.Call("ShardMaster.Join", args, &reply)
-			if ok && reply.WrongLeader == false {
+		var reply JoinReply
+
+		if ck.callLeader("ShardMaster.Join", args, &reply) {
+			if reply.Err == OK {
 				return
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		ck.changeLeader()
+		time.Sleep(retryInterval)
 	}
 }
 
 func (ck *Clerk) Leave(gids []int) {
-	args := &LeaveArgs{}
+	args := &LeaveArgs{
+		GIDs:      gids,
+		RequestID: ck.requestID,
+		ClientID:  ck.clientID,
+	}
+	ck.requestID++
+
 	// Your code here.
 	args.GIDs = gids
 
 	for {
-		// try each known server.
-		for _, srv := range ck.servers {
-			var reply LeaveReply
-			ok := srv.Call("ShardMaster.Leave", args, &reply)
-			if ok && reply.WrongLeader == false {
+		var reply LeaveReply
+
+		if ck.callLeader("ShardMaster.Leave", args, &reply) {
+			if reply.Err == OK {
 				return
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		ck.changeLeader()
+		time.Sleep(retryInterval)
 	}
 }
 
 func (ck *Clerk) Move(shard int, gid int) {
-	args := &MoveArgs{}
-	// Your code here.
-	args.Shard = shard
-	args.GID = gid
+	args := &MoveArgs{
+		Shard:     shard,
+		GID:       gid,
+		RequestID: ck.requestID,
+		ClientID:  ck.clientID,
+	}
+	ck.requestID++
 
 	for {
-		// try each known server.
-		for _, srv := range ck.servers {
-			var reply MoveReply
-			ok := srv.Call("ShardMaster.Move", args, &reply)
-			if ok && reply.WrongLeader == false {
+		var reply MoveReply
+
+		if ck.callLeader("ShardMaster.Move", args, &reply) {
+			if reply.Err == OK {
 				return
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		ck.changeLeader()
+		time.Sleep(retryInterval)
 	}
+}
+
+func (ck *Clerk) callLeader(rpcname string, args interface{}, reply interface{}) bool {
+	return ck.servers[ck.leaderID].Call(rpcname, args, reply)
+}
+
+func (ck *Clerk) changeLeader() {
+	ck.leaderID = (ck.leaderID + 1) % int64(len(ck.servers))
 }
