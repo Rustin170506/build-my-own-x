@@ -188,11 +188,11 @@ func getGroupToShards(groups map[int][]string, shards [NShards]int) map[int][]in
 }
 
 func getMinGroup(groupToShards map[int][]int) int {
-	result := -1
-	min := -1
+	result := 0
+	min := 0
 
 	for gid, shards := range groupToShards {
-		if min == -1 {
+		if min == 0 {
 			min = len(shards)
 			result = gid
 		} else if min > len(shards) {
@@ -205,11 +205,11 @@ func getMinGroup(groupToShards map[int][]int) int {
 }
 
 func getMaxGroup(groupToShards map[int][]int) int {
-	result := -1
-	max := -1
+	result := 0
+	max := 0
 
 	for gid, shards := range groupToShards {
-		if max == -1 {
+		if max == 0 {
 			max = len(shards)
 			result = gid
 		} else if max < len(shards) {
@@ -357,7 +357,7 @@ func (sm *ShardMaster) receive() {
 			case Query:
 				// do nothing
 			default:
-				DPrintf("unknown type op: %s", op.Type)
+				DPrintf("unknown type op: %d", op.Type)
 			}
 		}
 		ch, ok := sm.opMap[msg.CommandIndex]
