@@ -51,15 +51,207 @@ type ShardMaster struct {
 }
 
 func (sm *ShardMaster) Join(args *JoinArgs, reply *JoinReply) {
-	// Your code here.
+	op := Op{
+		Type:      Join,
+		ClientID:  args.ClientID,
+		RequestID: args.RequestID,
+		Servers:   args.Servers,
+	}
+	isLeader := sm.startOp(op, timeout)
+	if !isLeader {
+		reply.WrongLeader = true
+		reply.Err = ErrWrongLeader
+		return
+	}
+	DPrintf("[%d] join servers: %v", sm.me, args.Servers)
+	reply.Err = OK
+}
+
+// Require to hold the lock.
+func (sm *ShardMaster) executeJoin(servers map[int][]string) {
+	length := len(sm.configs)
+	lastConfig := sm.configs[length-1]
+	newGroups := deepCopy(lastConfig.Groups)
+	for gid, ss := range servers {
+		newGroups[gid] = ss
+	}
+
+	newConfig := Config{
+		Num:    length,
+		Shards: [NShards]int{},
+		Groups: newGroups,
+	}
+
+	groupToShards := getGroupToShards(newGroups, lastConfig.Shards)
+	unAssignedShards := make([]int, 10)
+	for shard, gid := range lastConfig.Shards {
+		if gid == 0 {
+			unAssignedShards = append(unAssignedShards, shard)
+		}
+	}
+
+	for _, shard := range unAssignedShards {
+		target := getMinGroup(groupToShards)
+		groupToShards[target] = append(groupToShards[target], shard)
+	}
+
+	groupToShards = balanceShardBetweenGroups(groupToShards)
+	for gid, shards := range groupToShards {
+		for _, shard := range shards {
+			newConfig.Shards[shard] = gid
+		}
+	}
+
+	sm.configs = append(sm.configs, newConfig)
+}
+
+func balanceShardBetweenGroups(groupToShards map[int][]int) map[int][]int {
+	minGroup := getMinGroup(groupToShards)
+	maxGroup := getMaxGroup(groupToShards)
+
+	for maxGroup-minGroup > 1 {
+		groupToShards[minGroup] = append(groupToShards[minGroup], groupToShards[maxGroup][0])
+		groupToShards[maxGroup] = groupToShards[maxGroup][1:]
+		minGroup = getMinGroup(groupToShards)
+		maxGroup = getMaxGroup(groupToShards)
+	}
+
+	return groupToShards
 }
 
 func (sm *ShardMaster) Leave(args *LeaveArgs, reply *LeaveReply) {
-	// Your code here.
+	op := Op{
+		Type:      Leave,
+		ClientID:  args.ClientID,
+		RequestID: args.RequestID,
+		GIDs:      args.GIDs,
+	}
+	isLeader := sm.startOp(op, timeout)
+	if !isLeader {
+		reply.WrongLeader = true
+		reply.Err = ErrWrongLeader
+		return
+	}
+	DPrintf("[%d] leave gids: %v", sm.me, args.GIDs)
+	reply.Err = OK
+}
+
+// Require to hold the lock.
+func (sm *ShardMaster) executeLeave(gids []int) {
+	length := len(sm.configs)
+	lastConfig := sm.configs[length-1]
+	newGroups := deepCopy(lastConfig.Groups)
+
+	newConfig := Config{
+		Num:    length,
+		Shards: lastConfig.Shards,
+		Groups: newGroups,
+	}
+	groupToShards := getGroupToShards(newGroups, lastConfig.Shards)
+	unAssignedShards := make([]int, 10)
+	for _, gid := range gids {
+		delete(newConfig.Groups, gid)
+		if shards, ok := groupToShards[gid]; ok {
+			unAssignedShards = append(unAssignedShards, shards...)
+			delete(groupToShards, gid)
+		}
+	}
+
+	for _, shard := range unAssignedShards {
+		target := getMinGroup(groupToShards)
+		groupToShards[target] = append(groupToShards[target], shard)
+	}
+
+	for gid, shards := range groupToShards {
+		for _, shard := range shards {
+			newConfig.Shards[shard] = gid
+		}
+	}
+
+	sm.configs = append(sm.configs, newConfig)
+}
+
+func getGroupToShards(groups map[int][]string, shards [NShards]int) map[int][]int {
+	result := make(map[int][]int)
+	for gid, _ := range groups {
+		for shard, id := range shards {
+			if gid == id {
+				if _, ok := result[gid]; !ok {
+					result[gid] = make([]int, NShards)
+				}
+				result[gid] = append(result[gid], shard)
+			}
+		}
+	}
+
+	return result
+}
+
+func getMinGroup(groupToShards map[int][]int) int {
+	result := -1
+	min := -1
+
+	for gid, shards := range groupToShards {
+		if min == -1 {
+			min = len(shards)
+			result = gid
+		} else if min > len(shards) {
+			min = len(shards)
+			result = gid
+		}
+	}
+
+	return result
+}
+
+func getMaxGroup(groupToShards map[int][]int) int {
+	result := -1
+	max := -1
+
+	for gid, shards := range groupToShards {
+		if max == -1 {
+			max = len(shards)
+			result = gid
+		} else if max < len(shards) {
+			max = len(shards)
+			result = gid
+		}
+	}
+
+	return result
 }
 
 func (sm *ShardMaster) Move(args *MoveArgs, reply *MoveReply) {
-	// Your code here.
+	op := Op{
+		Type:      Move,
+		ClientID:  args.ClientID,
+		RequestID: args.RequestID,
+		Shard:     args.Shard,
+		GID:       args.GID,
+	}
+	isLeader := sm.startOp(op, timeout)
+	if !isLeader {
+		reply.WrongLeader = true
+		reply.Err = ErrWrongLeader
+		return
+	}
+	DPrintf("[%d] move shard: %d, gid: %d", sm.me, args.Shard, args.GID)
+	reply.Err = OK
+}
+
+// Require to hold the lock.
+func (sm *ShardMaster) executeMove(shard, gid int) {
+	length := len(sm.configs)
+	lastConfig := sm.configs[length-1]
+	newGroups := deepCopy(lastConfig.Groups)
+
+	newConfig := Config{
+		Num:    length,
+		Shards: lastConfig.Shards,
+		Groups: newGroups,
+	}
+	newConfig.Shards[shard] = gid
+	sm.configs = append(sm.configs, newConfig)
 }
 
 func (sm *ShardMaster) Query(args *QueryArgs, reply *QueryReply) {
@@ -75,15 +267,15 @@ func (sm *ShardMaster) Query(args *QueryArgs, reply *QueryReply) {
 		return
 	}
 
+	sm.mu.Lock()
 	reply.Config = sm.executeQuery(args.Num)
+	defer sm.mu.Unlock()
 	DPrintf("[%d] query config: %v", sm.me, reply.Config)
 	reply.Err = OK
 }
 
+// Require to hold the lock.
 func (sm *ShardMaster) executeQuery(num int) Config {
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-
 	length := len(sm.configs)
 	var c Config
 	if num == -1 || num >= length {
@@ -156,6 +348,12 @@ func (sm *ShardMaster) receive() {
 			DPrintf("[%d] update last request ID, Client: %d, Request: %d", sm.me, op.ClientID, op.RequestID)
 			sm.lastRequestIDMap[op.ClientID] = op.RequestID
 			switch op.Type {
+			case Join:
+				sm.executeJoin(op.Servers)
+			case Leave:
+				sm.executeLeave(op.GIDs)
+			case Move:
+				sm.executeMove(op.Shard, op.GID)
 			case Query:
 				// do nothing
 			default:
