@@ -1,6 +1,8 @@
 package shardmaster
 
 import (
+	"math"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -69,6 +71,7 @@ func (sm *ShardMaster) Join(args *JoinArgs, reply *JoinReply) {
 
 // Require to hold the lock.
 func (sm *ShardMaster) executeJoin(servers map[int][]string) {
+	DPrintf("[%d] execute join servers: %v", sm.me, servers)
 	length := len(sm.configs)
 	lastConfig := sm.configs[length-1]
 	newGroups := deepCopy(lastConfig.Groups)
@@ -83,37 +86,51 @@ func (sm *ShardMaster) executeJoin(servers map[int][]string) {
 	}
 
 	groupToShards := getGroupToShards(newGroups, lastConfig.Shards)
-	unAssignedShards := make([]int, 10)
+	DPrintf("[%d] groupToShards: %v", sm.me, groupToShards)
+	unAssignedShards := make([]int, 0)
+	DPrintf("[%d] lastConfig.Shards : %v", sm.me, lastConfig.Shards)
 	for shard, gid := range lastConfig.Shards {
 		if gid == 0 {
 			unAssignedShards = append(unAssignedShards, shard)
 		}
 	}
 
-	for _, shard := range unAssignedShards {
-		target := getMinGroup(groupToShards)
-		groupToShards[target] = append(groupToShards[target], shard)
+	DPrintf("[%d] unAssignedShards: %v", sm.me, unAssignedShards)
+	if len(unAssignedShards) != 0 {
+		for _, shard := range unAssignedShards {
+			target, _ := getMinGroup(groupToShards)
+			DPrintf("[%d] assign shard %d to group %d", sm.me, shard, target)
+			groupToShards[target] = append(groupToShards[target], shard)
+		}
+		// If we have unassigned shards, the first time groupToShards is useless.
+		delete(groupToShards, 0)
 	}
 
-	groupToShards = balanceShardBetweenGroups(groupToShards)
+	DPrintf("[%d] groupToShards: %v", sm.me, groupToShards)
+	groupToShards = balanceShardBetweenGroups(sm.me, groupToShards)
+	DPrintf("[%d] groupToShards after balance: %v", sm.me, groupToShards)
+	DPrintf("[%d] new config: %v", sm.me, newConfig)
 	for gid, shards := range groupToShards {
 		for _, shard := range shards {
+			DPrintf("[%d] gid: %d, shard: %d", sm.me, gid, shard)
 			newConfig.Shards[shard] = gid
 		}
 	}
+	DPrintf("[%d] new config: %v", sm.me, newConfig)
 
 	sm.configs = append(sm.configs, newConfig)
 }
 
-func balanceShardBetweenGroups(groupToShards map[int][]int) map[int][]int {
-	minGroup := getMinGroup(groupToShards)
-	maxGroup := getMaxGroup(groupToShards)
-
-	for maxGroup-minGroup > 1 {
+func balanceShardBetweenGroups(me int, groupToShards map[int][]int) map[int][]int {
+	minGroup, min := getMinGroup(groupToShards)
+	maxGroup, max := getMaxGroup(groupToShards)
+	DPrintf("[%d] min: %d, max: %d", me, min, max)
+	for max-min > 1 {
+		DPrintf("[%d] min: %d, max: %d", me, min, max)
 		groupToShards[minGroup] = append(groupToShards[minGroup], groupToShards[maxGroup][0])
 		groupToShards[maxGroup] = groupToShards[maxGroup][1:]
-		minGroup = getMinGroup(groupToShards)
-		maxGroup = getMaxGroup(groupToShards)
+		minGroup, min = getMinGroup(groupToShards)
+		maxGroup, max = getMaxGroup(groupToShards)
 	}
 
 	return groupToShards
@@ -138,6 +155,7 @@ func (sm *ShardMaster) Leave(args *LeaveArgs, reply *LeaveReply) {
 
 // Require to hold the lock.
 func (sm *ShardMaster) executeLeave(gids []int) {
+	DPrintf("[%d] execute leave gids: %v", sm.me, gids)
 	length := len(sm.configs)
 	lastConfig := sm.configs[length-1]
 	newGroups := deepCopy(lastConfig.Groups)
@@ -148,7 +166,7 @@ func (sm *ShardMaster) executeLeave(gids []int) {
 		Groups: newGroups,
 	}
 	groupToShards := getGroupToShards(newGroups, lastConfig.Shards)
-	unAssignedShards := make([]int, 10)
+	unAssignedShards := make([]int, 0)
 	for _, gid := range gids {
 		delete(newConfig.Groups, gid)
 		if shards, ok := groupToShards[gid]; ok {
@@ -158,7 +176,7 @@ func (sm *ShardMaster) executeLeave(gids []int) {
 	}
 
 	for _, shard := range unAssignedShards {
-		target := getMinGroup(groupToShards)
+		target, _ := getMinGroup(groupToShards)
 		groupToShards[target] = append(groupToShards[target], shard)
 	}
 
@@ -173,52 +191,55 @@ func (sm *ShardMaster) executeLeave(gids []int) {
 
 func getGroupToShards(groups map[int][]string, shards [NShards]int) map[int][]int {
 	result := make(map[int][]int)
-	for gid, _ := range groups {
-		for shard, id := range shards {
-			if gid == id {
-				if _, ok := result[gid]; !ok {
-					result[gid] = make([]int, NShards)
-				}
-				result[gid] = append(result[gid], shard)
-			}
-		}
+	for gid := range groups {
+		result[gid] = make([]int, 0)
+	}
+	for shard, gid := range shards {
+		result[gid] = append(result[gid], shard)
 	}
 
 	return result
 }
 
-func getMinGroup(groupToShards map[int][]int) int {
+func getMinGroup(groupToShards map[int][]int) (int, int) {
 	result := 0
-	min := 0
+	min := math.MaxInt32
 
-	for gid, shards := range groupToShards {
-		if min == 0 {
-			min = len(shards)
-			result = gid
-		} else if min > len(shards) {
-			min = len(shards)
+	gids := make([]int, 0)
+	for key := range groupToShards {
+		gids = append(gids, key)
+	}
+
+	sort.Ints(gids)
+
+	for _, gid := range gids {
+		if gid != 0 && len(groupToShards[gid]) < min {
+			min = len(groupToShards[gid])
 			result = gid
 		}
 	}
 
-	return result
+	return result, min
 }
 
-func getMaxGroup(groupToShards map[int][]int) int {
+func getMaxGroup(groupToShards map[int][]int) (int, int) {
 	result := 0
-	max := 0
+	max := math.MinInt32
+	gids := make([]int, 0)
+	for key := range groupToShards {
+		gids = append(gids, key)
+	}
 
-	for gid, shards := range groupToShards {
-		if max == 0 {
-			max = len(shards)
-			result = gid
-		} else if max < len(shards) {
-			max = len(shards)
+	sort.Ints(gids)
+
+	for _, gid := range gids {
+		if len(groupToShards[gid]) > max {
+			max = len(groupToShards[gid])
 			result = gid
 		}
 	}
 
-	return result
+	return result, max
 }
 
 func (sm *ShardMaster) Move(args *MoveArgs, reply *MoveReply) {
@@ -400,7 +421,6 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister)
 	sm.me = me
 
 	sm.configs = make([]Config, 1)
-	sm.configs[0].Groups = map[int][]string{}
 	sm.lastRequestIDMap = make(map[int64]int64)
 	sm.opMap = make(map[int]chan Op)
 
