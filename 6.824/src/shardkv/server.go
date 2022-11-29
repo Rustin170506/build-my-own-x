@@ -1,33 +1,41 @@
 package shardkv
 
+import (
+	"sync/atomic"
 
-// import "../shardmaster"
+	"../shardmaster"
+)
 import "../labrpc"
 import "../raft"
 import "sync"
 import "../labgob"
 
-
-
-type Op struct {
-	// Your definitions here.
-	// Field names must start with capital letters,
-	// otherwise RPC will break.
+type OperationContext struct {
+	CommandId int64
+	Response  CommandResponse
 }
 
 type ShardKV struct {
-	mu           sync.Mutex
-	me           int
-	rf           *raft.Raft
-	applyCh      chan raft.ApplyMsg
-	make_end     func(string) *labrpc.ClientEnd
-	gid          int
-	masters      []*labrpc.ClientEnd
-	maxraftstate int // snapshot if log grows this big
+	mu      sync.Mutex
+	me      int
+	rf      *raft.Raft
+	applyCh chan raft.ApplyMsg
+	dead    int32 // set by Kill()
 
-	// Your definitions here.
+	make_end func(string) *labrpc.ClientEnd
+	gid      int
+	sc       *shardmaster.Clerk
+
+	maxRaftState int // snapshot if log grows this big
+	lastApplied  int // record the lastApplied to prevent stateMachine from rollback
+
+	lastConfig    shardmaster.Config
+	currentConfig shardmaster.Config
+
+	stateMachines  map[int]*Shard                // KV stateMachines
+	lastOperations map[int64]OperationContext    // determine whether log is duplicated by recording the last commandId and response corresponding to the clientId
+	notifyChans    map[int]chan *CommandResponse // notify client goroutine by applier goroutine to response
 }
-
 
 func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 	// Your code here.
@@ -37,6 +45,60 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 	// Your code here.
 }
 
+// a dedicated applier goroutine to apply committed entries to stateMachine, take snapshot and apply snapshot from raft
+func (kv *ShardKV) applier() {
+	for kv.killed() == false {
+		select {
+		case msg := <-kv.applyCh:
+			DPrintf("[Node %d] [Group %v]receive message: %v", kv.me, kv.gid, msg)
+			if msg.CommandValid {
+				kv.mu.Lock()
+				if msg.CommandIndex <= kv.lastApplied {
+					DPrintf("[Node %d] [Group %v] discards outdated message because a newer snapshot which lastApplied is %v has been restored", kv.me, kv.gid, kv.lastApplied)
+					kv.mu.Unlock()
+					continue
+				}
+				kv.lastApplied = msg.CommandIndex
+				var response *CommandResponse
+				command := msg.Command.(Command)
+				switch command.Op {
+				case Operation:
+				case Configuration:
+				case InsertShards:
+				case DeleteShards:
+				case EmptyEntry:
+					// TODO
+				}
+				// only notify related channel for currentTerm's log when node is leader
+				if _, isLeader := kv.rf.GetState(); isLeader {
+					ch := kv.getNotifyChan(msg.CommandIndex)
+					ch <- response
+				}
+
+				//needSnapshot := kv.needSnapshot()
+				//if needSnapshot {
+				//	kv.takeSnapshot(msg.CommandIndex)
+				//}
+				kv.mu.Unlock()
+			} else {
+				kv.mu.Lock()
+				//if kv.rf.CondInstallSnapshot(message.SnapshotTerm, message.SnapshotIndex, message.Snapshot) {
+				//	kv.restoreSnapshot(msg.Snapshot)
+				//	kv.lastApplied = msg.CommandIndex
+				//}
+				kv.mu.Unlock()
+			}
+		}
+	}
+}
+
+func (kv *ShardKV) getNotifyChan(index int) chan *CommandResponse {
+	if _, ok := kv.notifyChans[index]; !ok {
+		kv.notifyChans[index] = make(chan *CommandResponse, 1)
+	}
+	return kv.notifyChans[index]
+}
+
 //
 // the tester calls Kill() when a ShardKV instance won't
 // be needed again. you are not required to do anything
@@ -44,10 +106,14 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 // turn off debug output from this instance.
 //
 func (kv *ShardKV) Kill() {
+	atomic.StoreInt32(&kv.dead, 1)
 	kv.rf.Kill()
-	// Your code here, if desired.
 }
 
+func (kv *ShardKV) killed() bool {
+	z := atomic.LoadInt32(&kv.dead)
+	return z == 1
+}
 
 //
 // servers[] contains the ports of the servers in this group.
@@ -77,17 +143,21 @@ func (kv *ShardKV) Kill() {
 // StartServer() must return quickly, so it should start goroutines
 // for any long-running work.
 //
-func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxraftstate int, gid int, masters []*labrpc.ClientEnd, make_end func(string) *labrpc.ClientEnd) *ShardKV {
+func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxRaftState int, gid int, masters []*labrpc.ClientEnd, make_end func(string) *labrpc.ClientEnd) *ShardKV {
 	// call labgob.Register on structures you want
 	// Go's RPC library to marshall/unmarshall.
-	labgob.Register(Op{})
+	labgob.Register(Command{})
+	labgob.Register(CommandRequest{})
+	labgob.Register(shardmaster.Config{})
+	labgob.Register(ShardOperationResponse{})
+	labgob.Register(ShardOperationRequest{})
 
 	kv := new(ShardKV)
 	kv.me = me
-	kv.maxraftstate = maxraftstate
+	kv.maxRaftState = maxRaftState
 	kv.make_end = make_end
 	kv.gid = gid
-	kv.masters = masters
+	kv.sc = shardmaster.MakeClerk(masters)
 
 	// Your initialization code here.
 
@@ -96,7 +166,6 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister,
 
 	kv.applyCh = make(chan raft.ApplyMsg)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
-
 
 	return kv
 }
