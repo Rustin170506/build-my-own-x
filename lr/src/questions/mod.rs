@@ -48,5 +48,6 @@ mod q_242_valid_anagram;
 mod q_347_top_k_frequent_elements;
 mod q_424_longest_repeating_character_replacement;
 mod q_567_permutation_in_string;
+mod q_704_binary_search;
 mod q_739_daily_temperatures;
 mod q_853_car_fleet;
