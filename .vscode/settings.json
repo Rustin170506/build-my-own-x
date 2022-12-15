@@ -1,0 +1,6 @@
+{
+    "git.ignoreLimitWarning": true,
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+}
