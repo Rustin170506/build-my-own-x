@@ -11,6 +11,7 @@ mod q_022_generate_parentheses;
 mod q_026_remove_duplicates_from_sorted_array;
 mod q_027_remove_element;
 mod q_028_implement_strstr;
+mod q_033_search_in_rotated_sorted_array;
 mod q_035_search_insert_position;
 mod q_036_valid_sudoku;
 mod q_042_trapping_rain_water;
