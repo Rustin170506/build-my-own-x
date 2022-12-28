@@ -8,7 +8,7 @@ pub fn is_palindrome(s: String) -> bool {
     let mut temp = String::new();
 
     for c in low_case_s.chars() {
-        if ('a'..='z').contains(&c) || ('0'..='9').contains(&c) {
+        if c.is_ascii_lowercase() || c.is_ascii_digit() {
             temp.push(c);
         }
     }

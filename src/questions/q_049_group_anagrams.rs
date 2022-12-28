@@ -16,7 +16,7 @@ pub fn group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
         }
     }
 
-    result.iter().map(|(_, v)| v.clone()).collect()
+    result.values().cloned().collect()
 }
 
 #[cfg(test)]

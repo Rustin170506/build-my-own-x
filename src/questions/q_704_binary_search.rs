@@ -7,7 +7,7 @@ pub fn search(nums: Vec<i32>, target: i32) -> i32 {
         match nums[mid as usize].cmp(&target) {
             std::cmp::Ordering::Less => left = mid + 1,
             std::cmp::Ordering::Equal => {
-                result = mid as i32;
+                result = mid;
                 break;
             }
             std::cmp::Ordering::Greater => right = mid - 1,
