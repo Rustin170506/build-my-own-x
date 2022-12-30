@@ -41,6 +41,7 @@ mod q_121_best_time_to_buy_and_sell_stock;
 mod q_125_valid_palindrome;
 mod q_128_longest_consecutive_sequence;
 mod q_136_single_number;
+mod q_143_reorder_list;
 mod q_150_evaluate_reverse_polish_notation;
 mod q_153_find_minimum_in_rotated_sorted_array;
 mod q_155_min_stack;
