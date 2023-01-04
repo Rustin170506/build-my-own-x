@@ -52,6 +52,7 @@ mod q_217_contains_duplicate;
 mod q_238_product_of_array_except_self;
 mod q_239_sliding_window_maximum;
 mod q_242_valid_anagram;
+mod q_287_find_the_duplicate_number;
 mod q_347_top_k_frequent_elements;
 mod q_424_longest_repeating_character_replacement;
 mod q_567_permutation_in_string;
