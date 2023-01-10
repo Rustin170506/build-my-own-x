@@ -1,7 +1,7 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 pub fn contains_duplicate(nums: Vec<i32>) -> bool {
-    if nums.len() <= 1 {
+    if nums.len() == 1 {
         return false;
     }
 
