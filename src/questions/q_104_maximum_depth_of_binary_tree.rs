@@ -10,10 +10,7 @@ pub fn max_depth(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
     let left = 1 + max_depth(root.as_ref().unwrap().borrow().left.to_owned());
     let right = 1 + max_depth(root.as_ref().unwrap().borrow().right.to_owned());
 
-    if left > right {
-        return left;
-    }
-    right
+    i32::max(left, right)
 }
 
 #[cfg(test)]
