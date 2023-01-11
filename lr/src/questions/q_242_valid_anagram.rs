@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub fn is_anagram(s: String, t: String) -> bool {
-    if s.is_empty() || t.is_empty() || s.len() != t.len() {
+    if s.len() != t.len() {
         return false;
     }
     let mut s_map: HashMap<char, i32> = HashMap::new();
