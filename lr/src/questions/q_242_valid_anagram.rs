@@ -33,7 +33,6 @@ mod tests {
 
     #[test]
     fn test_is_anagram() {
-        assert!(!is_anagram("".to_string(), "".to_string()));
         assert!(is_anagram("anagram".to_string(), "nagaram".to_string()));
         assert!(!is_anagram("rat".to_string(), "car".to_string()));
         assert!(!is_anagram("aacc".to_string(), "ccac".to_string()));
