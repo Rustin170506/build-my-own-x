@@ -51,6 +51,7 @@ mod q_150_evaluate_reverse_polish_notation;
 mod q_153_find_minimum_in_rotated_sorted_array;
 mod q_155_min_stack;
 mod q_167_two_sum_ii_input_array_is_sorted;
+mod q_206_reverse_linked_list;
 mod q_217_contains_duplicate;
 mod q_226_invert_binary_tree;
 mod q_238_product_of_array_except_self;
