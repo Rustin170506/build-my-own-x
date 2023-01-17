@@ -12,11 +12,11 @@ pub fn is_same_tree(p: Option<Rc<RefCell<TreeNode>>>, q: Option<Rc<RefCell<TreeN
 
     if p.as_ref().unwrap().borrow().val == q.as_ref().unwrap().borrow().val {
         return is_same_tree(
-            p.as_ref().unwrap().borrow().left.clone(),
-            q.as_ref().unwrap().borrow().left.clone(),
+            p.as_ref().unwrap().borrow_mut().left.take(),
+            q.as_ref().unwrap().borrow_mut().left.take(),
         ) && is_same_tree(
-            p.as_ref().unwrap().borrow().right.clone(),
-            q.as_ref().unwrap().borrow().right.clone(),
+            p.as_ref().unwrap().borrow_mut().right.take(),
+            q.as_ref().unwrap().borrow_mut().right.take(),
         );
     }
     false
