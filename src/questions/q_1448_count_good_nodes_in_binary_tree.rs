@@ -9,7 +9,7 @@ pub fn good_nodes(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
         }
 
         let node_value = root.as_ref().unwrap().borrow().val;
-        let res = if node_value >= max_value { 1 } else { 0 };
+        let res = i32::from(node_value >= max_value);
         let max_value = i32::max(max_value, node_value);
         res + dfs(root.as_ref().unwrap().borrow().left.clone(), max_value)
             + dfs(root.as_ref().unwrap().borrow().right.clone(), max_value)
