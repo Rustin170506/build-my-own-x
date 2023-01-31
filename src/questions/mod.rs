@@ -58,6 +58,7 @@ mod q_199_binary_tree_right_side_view;
 mod q_206_reverse_linked_list;
 mod q_217_contains_duplicate;
 mod q_226_invert_binary_tree;
+mod q_230_kth_smallest_element_in_a_bst;
 mod q_235_lowest_common_ancestor_of_a_binary_search_tree;
 mod q_238_product_of_array_except_self;
 mod q_239_sliding_window_maximum;
