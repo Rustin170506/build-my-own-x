@@ -37,6 +37,7 @@ mod q_100_same_tree;
 mod q_101_symmetric_tree;
 mod q_102_binary_tree_level_order_traversal;
 mod q_104_maximum_depth_of_binary_tree;
+mod q_105_construct_binary_tree_from_preorder_and_inorder_traversal;
 mod q_108_convert_sorted_array_to_binary_search_tree;
 mod q_110_balanced_binary_tree;
 mod q_111_minimum_depth_of_binary_tree;
