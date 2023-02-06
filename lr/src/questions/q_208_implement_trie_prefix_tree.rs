@@ -41,7 +41,6 @@ impl Trie {
         let mut cur = &self.root;
         for c in word.chars() {
             if cur.children.get(&c).is_none() {
-                println!("{c} not found");
                 return false;
             }
             cur = cur.children.get(&c).unwrap();
