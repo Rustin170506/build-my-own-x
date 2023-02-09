@@ -77,6 +77,7 @@ mod q_424_longest_repeating_character_replacement;
 mod q_543_diameter_of_binary_tree;
 mod q_567_permutation_in_string;
 mod q_572_subtree_of_another_tree;
+mod q_621_task_scheduler;
 mod q_703_kth_largest_element_in_a_stream;
 mod q_704_binary_search;
 mod q_739_daily_temperatures;
