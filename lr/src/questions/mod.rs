@@ -28,6 +28,7 @@ mod q_069_sqrtx;
 mod q_070_climbing_stairs;
 mod q_074_search_a_2d_matrix;
 mod q_076_minimum_window_substring;
+mod q_078_subsets;
 mod q_083_remove_duplicates_from_sorted_list;
 mod q_084_largest_rectangle_in_histogram;
 mod q_088_merge_sorted_array;
