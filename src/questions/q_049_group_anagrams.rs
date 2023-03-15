@@ -5,7 +5,7 @@ pub fn group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
     for s in strs {
         let mut key = vec![0; 26];
         for c in s.chars() {
-            key[(c as usize - 'a' as usize)] += 1;
+            key[c as usize - 'a' as usize] += 1;
         }
 
         match result.entry(key) {
