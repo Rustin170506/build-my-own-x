@@ -54,6 +54,7 @@ mod q_121_best_time_to_buy_and_sell_stock;
 mod q_124_binary_tree_maximum_path_sum;
 mod q_125_valid_palindrome;
 mod q_128_longest_consecutive_sequence;
+mod q_131_palindrome_partitioning;
 mod q_136_single_number;
 mod q_143_reorder_list;
 mod q_1448_count_good_nodes_in_binary_tree;
