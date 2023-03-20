@@ -38,7 +38,7 @@ pub fn letter_combinations(digits: String) -> Vec<String> {
         }
     }
 
-    if digits.len() > 0 {
+    if !digits.is_empty() {
         dfs(&digit_to_char, &mut res, &digits, 0, &mut "".to_owned());
     }
 
