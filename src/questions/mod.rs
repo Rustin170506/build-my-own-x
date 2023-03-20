@@ -7,6 +7,7 @@ mod q_011_container_with_most_water;
 mod q_013_roman_to_integer;
 mod q_014_longest_common_prefix;
 mod q_015_3sum;
+mod q_017_letter_combinations_of_a_phone_number;
 mod q_019_remove_nth_node_from_end_of_list;
 mod q_020_valid_parentheses;
 mod q_021_merge_two_sorted_lists;
