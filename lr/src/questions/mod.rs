@@ -66,6 +66,7 @@ mod q_153_find_minimum_in_rotated_sorted_array;
 mod q_155_min_stack;
 mod q_167_two_sum_ii_input_array_is_sorted;
 mod q_199_binary_tree_right_side_view;
+mod q_200_number_of_islands;
 mod q_206_reverse_linked_list;
 mod q_208_implement_trie_prefix_tree;
 mod q_211_design_add_and_search_words_data_structure;
