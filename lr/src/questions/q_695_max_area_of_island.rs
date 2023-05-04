@@ -44,8 +44,7 @@ fn dfs(
 
     visited.insert((r, c));
 
-    1
-        + dfs(r + 1, c, rows, cols, grid, visited)
+    1 + dfs(r + 1, c, rows, cols, grid, visited)
         + dfs(r - 1, c, rows, cols, grid, visited)
         + dfs(r, c + 1, rows, cols, grid, visited)
         + dfs(r, c - 1, rows, cols, grid, visited)
