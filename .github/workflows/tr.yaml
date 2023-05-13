@@ -13,8 +13,9 @@ name: Continuous integration
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      working-directory: tr
+    defaults:
+      run:
+        working-directory: tr
     steps:
       - name: Checkout
         uses: actions/checkout@v3
