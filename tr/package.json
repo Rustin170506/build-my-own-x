@@ -1,0 +1,19 @@
+{
+  "name": "tr",
+  "version": "0.1.0",
+  "description": "Leetcode in TS.",
+  "author": "hi-rustin",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "private": true,
+  "dependencies": {
+    "@types/node": "^20.1.4",
+    "jsdom": "^22.0.0",
+    "typescript": "^5.0.4",
+    "vite-tsconfig-paths": "^4.2.0",
+    "vitest": "^0.31.0"
+  }
+}
