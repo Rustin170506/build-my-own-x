@@ -3,10 +3,10 @@ on:
     branches:
       - main
     paths:
-      - "lr/**"
+      - "lg/**"
   pull_request:
     paths:
-      - "lr/**"
+      - "lg/**"
 
 name: Continuous integration
 
