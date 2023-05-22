@@ -39,6 +39,7 @@ mod q_083_remove_duplicates_from_sorted_list;
 mod q_084_largest_rectangle_in_histogram;
 mod q_088_merge_sorted_array;
 mod q_090_subsets_ii;
+mod q_091_decode_ways;
 mod q_094_binary_tree_inorder_traversal;
 mod q_098_validate_binary_search_tree;
 mod q_100_same_tree;
