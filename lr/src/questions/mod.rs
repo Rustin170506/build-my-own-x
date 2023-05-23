@@ -66,6 +66,7 @@ mod q_143_reorder_list;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_146_lru_cache;
 mod q_150_evaluate_reverse_polish_notation;
+mod q_152_maximum_product_subarray;
 mod q_153_find_minimum_in_rotated_sorted_array;
 mod q_155_min_stack;
 mod q_167_two_sum_ii_input_array_is_sorted;
