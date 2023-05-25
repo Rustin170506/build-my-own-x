@@ -65,6 +65,7 @@ mod q_136_single_number;
 mod q_143_reorder_list;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_146_lru_cache;
+mod q_149_word_break;
 mod q_150_evaluate_reverse_polish_notation;
 mod q_152_maximum_product_subarray;
 mod q_153_find_minimum_in_rotated_sorted_array;
