@@ -97,6 +97,7 @@ mod q_322_coin_change;
 mod q_347_top_k_frequent_elements;
 mod q_355_design_twitter;
 mod q_40_combination_sum_ii;
+mod q_416_partition_equal_subset_sum;
 mod q_417_pacific_atlantic_water_flow;
 mod q_424_longest_repeating_character_replacement;
 mod q_543_diameter_of_binary_tree;
