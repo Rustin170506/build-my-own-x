@@ -92,6 +92,7 @@ mod q_242_valid_anagram;
 mod q_287_find_the_duplicate_number;
 mod q_295_find_median_from_data_stream;
 mod q_297_serialize_and_deserialize_binary_tree;
+mod q_300_longest_increasing_subsequence;
 mod q_322_coin_change;
 mod q_347_top_k_frequent_elements;
 mod q_355_design_twitter;
