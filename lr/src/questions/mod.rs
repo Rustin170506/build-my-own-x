@@ -95,6 +95,7 @@ mod q_295_find_median_from_data_stream;
 mod q_297_serialize_and_deserialize_binary_tree;
 mod q_300_longest_increasing_subsequence;
 mod q_322_coin_change;
+mod q_338_counting_bits;
 mod q_347_top_k_frequent_elements;
 mod q_355_design_twitter;
 mod q_40_combination_sum_ii;
