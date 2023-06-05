@@ -91,6 +91,7 @@ mod q_235_lowest_common_ancestor_of_a_binary_search_tree;
 mod q_238_product_of_array_except_self;
 mod q_239_sliding_window_maximum;
 mod q_242_valid_anagram;
+mod q_268_missing_number;
 mod q_287_find_the_duplicate_number;
 mod q_295_find_median_from_data_stream;
 mod q_297_serialize_and_deserialize_binary_tree;
