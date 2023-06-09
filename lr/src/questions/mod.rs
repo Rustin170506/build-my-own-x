@@ -77,6 +77,7 @@ mod q_191_number_of_1_bits;
 mod q_198_house_robber;
 mod q_199_binary_tree_right_side_view;
 mod q_200_number_of_islands;
+mod q_202_happy_number;
 mod q_206_reverse_linked_list;
 mod q_207_course_schedule;
 mod q_208_implement_trie_prefix_tree;
