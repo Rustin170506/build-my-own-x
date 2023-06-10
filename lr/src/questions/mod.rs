@@ -26,6 +26,7 @@ mod q_039_combination_sum;
 mod q_042_trapping_rain_water;
 mod q_046_permutations;
 mod q_049_group_anagrams;
+mod q_050_pows_n;
 mod q_051_n_queens;
 mod q_058_length_of_last_word;
 mod q_066_plus_one;
