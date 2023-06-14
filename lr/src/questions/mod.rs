@@ -25,6 +25,7 @@ mod q_036_valid_sudoku;
 mod q_039_combination_sum;
 mod q_042_trapping_rain_water;
 mod q_046_permutations;
+mod q_048_rotate_image;
 mod q_049_group_anagrams;
 mod q_050_pows_n;
 mod q_051_n_queens;
