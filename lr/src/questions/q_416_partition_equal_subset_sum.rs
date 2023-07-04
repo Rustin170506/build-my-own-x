@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn test_can_partition() {
-        assert_eq!(can_partition(vec![1, 5, 11, 5]), true);
-        assert_eq!(can_partition(vec![1, 2, 3, 5]), false);
+        assert!(can_partition(vec![1, 5, 11, 5]));
+        assert!(!can_partition(vec![1, 2, 3, 5]));
     }
 }
