@@ -4,22 +4,24 @@ pub fn is_anagram(s: String, t: String) -> bool {
     if s.len() != t.len() {
         return false;
     }
-    let mut s_map: HashMap<char, i32> = HashMap::new();
+
+    let mut count_map = HashMap::new();
+
     for c in s.chars() {
-        let count = s_map.entry(c).or_insert(0);
-        *count += 1
+        let count = count_map.entry(c).or_insert(0);
+        *count += 1;
     }
 
     for c in t.chars() {
-        if let Some(x) = s_map.get_mut(&c) {
-            *x -= 1;
+        if let Some(count) = count_map.get_mut(&c) {
+            *count -= 1;
         } else {
             return false;
         }
     }
 
-    for v in s_map.values() {
-        if *v != 0 {
+    for count in count_map.values() {
+        if *count != 0 {
             return false;
         }
     }
@@ -27,14 +29,9 @@ pub fn is_anagram(s: String, t: String) -> bool {
     true
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_anagram() {
-        assert!(is_anagram("anagram".to_string(), "nagaram".to_string()));
-        assert!(!is_anagram("rat".to_string(), "car".to_string()));
-        assert!(!is_anagram("aacc".to_string(), "ccac".to_string()));
-    }
+#[test]
+fn test_is_anagram() {
+    assert!(is_anagram("anagram".to_string(), "nagaram".to_string()));
+    assert!(!is_anagram("rat".to_string(), "car".to_string()));
+    assert!(is_anagram("你我".to_string(), "我你".to_string()));
 }
