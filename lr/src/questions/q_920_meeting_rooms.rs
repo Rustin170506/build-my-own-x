@@ -20,9 +20,11 @@ mod tests {
 
     #[test]
     fn test_can_attend_meetings() {
-        assert!(
-            !can_attend_meetings(vec![vec![0, 30], vec![5, 10], vec![15, 20]])
-        );
+        assert!(!can_attend_meetings(vec![
+            vec![0, 30],
+            vec![5, 10],
+            vec![15, 20]
+        ]));
         assert!(can_attend_meetings(vec![vec![7, 10], vec![2, 4]]));
     }
 }
