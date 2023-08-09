@@ -31,6 +31,7 @@ mod q_048_rotate_image;
 mod q_049_group_anagrams;
 mod q_050_pows_n;
 mod q_051_n_queens;
+mod q_053_maximum_subarray;
 mod q_054_spiral_matrix;
 mod q_056_merge_intervals;
 mod q_057_insert_interval;
