@@ -33,6 +33,7 @@ mod q_050_pows_n;
 mod q_051_n_queens;
 mod q_053_maximum_subarray;
 mod q_054_spiral_matrix;
+mod q_055_jump_game;
 mod q_056_merge_intervals;
 mod q_057_insert_interval;
 mod q_058_length_of_last_word;
