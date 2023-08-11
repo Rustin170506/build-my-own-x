@@ -26,6 +26,7 @@ mod q_039_combination_sum;
 mod q_040_combination_sum_ii;
 mod q_042_trapping_rain_water;
 mod q_043_multiply_strings;
+mod q_045_jump_game_ii;
 mod q_046_permutations;
 mod q_048_rotate_image;
 mod q_049_group_anagrams;
