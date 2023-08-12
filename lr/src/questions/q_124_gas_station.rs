@@ -1,6 +1,6 @@
 pub fn can_complete_circuit(gas: Vec<i32>, cost: Vec<i32>) -> i32 {
     assert!(gas.len() == cost.len());
-    if gas.iter().sum::<i32>() >= cost.iter().sum() {
+    if gas.iter().sum::<i32>() <= cost.iter().sum() {
         return -1;
     }
 
