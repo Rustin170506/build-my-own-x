@@ -85,6 +85,7 @@ mod q_153_find_minimum_in_rotated_sorted_array;
 mod q_155_min_stack;
 mod q_167_two_sum_ii_input_array_is_sorted;
 mod q_1851_minimum_interval_to_include_each_query;
+mod q_1899_merge_triplets_to_form_target_triplet;
 mod q_190_reverse_bits;
 mod q_191_number_of_1_bits;
 mod q_198_house_robber;
