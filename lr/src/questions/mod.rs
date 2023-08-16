@@ -128,6 +128,7 @@ mod q_567_permutation_in_string;
 mod q_572_subtree_of_another_tree;
 mod q_621_task_scheduler;
 mod q_647_palindromic_substrings;
+mod q_678_valid_parenthesis_string;
 mod q_684_redundant_connection;
 mod q_695_max_area_of_island;
 mod q_703_kth_largest_element_in_a_stream;
