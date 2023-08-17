@@ -38,6 +38,7 @@ mod q_055_jump_game;
 mod q_056_merge_intervals;
 mod q_057_insert_interval;
 mod q_058_length_of_last_word;
+mod q_062_unique_paths;
 mod q_066_plus_one;
 mod q_067_add_binary;
 mod q_069_sqrtx;
