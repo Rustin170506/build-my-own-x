@@ -144,3 +144,4 @@ mod q_920_meeting_rooms;
 mod q_973_k_closest_points_to_origin;
 mod q_981_time_based_key_value_store;
 mod q_994_rotting_oranges;
+mod q_1143_longest_common_subsequence;
