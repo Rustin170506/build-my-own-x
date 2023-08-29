@@ -121,6 +121,7 @@ mod q_297_serialize_and_deserialize_binary_tree;
 mod q_300_longest_increasing_subsequence;
 mod q_309_best_time_to_buy_and_sell_stock_with_cooldown;
 mod q_322_coin_change;
+mod q_323_number_of_connected_components_in_an_undirected_graph;
 mod q_338_counting_bits;
 mod q_347_top_k_frequent_elements;
 mod q_355_design_twitter;
