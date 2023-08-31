@@ -147,6 +147,7 @@ mod q_0981_time_based_key_value_store;
 mod q_0994_rotting_oranges;
 mod q_1046_last_stone_weight;
 mod q_1143_longest_common_subsequence;
+mod q_1299_replace_elements_with_greatest_element_on_right_side;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_1851_minimum_interval_to_include_each_query;
 mod q_1899_merge_triplets_to_form_target_triplet;
