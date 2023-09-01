@@ -120,6 +120,7 @@ mod q_0338_counting_bits;
 mod q_0347_top_k_frequent_elements;
 mod q_0355_design_twitter;
 mod q_0371_sum_of_two_integers;
+mod q_0392_is_subsequence;
 mod q_0416_partition_equal_subset_sum;
 mod q_0417_pacific_atlantic_water_flow;
 mod q_0424_longest_repeating_character_replacement;
