@@ -143,6 +143,7 @@ mod q_0846_hand_of_straights;
 mod q_0853_car_fleet;
 mod q_0875_koko_eating_bananas;
 mod q_0920_meeting_rooms;
+mod q_0929_unique_email_addresses;
 mod q_0973_k_closest_points_to_origin;
 mod q_0981_time_based_key_value_store;
 mod q_0994_rotting_oranges;
