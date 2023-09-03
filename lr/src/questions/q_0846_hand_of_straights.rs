@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn q_is_n_straight_hand() {
-        assert_eq!(is_n_straight_hand(vec![1, 2, 3, 6, 2, 3, 4, 7, 8], 3), true);
-        assert_eq!(is_n_straight_hand(vec![1, 2, 3, 4, 5], 4), false);
+        assert!(is_n_straight_hand(vec![1, 2, 3, 6, 2, 3, 4, 7, 8], 3));
+        assert!(!is_n_straight_hand(vec![1, 2, 3, 4, 5], 4));
     }
 }
