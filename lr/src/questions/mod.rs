@@ -130,6 +130,7 @@ mod q_0494_target_sum;
 mod q_0543_diameter_of_binary_tree;
 mod q_0567_permutation_in_string;
 mod q_0572_subtree_of_another_tree;
+mod q_0605_can_place_flowers;
 mod q_0621_task_scheduler;
 mod q_0647_palindromic_substrings;
 mod q_0678_valid_parenthesis_string;
