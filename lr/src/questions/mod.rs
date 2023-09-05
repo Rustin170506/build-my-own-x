@@ -83,6 +83,7 @@ mod q_0152_maximum_product_subarray;
 mod q_0153_find_minimum_in_rotated_sorted_array;
 mod q_0155_min_stack;
 mod q_0167_two_sum_ii_input_array_is_sorted;
+mod q_0169_majority_element;
 mod q_0190_reverse_bits;
 mod q_0191_number_of_1_bits;
 mod q_0198_house_robber;
