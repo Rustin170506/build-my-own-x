@@ -128,6 +128,7 @@ mod q_0417_pacific_atlantic_water_flow;
 mod q_0424_longest_repeating_character_replacement;
 mod q_0435_non_overlapping_intervals;
 mod q_0494_target_sum;
+mod q_0496_next_greater_element_i;
 mod q_0543_diameter_of_binary_tree;
 mod q_0567_permutation_in_string;
 mod q_0572_subtree_of_another_tree;
