@@ -140,6 +140,7 @@ mod q_0684_redundant_connection;
 mod q_0695_max_area_of_island;
 mod q_0703_kth_largest_element_in_a_stream;
 mod q_0704_binary_search;
+mod q_0724_find_pivot_index;
 mod q_0739_daily_temperatures;
 mod q_0746_min_cost_climbing_stairs;
 mod q_0763_partition_labels;
