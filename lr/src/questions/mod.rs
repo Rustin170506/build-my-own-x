@@ -115,6 +115,7 @@ mod q_0287_find_the_duplicate_number;
 mod q_0295_find_median_from_data_stream;
 mod q_0297_serialize_and_deserialize_binary_tree;
 mod q_0300_longest_increasing_subsequence;
+mod q_0303_range_sum_query_immutable;
 mod q_0309_best_time_to_buy_and_sell_stock_with_cooldown;
 mod q_0322_coin_change;
 mod q_0323_number_of_connected_components_in_an_undirected_graph;
