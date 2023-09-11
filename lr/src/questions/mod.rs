@@ -138,6 +138,7 @@ mod q_0605_can_place_flowers;
 mod q_0621_task_scheduler;
 mod q_0647_palindromic_substrings;
 mod q_0678_valid_parenthesis_string;
+mod q_0680_valid_palindrome_ii;
 mod q_0684_redundant_connection;
 mod q_0695_max_area_of_island;
 mod q_0703_kth_largest_element_in_a_stream;
