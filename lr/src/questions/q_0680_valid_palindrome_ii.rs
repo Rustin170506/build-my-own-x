@@ -33,10 +33,10 @@ mod tests {
 
     #[test]
     fn test_valid_palindrome() {
-        assert_eq!(valid_palindrome("aba".to_string()), true);
-        assert_eq!(valid_palindrome("abca".to_string()), true);
-        assert_eq!(valid_palindrome("abc".to_string()), false);
-        assert_eq!(valid_palindrome("ab".to_string()), true);
-        assert_eq!(valid_palindrome("a".to_string()), true);
+        assert!(valid_palindrome("aba".to_string()));
+        assert!(valid_palindrome("abca".to_string()));
+        assert!(!valid_palindrome("abc".to_string()));
+        assert!(valid_palindrome("ab".to_string()));
+        assert!(valid_palindrome("a".to_string()));
     }
 }

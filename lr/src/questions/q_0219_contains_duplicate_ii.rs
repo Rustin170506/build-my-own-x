@@ -24,8 +24,8 @@ mod tests {
 
     #[test]
     fn test_contains_nearby_duplicate() {
-        assert_eq!(contains_nearby_duplicate(vec![1, 2, 3, 1], 3), true);
-        assert_eq!(contains_nearby_duplicate(vec![1, 0, 1, 1], 1), true);
-        assert_eq!(contains_nearby_duplicate(vec![1, 2, 3, 1, 2, 3], 2), false);
+        assert!(contains_nearby_duplicate(vec![1, 2, 3, 1], 3));
+        assert!(contains_nearby_duplicate(vec![1, 0, 1, 1], 1));
+        assert!(!contains_nearby_duplicate(vec![1, 2, 3, 1, 2, 3], 2));
     }
 }

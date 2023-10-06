@@ -28,7 +28,7 @@ mod tests {
 
     #[test]
     fn test_is_palindrome() {
-        assert_eq!(is_palindrome(list!(1, 2, 2, 1)), true);
-        assert_eq!(is_palindrome(list!(1, 2)), false);
+        assert!(is_palindrome(list!(1, 2, 2, 1)));
+        assert!(!is_palindrome(list!(1, 2)));
     }
 }
