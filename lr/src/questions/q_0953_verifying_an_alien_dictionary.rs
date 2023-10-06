@@ -38,23 +38,17 @@ mod tests {
 
     #[test]
     fn test_is_alien_sorted() {
-        assert!(
-            is_alien_sorted(
-                vec!["hello".to_string(), "leetcode".to_string(),],
-                "hlabcdefgijkmnopqrstuvwxyz".to_string()
-            )
-        );
-        assert!(
-            !is_alien_sorted(
-                vec!["word".to_string(), "world".to_string(), "row".to_string(),],
-                "worldabcefghijkmnpqstuvxyz".to_string()
-            )
-        );
-        assert!(
-            !is_alien_sorted(
-                vec!["apple".to_string(), "app".to_string(),],
-                "abcdefghijklmnopqrstuvwxyz".to_string()
-            )
-        );
+        assert!(is_alien_sorted(
+            vec!["hello".to_string(), "leetcode".to_string(),],
+            "hlabcdefgijkmnopqrstuvwxyz".to_string()
+        ));
+        assert!(!is_alien_sorted(
+            vec!["word".to_string(), "world".to_string(), "row".to_string(),],
+            "worldabcefghijkmnpqstuvxyz".to_string()
+        ));
+        assert!(!is_alien_sorted(
+            vec!["apple".to_string(), "app".to_string(),],
+            "abcdefghijklmnopqrstuvwxyz".to_string()
+        ));
     }
 }

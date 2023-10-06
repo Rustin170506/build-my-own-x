@@ -5,13 +5,13 @@ pub fn longest_common_prefix(strs: Vec<String>) -> String {
     }
     prefix.push_str(strs[0].as_str());
 
-    for s in strs.iter().skip(0) {
+    for s in strs.iter() {
         loop {
             let index = s.find(prefix.as_str());
             match index {
                 Some(index) => {
                     if index != 0 {
-                        prefix = prefix.chars().skip(0).take(prefix.len() - 1).collect();
+                        prefix = prefix.chars().take(prefix.len() - 1).collect();
                         if prefix.is_empty() {
                             return prefix;
                         }
@@ -20,7 +20,7 @@ pub fn longest_common_prefix(strs: Vec<String>) -> String {
                     }
                 }
                 None => {
-                    prefix = prefix.chars().skip(0).take(prefix.len() - 1).collect();
+                    prefix = prefix.chars().take(prefix.len() - 1).collect();
                     if prefix.is_empty() {
                         return prefix;
                     }

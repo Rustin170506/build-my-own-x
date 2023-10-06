@@ -14,9 +14,7 @@ impl Point {
 
 impl std::cmp::PartialOrd for Point {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let euclidean_distance1 = (((self.x * self.x) + (self.y * self.y)) as f64).sqrt();
-        let euclidean_distance2 = (((other.x * other.x) + (other.y * other.y)) as f64).sqrt();
-        euclidean_distance2.partial_cmp(&euclidean_distance1)
+        Some(self.cmp(other))
     }
 }
 

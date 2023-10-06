@@ -8,7 +8,7 @@ struct Post {
 
 impl std::cmp::PartialOrd for Post {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.date.partial_cmp(&other.date)
+        Some(self.cmp(other))
     }
 }
 

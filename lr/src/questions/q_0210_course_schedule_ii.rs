@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 pub fn find_order(num_courses: i32, prerequisites: Vec<Vec<i32>>) -> Vec<i32> {
     let mut pre_map: HashMap<i32, Vec<i32>> = (0..num_courses).map(|i| (i, vec![])).collect();
     for pre in prerequisites {
-        pre_map.entry(pre[0]).or_insert(vec![]).push(pre[1]);
+        pre_map.entry(pre[0]).or_default().push(pre[1]);
     }
     let mut res = vec![];
 
