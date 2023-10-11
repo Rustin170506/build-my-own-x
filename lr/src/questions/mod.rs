@@ -171,4 +171,4 @@ mod q_1851_minimum_interval_to_include_each_query;
 mod q_1899_merge_triplets_to_form_target_triplet;
 mod q_1929_concatenation_of_array;
 mod q_2013_detect_squares;
-mod q_2390_emoving_stars_from_a_string;
+mod q_2390_removing_stars_from_a_string;

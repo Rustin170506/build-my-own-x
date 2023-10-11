@@ -1,18 +1,20 @@
-use std::collections::VecDeque;
-
 pub fn remove_stars(s: String) -> String {
-    let mut stack = VecDeque::new();
-    for c in s.chars() {
+    let mut res = String::new();
+    let mut star_count = 0;
+
+    for c in s.chars().rev() {
         if c == '*' {
-            if !stack.is_empty() {
-                stack.pop_back();
-            }
+            star_count += 1;
         } else {
-            stack.push_back(c);
+            if star_count > 0 {
+                star_count -= 1;
+            } else {
+                res.push(c);
+            }
         }
     }
 
-    stack.iter().collect()
+    res.chars().rev().collect()
 }
 
 #[cfg(test)]
