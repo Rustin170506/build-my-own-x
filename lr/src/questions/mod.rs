@@ -133,6 +133,7 @@ mod q_0416_partition_equal_subset_sum;
 mod q_0417_pacific_atlantic_water_flow;
 mod q_0424_longest_repeating_character_replacement;
 mod q_0435_non_overlapping_intervals;
+mod q_0441_arranging_coins;
 mod q_0448_find_all_numbers_disappeared_in_an_array;
 mod q_0463_island_perimeter;
 mod q_0494_target_sum;
