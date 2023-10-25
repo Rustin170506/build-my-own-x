@@ -5,12 +5,10 @@ pub fn remove_stars(s: String) -> String {
     for c in s.chars().rev() {
         if c == '*' {
             star_count += 1;
+        } else if star_count > 0 {
+            star_count -= 1;
         } else {
-            if star_count > 0 {
-                star_count -= 1;
-            } else {
-                res.push(c);
-            }
+            res.push(c);
         }
     }
 
