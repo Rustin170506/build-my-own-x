@@ -13,17 +13,15 @@ pub fn middle_node(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
         new_head = &new_head.as_ref().unwrap().next;
     }
 
-    // 1, 2, 3 -> 3/2 = 1
-    //
-    // 1, 2, 3, 4, 5 ,6 ,7, 8 -> 4/2 = 2
     let middle = count / 2;
 
-    let mut head = &head;
+    let mut head = head;
+    let mut head = &mut head;
     for _ in 0..middle {
-        head = &head.as_ref().unwrap().next;
+        head = &mut head.as_mut().unwrap().next;
     }
 
-    head.clone()
+    head.take()
 }
 
 #[test]
