@@ -117,6 +117,7 @@ mod q_0268_missing_number;
 mod q_0271_encode_and_decode_strings;
 mod q_0286_walls_and_gates;
 mod q_0287_find_the_duplicate_number;
+mod q_0290_word_pattern;
 mod q_0295_find_median_from_data_stream;
 mod q_0297_serialize_and_deserialize_binary_tree;
 mod q_0300_longest_increasing_subsequence;
