@@ -28,7 +28,7 @@ jobs:
 
     steps:
     - name: "Checkout Repository"
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
 
     - name: Install Rustup
       run: |
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: "Use the latest Rust nightly with rustfmt"
       uses: actions-rs/toolchain@v1
       with:
