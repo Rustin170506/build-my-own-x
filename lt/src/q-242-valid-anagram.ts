@@ -1,6 +1,4 @@
-import { expect, test } from "vitest";
-
-function isAnagram(s: string, t: string): boolean {
+export function isAnagram(s: string, t: string): boolean {
   if (s.length != t.length) {
     return false;
   }
@@ -28,9 +26,3 @@ function isAnagram(s: string, t: string): boolean {
 
   return s_map.size == 0;
 }
-
-test("isAnagram", () => {
-  expect(isAnagram("abc", "cba")).toBe(true);
-  expect(isAnagram("acc", "c")).toBe(false);
-  expect(isAnagram("acc", "cad")).toBe(false);
-});
