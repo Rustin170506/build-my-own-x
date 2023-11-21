@@ -1,4 +1,4 @@
-import { isAnagram } from "./q-242-valid-anagram";
+import { isAnagram } from "./q0242ValidAnagram";
 
 test("isAnagram", () => {
   expect(isAnagram("abc", "cba")).toBe(true);

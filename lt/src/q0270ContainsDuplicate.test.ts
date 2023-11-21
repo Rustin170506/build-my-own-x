@@ -1,4 +1,4 @@
-import { containsDuplicate } from "./q-270-contains-duplicate";
+import { containsDuplicate } from "./q0270ContainsDuplicate";
 
 test("containsDuplicate", () => {
   expect(containsDuplicate([1, 2, 3, 1])).toBe(true);
