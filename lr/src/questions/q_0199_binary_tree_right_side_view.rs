@@ -20,8 +20,8 @@ pub fn right_side_view(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<i32> {
             }
         }
 
-        if right_side.is_some() {
-            res.push(right_side.as_ref().unwrap().borrow().val);
+        if let Some(right_side) = right_side {
+            res.push(right_side.as_ref().borrow().val);
         }
     }
 

@@ -15,10 +15,10 @@ pub fn level_order(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<Vec<i32>> {
         let mut level = vec![];
         for _ in 0..len {
             let node = q.pop_front().unwrap();
-            if node.is_some() {
-                level.push(node.as_ref().unwrap().borrow().val);
-                q.push_back(node.as_ref().unwrap().borrow().left.clone());
-                q.push_back(node.as_ref().unwrap().borrow().right.clone());
+            if let Some(node) = node {
+                level.push(node.as_ref().borrow().val);
+                q.push_back(node.as_ref().borrow().left.clone());
+                q.push_back(node.as_ref().borrow().right.clone());
             }
         }
         if !level.is_empty() {
