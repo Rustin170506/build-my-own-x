@@ -6,7 +6,7 @@ export function maxNumberOfBalloons(text: string): number {
             ["l", 2],
             ["o", 2],
             ["n", 1],
-        ].map(([character, count]) => [character as string, count as number])
+        ].map(([character, count]) => [character as string, count as number]),
     );
 
     const textCharacterCounts: Map<string, number> = text
@@ -22,7 +22,7 @@ export function maxNumberOfBalloons(text: string): number {
         if (textCharacterCounts.has(character)) {
             maxBalloonCount = Math.min(
                 maxBalloonCount,
-                Math.floor(textCharacterCounts.get(character)! / count)
+                Math.floor(textCharacterCounts.get(character)! / count),
             );
         } else {
             return 0;
