@@ -175,6 +175,7 @@ mod q_1189_maximum_number_of_balloons;
 mod q_1299_replace_elements_with_greatest_element_on_right_side;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_1768_merge_strings_alternately;
+mod q_1838_frequency_of_the_most_frequent_element;
 mod q_1851_minimum_interval_to_include_each_query;
 mod q_1899_merge_triplets_to_form_target_triplet;
 mod q_1929_concatenation_of_array;
