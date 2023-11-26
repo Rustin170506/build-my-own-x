@@ -140,6 +140,7 @@ mod q_0448_find_all_numbers_disappeared_in_an_array;
 mod q_0463_island_perimeter;
 mod q_0494_target_sum;
 mod q_0496_next_greater_element_i;
+mod q_0540_single_element_in_a_sorted_array;
 mod q_0543_diameter_of_binary_tree;
 mod q_0567_permutation_in_string;
 mod q_0572_subtree_of_another_tree;
