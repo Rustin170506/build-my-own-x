@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::utils::ListNode;
 
 pub fn reorder_list(head: &mut Option<Box<ListNode>>) {
@@ -61,4 +63,109 @@ mod tests {
         reorder_list(&mut list);
         assert_eq!(list, list!(1, 4, 2, 3));
     }
+}
+
+pub fn reorder_list1(head: &mut Option<Rc<RefCell<ListNode1>>>) {
+    // Only one or two nodes in the list.
+    if head.is_none() || head.as_ref().unwrap().borrow().next.is_none() {
+        return;
+    }
+
+    // Split the list into two halves
+    let mut slow = Rc::clone(head.as_ref().unwrap());
+    let mut fast = Rc::clone(&slow);
+    while fast.borrow().next.is_some()
+        && fast.borrow().next.as_ref().unwrap().borrow().next.is_some()
+    {
+        let next_slow = Rc::clone(slow.borrow().next.as_ref().unwrap());
+        slow = next_slow;
+
+        let next_fast = Rc::clone(
+            fast.borrow()
+                .next
+                .as_ref()
+                .unwrap()
+                .borrow()
+                .next
+                .as_ref()
+                .unwrap(),
+        );
+        fast = next_fast;
+    }
+
+    // Split the list into two halves.
+    let mut second_half = slow.borrow_mut().next.take();
+
+    // Reverse the second half of the list
+    let mut prev = None;
+    let mut current = second_half;
+    while let Some(node) = current {
+        let next = node.borrow_mut().next.take();
+        node.borrow_mut().next = prev.take();
+        prev = Some(node);
+        current = next;
+    }
+    second_half = prev;
+
+    // Merge the two halves
+    let mut first_half = head.take();
+    let new_head = Rc::clone(first_half.as_ref().unwrap());
+
+    while let Some(first_node) = first_half {
+        first_half = first_node.borrow_mut().next.take();
+        if let Some(second_node) = second_half {
+            second_half = second_node.borrow_mut().next.take();
+            first_node.borrow_mut().next = Some(Rc::clone(&second_node));
+            if first_half.is_some() {
+                second_node.borrow_mut().next = first_half.clone();
+            } else {
+                second_node.borrow_mut().next = None;
+            }
+        }
+    }
+
+    *head = Some(new_head)
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ListNode1 {
+    pub val: i32,
+    pub next: Option<Rc<RefCell<ListNode1>>>,
+}
+
+#[test]
+fn test_reorder_list1() {
+    let node4 = Rc::new(RefCell::new(ListNode1 { val: 4, next: None }));
+    let node3 = Rc::new(RefCell::new(ListNode1 {
+        val: 3,
+        next: Some(Rc::clone(&node4)),
+    }));
+    let node2 = Rc::new(RefCell::new(ListNode1 {
+        val: 2,
+        next: Some(Rc::clone(&node3)),
+    }));
+    let node1 = Rc::new(RefCell::new(ListNode1 {
+        val: 1,
+        next: Some(Rc::clone(&node2)),
+    }));
+
+    let mut head = Some(node1);
+    reorder_list1(&mut head);
+
+    // 1 4 2 3
+    let expected_node4 = Rc::new(RefCell::new(ListNode1 { val: 3, next: None }));
+    let expected_node3 = Rc::new(RefCell::new(ListNode1 {
+        val: 2,
+        next: Some(Rc::clone(&expected_node4)),
+    }));
+    let expected_node2 = Rc::new(RefCell::new(ListNode1 {
+        val: 4,
+        next: Some(Rc::clone(&expected_node3)),
+    }));
+    let expected_node1 = Rc::new(RefCell::new(ListNode1 {
+        val: 1,
+        next: Some(Rc::clone(&expected_node2)),
+    }));
+    let expected_head = Some(expected_node1);
+    assert_eq!(head, expected_head);
 }
