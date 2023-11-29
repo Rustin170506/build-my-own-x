@@ -152,6 +152,7 @@ mod q_0680_valid_palindrome_ii;
 mod q_0682_baseball_game;
 mod q_0684_redundant_connection;
 mod q_0695_max_area_of_island;
+mod q_0701_insert_into_a_binary_search_tree;
 mod q_0703_kth_largest_element_in_a_stream;
 mod q_0704_binary_search;
 mod q_0705_design_hashset;
