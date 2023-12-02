@@ -1,9 +1,4 @@
-export class ListNode {
-    constructor(
-        public val = 0,
-        public next: ListNode | null = null,
-    ) {}
-}
+import { ListNode } from "./util/ListNode";
 
 export function reorderList(head: ListNode | null): void {
     if (!head) return;

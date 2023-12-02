@@ -1,4 +1,5 @@
-import { reorderList, ListNode } from "./q0143ReorderList";
+import { reorderList } from "./q0143ReorderList";
+import { ListNode } from "./util/ListNode";
 
 function createLinkedList(arr: number[]): ListNode | null {
     if (arr.length === 0) return null;
