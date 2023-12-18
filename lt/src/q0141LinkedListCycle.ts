@@ -1,6 +1,6 @@
 import { ListNode } from "./util/ListNode";
 
-function hasCycle(head: ListNode | null): boolean {
+export function hasCycle(head: ListNode | null): boolean {
     let [slow, fast] = [head, head];
 
     while (fast?.next?.next) {

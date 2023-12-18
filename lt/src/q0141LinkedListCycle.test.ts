@@ -1,4 +1,5 @@
-import { hasCycle, ListNode } from "./q0141LinkedListCycle";
+import { hasCycle } from "./q0141LinkedListCycle";
+import { ListNode } from "./util/ListNode";
 
 function createLinkedList(arr: number[], pos: number): ListNode | null {
     const dummy = new ListNode(0);
