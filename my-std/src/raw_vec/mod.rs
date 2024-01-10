@@ -1,11 +1,11 @@
 use std::{
     alloc::{handle_alloc_error, Allocator, Global, Layout},
     collections::{TryReserveError, TryReserveErrorKind},
-    ptr::Unique,
+    ptr::NonNull,
 };
 
 pub struct RawVec<T, A: Allocator = Global> {
-    ptr: Unique<T>,
+    ptr: NonNull<T>,
     cap: usize,
     index: usize,
     alloc: A,
@@ -15,6 +15,7 @@ impl<T> RawVec<T, Global> {
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
+
     pub fn with_capacity(cap: usize) -> Self {
         Self::with_capacity_in(cap, Global)
     }
@@ -48,7 +49,7 @@ impl<T, A: Allocator> RawVec<T, A> {
     fn allocate_in(capacity: usize, alloc: A) -> Self {
         if capacity == 0 {
             Self {
-                ptr: Unique::dangling(),
+                ptr: NonNull::dangling(),
                 index: 0,
                 cap: 0,
                 alloc,
@@ -69,7 +70,7 @@ impl<T, A: Allocator> RawVec<T, A> {
             };
 
             Self {
-                ptr: unsafe { Unique::new_unchecked(ptr.cast().as_ptr()) },
+                ptr: unsafe { NonNull::new_unchecked(ptr.cast().as_ptr()) },
                 index: 0,
                 cap: capacity,
                 alloc,
