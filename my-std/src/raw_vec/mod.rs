@@ -41,6 +41,12 @@ impl<T> RawVec<T, Global> {
     }
 }
 
+impl<T> Default for RawVec<T, Global> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, A: Allocator> RawVec<T, A> {
     pub const fn new_in(alloc: A) -> Self {
         Self {
