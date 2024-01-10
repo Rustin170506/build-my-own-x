@@ -1,59 +1,66 @@
 use std::{
     alloc::{handle_alloc_error, Allocator, Global, Layout},
     collections::{TryReserveError, TryReserveErrorKind},
+    mem::SizedTypeProperties,
     ptr::NonNull,
 };
 
+enum AllocInit {
+    /// The contents of the new memory are uninitialized.
+    Uninitialized,
+    /// The new memory is guaranteed to be zeroed.
+    Zeroed,
+}
+
+struct Cap(usize);
+
+impl Cap {
+    const ZERO: Self = Self(0);
+}
+
 pub struct RawVec<T, A: Allocator = Global> {
     ptr: NonNull<T>,
-    cap: usize,
-    index: usize,
+    cap: Cap,
     alloc: A,
 }
 
 impl<T> RawVec<T, Global> {
+    #[must_use]
     pub fn new() -> Self {
-        Self::with_capacity(0)
+        Self::new_in(Global)
     }
 
+    #[must_use]
     pub fn with_capacity(cap: usize) -> Self {
         Self::with_capacity_in(cap, Global)
+    }
+
+    #[must_use]
+    pub fn with_capacity_zeroed(capacity: usize) -> Self {
+        Self::with_capacity_zeroed_in(capacity, Global)
     }
 }
 
 impl<T, A: Allocator> RawVec<T, A> {
-    pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
-        Self::allocate_in(capacity, alloc)
-    }
-
-    pub fn ptr(&self) -> *mut T {
-        self.ptr.as_ptr()
-    }
-
-    pub fn allocator(&self) -> &A {
-        &self.alloc
-    }
-
-    pub fn push(&mut self, value: T) {
-        unsafe {
-            self.ptr.as_ptr().add(self.index).write(value);
+    pub const fn new_in(alloc: A) -> Self {
+        Self {
+            ptr: NonNull::dangling(),
+            cap: Cap::ZERO,
+            alloc,
         }
-        self.index += 1;
     }
 
-    pub fn pop(&mut self) -> T {
-        self.index -= 1;
-        unsafe { self.ptr.as_ptr().add(self.index).read() }
+    pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
+        Self::allocate_in(capacity, AllocInit::Uninitialized, alloc)
     }
 
-    fn allocate_in(capacity: usize, alloc: A) -> Self {
-        if capacity == 0 {
-            Self {
-                ptr: NonNull::dangling(),
-                index: 0,
-                cap: 0,
-                alloc,
-            }
+    pub fn with_capacity_zeroed_in(capacity: usize, alloc: A) -> Self {
+        Self::allocate_in(capacity, AllocInit::Zeroed, alloc)
+    }
+
+    fn allocate_in(capacity: usize, init: AllocInit, alloc: A) -> Self {
+        if T::IS_ZST || capacity == 0 {
+            Self::new_in(alloc)
         } else {
             let layout = match Layout::array::<T>(capacity) {
                 Ok(layout) => layout,
@@ -63,7 +70,10 @@ impl<T, A: Allocator> RawVec<T, A> {
                 Ok(_) => {}
                 Err(_) => capacity_overflow(),
             }
-            let result = alloc.allocate(layout);
+            let result = match init {
+                AllocInit::Uninitialized => alloc.allocate(layout),
+                AllocInit::Zeroed => alloc.allocate_zeroed(layout),
+            };
             let ptr = match result {
                 Ok(ptr) => ptr,
                 Err(_) => handle_alloc_error(layout),
@@ -71,11 +81,26 @@ impl<T, A: Allocator> RawVec<T, A> {
 
             Self {
                 ptr: unsafe { NonNull::new_unchecked(ptr.cast().as_ptr()) },
-                index: 0,
-                cap: capacity,
+                cap: Cap(capacity),
                 alloc,
             }
         }
+    }
+
+    pub fn capacity(&self) -> usize {
+        if T::IS_ZST {
+            usize::MAX
+        } else {
+            self.cap.0
+        }
+    }
+
+    pub fn ptr(&self) -> *mut T {
+        self.ptr.as_ptr()
+    }
+
+    pub fn allocator(&self) -> &A {
+        &self.alloc
     }
 }
 
@@ -97,12 +122,7 @@ mod tests {
 
     #[test]
     fn test_raw_vec() {
-        let mut vec = RawVec::with_capacity(3);
-        vec.push(1);
-        vec.push(2);
-        vec.push(3);
-        assert_eq!(vec.pop(), 3);
-        assert_eq!(vec.pop(), 2);
-        assert_eq!(vec.pop(), 1);
+        let raw_vec: RawVec<i64> = RawVec::with_capacity(3);
+        assert_eq!(raw_vec.capacity(), 3);
     }
 }
