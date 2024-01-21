@@ -16,7 +16,7 @@
   "private": true,
   "dependencies": {
     "@types/node": "^20.1.4",
-    "jsdom": "^23.0.0",
+    "jsdom": "^24.0.0",
     "typescript": "^5.0.4"
   },
   "devDependencies": {
