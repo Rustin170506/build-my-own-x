@@ -176,6 +176,7 @@ mod q_1143_longest_common_subsequence;
 mod q_1189_maximum_number_of_balloons;
 mod q_1299_replace_elements_with_greatest_element_on_right_side;
 mod q_1448_count_good_nodes_in_binary_tree;
+mod q_1470_shuffle_the_array;
 mod q_1768_merge_strings_alternately;
 mod q_1838_frequency_of_the_most_frequent_element;
 mod q_1851_minimum_interval_to_include_each_query;
