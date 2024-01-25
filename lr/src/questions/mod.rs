@@ -174,6 +174,7 @@ mod q_0994_rotting_oranges;
 mod q_1046_last_stone_weight;
 mod q_1143_longest_common_subsequence;
 mod q_1189_maximum_number_of_balloons;
+mod q_1288_remove_covered_intervals;
 mod q_1299_replace_elements_with_greatest_element_on_right_side;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_1470_shuffle_the_array;
