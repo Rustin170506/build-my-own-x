@@ -1,5 +1,4 @@
 defmodule Solution0206 do
-  import ListNode
   @spec reverse_list(head :: ListNode.t() | nil) :: ListNode.t() | nil
   def reverse_list(head) do
     do_reverse(head, nil)
