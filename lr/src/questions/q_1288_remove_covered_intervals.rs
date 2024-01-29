@@ -5,11 +5,10 @@ pub fn remove_covered_intervals(intervals: Vec<Vec<i32>>) -> i32 {
     for i in 0..intervals.len() {
         let interval = &intervals[i];
         let mut covered = false;
-        for j in 0..intervals.len() {
+        for (j, temp) in intervals.iter().enumerate() {
             if i == j {
                 continue;
             }
-            let temp = &intervals[j];
             if temp[0] <= interval[0] && temp[1] >= interval[1] {
                 covered = true;
                 break;
@@ -19,7 +18,7 @@ pub fn remove_covered_intervals(intervals: Vec<Vec<i32>>) -> i32 {
             result += 1;
         }
     }
-    return result;
+    result
 }
 
 pub fn remove_covered_intervals_v2(intervals: Vec<Vec<i32>>) -> i32 {
@@ -27,9 +26,7 @@ pub fn remove_covered_intervals_v2(intervals: Vec<Vec<i32>>) -> i32 {
     intervals.sort_by(|a, b| {
         if a[0] < b[0] {
             Ordering::Less
-        } else if a[0] > b[0] {
-            Ordering::Greater
-        } else if a[1] < b[1] {
+        } else if a[0] > b[0] || a[1] < b[1] {
             Ordering::Greater
         } else {
             Ordering::Less
