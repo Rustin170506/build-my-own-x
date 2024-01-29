@@ -76,6 +76,7 @@ mod q_0130_surrounded_regions;
 mod q_0131_palindrome_partitioning;
 mod q_0136_single_number;
 mod q_0143_reorder_list;
+mod q_0144_binary_tree_preorder_traversal;
 mod q_0146_lru_cache;
 mod q_0149_word_break;
 mod q_0150_evaluate_reverse_polish_notation;
