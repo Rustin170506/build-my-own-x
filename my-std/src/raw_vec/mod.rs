@@ -25,8 +25,10 @@ pub struct RawVec<T, A: Allocator = Global> {
 }
 
 impl<T> RawVec<T, Global> {
+    pub const NEW: Self = Self::new();
+
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self::new_in(Global)
     }
 

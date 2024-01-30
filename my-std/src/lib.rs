@@ -5,4 +5,5 @@
     inline_const,
     unchecked_math
 )]
+pub mod my_vec;
 pub mod raw_vec;
