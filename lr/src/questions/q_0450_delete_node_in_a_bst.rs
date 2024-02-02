@@ -4,9 +4,7 @@ use crate::utils::TreeNode;
 
 pub fn delete_node(root: Option<Rc<RefCell<TreeNode>>>, key: i32) -> Option<Rc<RefCell<TreeNode>>> {
     let mut root = root;
-    if root.is_none() {
-        return None;
-    }
+    root.as_ref()?;
 
     let val = root.as_ref().unwrap().borrow().val;
     if key > val {
@@ -15,22 +13,20 @@ pub fn delete_node(root: Option<Rc<RefCell<TreeNode>>>, key: i32) -> Option<Rc<R
     } else if key < val {
         let left = root.as_ref().unwrap().borrow().left.clone();
         root.as_mut().unwrap().borrow_mut().left = delete_node(left, key)
+    } else if root.as_ref().unwrap().borrow().left.is_none() {
+        return root.as_ref().unwrap().borrow().right.clone();
+    } else if root.as_ref().unwrap().borrow().right.is_none() {
+        return root.as_ref().unwrap().borrow().left.clone();
     } else {
-        if root.as_ref().unwrap().borrow().left.is_none() {
-            return root.as_ref().unwrap().borrow().right.clone();
-        } else if root.as_ref().unwrap().borrow().right.is_none() {
-            return root.as_ref().unwrap().borrow().left.clone();
-        } else {
-            let mut cur = root.as_ref().unwrap().borrow().right.clone();
-            while cur.as_ref().unwrap().borrow().left.is_some() {
-                let left = cur.as_ref().unwrap().borrow().left.clone();
-                cur = left;
-            }
-            root.as_mut().unwrap().borrow_mut().val = cur.as_ref().unwrap().borrow().val;
-            let val = root.as_ref().unwrap().borrow().val;
-            let right = root.as_ref().unwrap().borrow().right.clone();
-            root.as_mut().unwrap().borrow_mut().right = delete_node(right, val);
+        let mut cur = root.as_ref().unwrap().borrow().right.clone();
+        while cur.as_ref().unwrap().borrow().left.is_some() {
+            let left = cur.as_ref().unwrap().borrow().left.clone();
+            cur = left;
         }
+        root.as_mut().unwrap().borrow_mut().val = cur.as_ref().unwrap().borrow().val;
+        let val = root.as_ref().unwrap().borrow().val;
+        let right = root.as_ref().unwrap().borrow().right.clone();
+        root.as_mut().unwrap().borrow_mut().right = delete_node(right, val);
     }
 
     root
