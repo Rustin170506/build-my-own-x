@@ -169,6 +169,7 @@ mod q_0853_car_fleet;
 mod q_0875_koko_eating_bananas;
 mod q_0876_middle_of_the_linked_list;
 mod q_0912_sort_an_array;
+mod q_0918_maximum_sum_circular_subarray;
 mod q_0920_meeting_rooms;
 mod q_0929_unique_email_addresses;
 mod q_0953_verifying_an_alien_dictionary;
