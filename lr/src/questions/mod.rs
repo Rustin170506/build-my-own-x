@@ -181,6 +181,7 @@ mod q_1143_longest_common_subsequence;
 mod q_1189_maximum_number_of_balloons;
 mod q_1288_remove_covered_intervals;
 mod q_1299_replace_elements_with_greatest_element_on_right_side;
+mod q_1343_number_of_sub_arrays_of_size_k_and_average_greater_than_or_equal_to_threshold;
 mod q_1448_count_good_nodes_in_binary_tree;
 mod q_1470_shuffle_the_array;
 mod q_1768_merge_strings_alternately;
