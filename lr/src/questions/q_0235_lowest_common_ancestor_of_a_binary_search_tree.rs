@@ -7,22 +7,24 @@ pub fn lowest_common_ancestor(
     p: Option<Rc<RefCell<TreeNode>>>,
     q: Option<Rc<RefCell<TreeNode>>>,
 ) -> Option<Rc<RefCell<TreeNode>>> {
-    let mut curr = root;
+    let mut current = root;
     let p = p.as_ref().unwrap().borrow().val;
     let q = q.as_ref().unwrap().borrow().val;
-    while curr.is_some() {
-        let value = curr.as_ref().unwrap().borrow().val;
-        if q > value && p > value {
-            let temp = curr.as_ref().unwrap().borrow().right.clone();
-            curr = temp;
-        } else if q < value && p < value {
-            let temp = curr.as_ref().unwrap().borrow().left.clone();
-            curr = temp;
+
+    while current.is_some() {
+        let current_val = current.as_ref().unwrap().borrow().val;
+        if current_val > p && current_val > q {
+            let left = current.as_mut().unwrap().borrow_mut().left.take();
+            current = left;
+        } else if current_val < p && current_val < q {
+            let right = current.as_mut().unwrap().borrow_mut().right.take();
+            current = right;
         } else {
-            return curr;
+            return current;
         }
     }
-    unreachable!()
+
+    unreachable!("should return in while loop");
 }
 
 #[cfg(test)]
