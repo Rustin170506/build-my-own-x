@@ -45,4 +45,17 @@ impl<T, A: Allocator> MyVec<T, A> {
             self.len += 1;
         }
     }
+
+    /// Removes the last element from a vector and returns it, or [`None`] if it is empty.
+    pub fn pop(&mut self) -> Option<T> {
+        if self.len == 0 {
+            return None;
+        } else {
+            unsafe {
+                self.len -= 1;
+                core::hint::assert_unchecked(self.len < self.buf.capacity());
+                Some(ptr::read(self.as_mut_ptr().add(self.len)))
+            }
+        }
+    }
 }
