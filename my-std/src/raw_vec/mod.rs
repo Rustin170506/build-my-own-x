@@ -141,12 +141,12 @@ impl<T, A: Allocator> RawVec<T, A> {
         if T::IS_ZST || self.cap.0 == 0 {
             None
         } else {
-            let _: () = const { assert!(mem::size_of::<T>() % mem::align_of::<T>() == 0) };
+            const { assert!(mem::size_of::<T>() % mem::align_of::<T>() == 0) };
             unsafe {
                 let align = mem::align_of::<T>();
                 let size = mem::size_of::<T>().unchecked_mul(self.cap.0);
                 let layout = Layout::from_size_align_unchecked(size, align);
-                Some((self.ptr.cast().into(), layout))
+                Some((self.ptr.cast(), layout))
             }
         }
     }

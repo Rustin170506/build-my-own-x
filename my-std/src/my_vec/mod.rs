@@ -52,7 +52,7 @@ impl<T, A: Allocator> MyVec<T, A> {
     /// Removes the last element from a vector and returns it, or [`None`] if it is empty.
     pub fn pop(&mut self) -> Option<T> {
         if self.len == 0 {
-            return None;
+            None
         } else {
             unsafe {
                 self.len -= 1;
