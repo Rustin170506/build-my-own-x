@@ -28,21 +28,19 @@ pub fn is_interleave(s1: String, s2: String, s3: String) -> bool {
 
 #[test]
 fn test_is_interleave() {
-    assert!(
-        is_interleave(
-            "aabcc".to_string(),
-            "dbbca".to_string(),
-            "aadbbcbcac".to_string()
-        )
-    );
-    assert!(
-        !is_interleave(
-            "aabcc".to_string(),
-            "dbbca".to_string(),
-            "aadbbbaccc".to_string()
-        )
-    );
-    assert!(
-        is_interleave("".to_string(), "".to_string(), "".to_string())
-    );
+    assert!(is_interleave(
+        "aabcc".to_string(),
+        "dbbca".to_string(),
+        "aadbbcbcac".to_string()
+    ));
+    assert!(!is_interleave(
+        "aabcc".to_string(),
+        "dbbca".to_string(),
+        "aadbbbaccc".to_string()
+    ));
+    assert!(is_interleave(
+        "".to_string(),
+        "".to_string(),
+        "".to_string()
+    ));
 }
