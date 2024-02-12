@@ -1,7 +1,9 @@
 use std::{
-    alloc::{handle_alloc_error, Allocator, Global, Layout},
+    alloc::{handle_alloc_error, Allocator, Global, Layout, LayoutError},
+    cmp,
     collections::{TryReserveError, TryReserveErrorKind},
-    mem::SizedTypeProperties,
+    hint,
+    mem::{self, SizedTypeProperties},
     ptr::NonNull,
 };
 
@@ -52,6 +54,19 @@ impl<T> Default for RawVec<T, Global> {
 }
 
 impl<T, A: Allocator> RawVec<T, A> {
+    // Tiny Vecs are dumb. Skip to:
+    // - 8 if the element size is 1, because any heap allocators is likely
+    //   to round up a request of less than 8 bytes to at least 8 bytes.
+    // - 4 if elements are moderate-sized (<= 1 KiB).
+    // - 1 otherwise, to avoid wasting too much space for very short Vecs.
+    pub(crate) const MIN_NON_ZERO_CAP: usize = if mem::size_of::<T>() == 1 {
+        8
+    } else if mem::size_of::<T>() <= 1024 {
+        4
+    } else {
+        1
+    };
+
     pub const fn new_in(alloc: A) -> Self {
         Self {
             ptr: NonNull::dangling(),
@@ -122,10 +137,98 @@ impl<T, A: Allocator> RawVec<T, A> {
         }
     }
 
+    fn current_memory(&self) -> Option<(NonNull<u8>, Layout)> {
+        if T::IS_ZST || self.cap.0 == 0 {
+            None
+        } else {
+            let _: () = const { assert!(mem::size_of::<T>() % mem::align_of::<T>() == 0) };
+            unsafe {
+                let align = mem::align_of::<T>();
+                let size = mem::size_of::<T>().unchecked_mul(self.cap.0);
+                let layout = Layout::from_size_align_unchecked(size, align);
+                Some((self.ptr.cast().into(), layout))
+            }
+        }
+    }
+
     /// Returns a shared reference to the allocator backing this `RawVec`.
     pub fn allocator(&self) -> &A {
         &self.alloc
     }
+
+    pub fn reserve_for_push(&mut self, len: usize) {
+        handle_reserve(self.grow_amortized(len, 1))
+    }
+
+    unsafe fn set_ptr_and_cap(&mut self, ptr: NonNull<[u8]>, cap: usize) {
+        // Allocators currently return a `NonNull<[u8]>` whose length matches
+        // the size requested. If that ever changes, the capacity there should
+        // change to `ptr.len() / mem::size_of::<T>()`.
+        self.ptr = NonNull::new_unchecked(ptr.cast().as_ptr());
+        self.cap = Cap(cap);
+    }
+
+    fn grow_amortized(&mut self, len: usize, additional: usize) -> Result<(), TryReserveError> {
+        debug_assert!(additional > 0);
+        if T::IS_ZST {
+            // Since we return a capacity of `usize::MAX` when `elem_size` is 0,
+            // getting to there necessarily means the `RawVec` is overfull.
+            return Err(TryReserveErrorKind::CapacityOverflow.into());
+        }
+
+        // Nothing we can really do about these checks, sadly.
+        let required_cap = len
+            .checked_add(additional)
+            .ok_or(TryReserveErrorKind::CapacityOverflow)?;
+
+        // This guarantees exponential growth.
+        // The doubling cannot overflow because `cao <= isize::MAX` and the type of `cap` is `usize`.
+        let cap = cmp::max(self.cap.0 * 2, required_cap);
+        let cap = cmp::max(Self::MIN_NON_ZERO_CAP, cap);
+
+        let new_layout = Layout::array::<T>(cap);
+
+        // `finish_grow` is non-generic over `T`.
+        let ptr = finish_grow(new_layout, self.current_memory(), &mut self.alloc)?;
+        // SAFETY: finish_grow would have resulted in a capacity overflow if we tried to allocate more than isize::MAX items
+        unsafe { self.set_ptr_and_cap(ptr, cap) };
+
+        Ok(())
+    }
+}
+
+#[inline(never)]
+fn finish_grow<A>(
+    new_layout: Result<Layout, LayoutError>,
+    current_memory: Option<(NonNull<u8>, Layout)>,
+    alloc: &mut A,
+) -> Result<NonNull<[u8]>, TryReserveError>
+where
+    A: Allocator,
+{
+    // Check for the error here to minimize the size of `RawVec::grow_*`.
+    let new_layout = new_layout.map_err(|_| TryReserveErrorKind::CapacityOverflow)?;
+
+    alloc_guard(new_layout.size())?;
+
+    let memory = if let Some((ptr, old_layout)) = current_memory {
+        debug_assert_eq!(old_layout.align(), new_layout.align());
+        unsafe {
+            // The allocator checks for alignment equality
+            hint::assert_unchecked(old_layout.align() == new_layout.align());
+            alloc.grow(ptr, old_layout, new_layout)
+        }
+    } else {
+        alloc.allocate(new_layout)
+    };
+
+    memory.map_err(|_| {
+        TryReserveErrorKind::AllocError {
+            layout: new_layout,
+            non_exhaustive: (),
+        }
+        .into()
+    })
 }
 
 // We need to guarantee the following:
@@ -137,6 +240,14 @@ fn alloc_guard(alloc_size: usize) -> Result<(), TryReserveError> {
         Err(TryReserveErrorKind::CapacityOverflow.into())
     } else {
         Ok(())
+    }
+}
+
+fn handle_reserve(result: Result<(), TryReserveError>) {
+    match result.map_err(|e| e.kind()) {
+        Err(TryReserveErrorKind::CapacityOverflow) => capacity_overflow(),
+        Err(TryReserveErrorKind::AllocError { layout, .. }) => handle_alloc_error(layout),
+        Ok(()) => { /* yay */ }
     }
 }
 

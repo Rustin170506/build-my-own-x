@@ -35,9 +35,12 @@ impl<T, A: Allocator> MyVec<T, A> {
         self.buf.ptr()
     }
 
+    /// Appends an element to the back of a collection.
     pub fn push(&mut self, value: T) {
+        // This will panic or abort if we would allocate more than `isize::MAX` bytes
+        // or if the length increment would overflow for zero-sized types.
         if self.len == self.buf.capacity() {
-            // grow
+            self.buf.reserve_for_push(self.len);
         }
         unsafe {
             let end = self.as_mut_ptr().add(self.len);
@@ -57,5 +60,22 @@ impl<T, A: Allocator> MyVec<T, A> {
                 Some(ptr::read(self.as_mut_ptr().add(self.len)))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_push_pop() {
+        let mut v = MyVec::new();
+        v.push(1);
+        v.push(2);
+        v.push(3);
+        assert_eq!(v.pop(), Some(3));
+        assert_eq!(v.pop(), Some(2));
+        assert_eq!(v.pop(), Some(1));
+        assert_eq!(v.pop(), None);
     }
 }
