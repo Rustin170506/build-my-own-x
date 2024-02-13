@@ -163,6 +163,7 @@ mod q_0704_binary_search;
 mod q_0705_design_hashset;
 mod q_0724_find_pivot_index;
 mod q_0739_daily_temperatures;
+mod q_0743_network_delay_time;
 mod q_0746_min_cost_climbing_stairs;
 mod q_0763_partition_labels;
 mod q_0846_hand_of_straights;
