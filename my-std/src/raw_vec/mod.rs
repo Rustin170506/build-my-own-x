@@ -20,6 +20,8 @@ impl Cap {
     const ZERO: Self = Self(0);
 }
 
+/// A low-level utility for more ergonomically allocating, reallocating, and deallocating
+/// a buffer of memory on the heap without having to worry about all the corner cases involved.
 pub struct RawVec<T, A: Allocator = Global> {
     ptr: NonNull<T>,
     cap: Cap,
@@ -29,11 +31,19 @@ pub struct RawVec<T, A: Allocator = Global> {
 impl<T> RawVec<T, Global> {
     pub const NEW: Self = Self::new();
 
+    /// Creates the biggest possible `RawVec` (on the system heap)
+    /// without allocating. If `T` has positive size, then this makes a
+    /// `RawVec` with capacity `0`. If `T` is zero-sized, then it makes a
+    /// `RawVec` with capacity `usize::MAX`. Useful for implementing
+    /// delayed allocation.
     #[must_use]
     pub const fn new() -> Self {
         Self::new_in(Global)
     }
 
+    /// Creates a `RawVec` (on the system heap) with exactly the capacity and
+    /// alignment requirements for a `[T; cap]`. This is equivalent to
+    /// calling `RawVec::new` when `capacity` is `0` or `T` is zero-sized.
     #[must_use]
     #[inline]
     pub fn with_capacity(cap: usize) -> Self {
@@ -67,7 +77,10 @@ impl<T, A: Allocator> RawVec<T, A> {
         1
     };
 
+    /// Like `new`, but parameterized over the choice of allocator for
+    /// the returned `RawVec`.
     pub const fn new_in(alloc: A) -> Self {
+        // `cap: 0` means ""unallocated". zero-sized types are ignored.
         Self {
             ptr: NonNull::dangling(),
             cap: Cap::ZERO,
@@ -75,17 +88,22 @@ impl<T, A: Allocator> RawVec<T, A> {
         }
     }
 
+    /// Like `with_capacity`, but parameterized over the choice of allocator for
+    /// the returned `RawVec`.
     #[inline]
     pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
         Self::allocate_in(capacity, AllocInit::Uninitialized, alloc)
     }
 
+    /// Like `with_capacity_zeroed`, but parameterized over the choice of allocator for
+    /// the returned `RawVec`.
     #[inline]
     pub fn with_capacity_zeroed_in(capacity: usize, alloc: A) -> Self {
         Self::allocate_in(capacity, AllocInit::Zeroed, alloc)
     }
 
     fn allocate_in(capacity: usize, init: AllocInit, alloc: A) -> Self {
+        // Don't allocate here because `Drop` will not deallocate when `capacity` is 0.
         if T::IS_ZST || capacity == 0 {
             Self::new_in(alloc)
         } else {
@@ -156,10 +174,14 @@ impl<T, A: Allocator> RawVec<T, A> {
         &self.alloc
     }
 
+    /// A specialized version of `reserve()` used only by the hot and
+    /// oft-instantiated `Vec::push()`, which does its own capacity check.
     pub fn reserve_for_push(&mut self, len: usize) {
         handle_reserve(self.grow_amortized(len, 1))
     }
+}
 
+impl<T, A: Allocator> RawVec<T, A> {
     unsafe fn set_ptr_and_cap(&mut self, ptr: NonNull<[u8]>, cap: usize) {
         // Allocators currently return a `NonNull<[u8]>` whose length matches
         // the size requested. If that ever changes, the capacity there should
