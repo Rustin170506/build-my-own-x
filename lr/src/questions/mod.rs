@@ -162,6 +162,7 @@ mod q_0701_insert_into_a_binary_search_tree;
 mod q_0703_kth_largest_element_in_a_stream;
 mod q_0704_binary_search;
 mod q_0705_design_hashset;
+mod q_0706_design_hashmap;
 mod q_0724_find_pivot_index;
 mod q_0739_daily_temperatures;
 mod q_0743_network_delay_time;
