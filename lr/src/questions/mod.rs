@@ -167,6 +167,7 @@ mod q_0739_daily_temperatures;
 mod q_0743_network_delay_time;
 mod q_0746_min_cost_climbing_stairs;
 mod q_0763_partition_labels;
+mod q_0778_swim_in_rising_water;
 mod q_0787_cheapest_flights_within_k_stops;
 mod q_0846_hand_of_straights;
 mod q_0853_car_fleet;
