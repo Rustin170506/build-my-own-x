@@ -1,3 +1,4 @@
+#[allow(clippy::ptr_arg)]
 pub fn rotate(matrix: &mut Vec<Vec<i32>>) {
     let (mut l, mut r) = (0, matrix.len() - 1);
 

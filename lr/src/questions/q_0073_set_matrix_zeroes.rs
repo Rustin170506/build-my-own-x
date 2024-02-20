@@ -1,4 +1,4 @@
-#[allow(clippy::needless_range_loop)]
+#[allow(clippy::needless_range_loop, clippy::ptr_arg)]
 pub fn set_zeroes(matrix: &mut Vec<Vec<i32>>) {
     let (rows, cols) = (matrix.len(), matrix[0].len());
     let mut row_zero = false;
