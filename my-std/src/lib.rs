@@ -4,7 +4,8 @@
     sized_type_properties,
     inline_const,
     unchecked_math,
-    hint_assert_unchecked
+    hint_assert_unchecked,
+    dropck_eyepatch
 )]
 pub mod my_vec;
 pub mod raw_vec;

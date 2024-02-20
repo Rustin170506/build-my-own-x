@@ -219,6 +219,16 @@ impl<T, A: Allocator> RawVec<T, A> {
     }
 }
 
+unsafe impl<#[may_dangle] T, A: Allocator> Drop for RawVec<T, A> {
+    fn drop(&mut self) {
+        if let Some((ptr, layout)) = self.current_memory() {
+            unsafe {
+                self.alloc.deallocate(ptr.cast(), layout);
+            }
+        }
+    }
+}
+
 #[inline(never)]
 fn finish_grow<A>(
     new_layout: Result<Layout, LayoutError>,
