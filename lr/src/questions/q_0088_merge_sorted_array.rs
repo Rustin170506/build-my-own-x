@@ -1,3 +1,4 @@
+#[allow(clippy::ptr_arg)]
 pub fn merge(nums1: &mut Vec<i32>, m: i32, nums2: &mut Vec<i32>, n: i32) {
     assert!(nums1.len() == (m + n) as usize);
     assert!(nums2.len() == n as usize);

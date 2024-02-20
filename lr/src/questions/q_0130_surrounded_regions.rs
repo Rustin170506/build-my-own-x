@@ -1,3 +1,4 @@
+#[allow(clippy::ptr_arg)]
 pub fn solve(board: &mut Vec<Vec<char>>) {
     let (rows, cols) = (board.len(), board[0].len());
 

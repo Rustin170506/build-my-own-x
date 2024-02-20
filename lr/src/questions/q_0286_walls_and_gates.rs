@@ -33,7 +33,7 @@ pub fn walls_and_gates(rooms: Vec<Vec<i32>>) {
 fn add_room(
     q: &mut VecDeque<(i32, i32)>,
     visited: &mut HashSet<(i32, i32)>,
-    rooms: &Vec<Vec<i32>>,
+    rooms: &[Vec<i32>],
     r: i32,
     c: i32,
 ) {
