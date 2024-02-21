@@ -117,6 +117,7 @@ mod q_0242_valid_anagram;
 mod q_0253_meeting_rooms_ii;
 mod q_0261_graph_valid_tree;
 mod q_0268_missing_number;
+mod q_0269_alien_dictionary;
 mod q_0271_encode_and_decode_strings;
 mod q_0286_walls_and_gates;
 mod q_0287_find_the_duplicate_number;
