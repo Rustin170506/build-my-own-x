@@ -1,16 +1,35 @@
 use std::{
     alloc::{Allocator, Global},
-    ptr,
+    fmt, ops, ptr, slice,
 };
 
 use crate::raw_vec::RawVec;
 
+/// A contiguous growable array.
+///
+/// # Examples
+///
+/// ```
+/// use my_std::my_vec::MyVec;
+///
+/// let mut vec = MyVec::new();
+/// vec.push(1);
+/// vec.push(2);
+/// assert_eq!(vec.pop(), Some(2));
+/// assert_eq!(vec.len(), 1);
+/// vec.push(3);
+/// assert_eq!(vec.len(), 2);
+/// assert_eq!(vec.pop(), Some(3));
+/// assert_eq!(vec.pop(), Some(1));
+/// assert_eq!(vec.pop(), None);
+/// ```
 pub struct MyVec<T, A: Allocator = Global> {
     buf: RawVec<T, A>,
     len: usize,
 }
 
 impl<T> MyVec<T> {
+    /// Constructs a new, empty `MyVec<T>`.
     pub const fn new() -> Self {
         MyVec {
             buf: RawVec::NEW,
@@ -18,12 +37,14 @@ impl<T> MyVec<T> {
         }
     }
 
+    /// Constructs a new, empty `MyVec<T>` with the specified capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self::with_capacity_in(capacity, Global)
     }
 }
 
 impl<T, A: Allocator> MyVec<T, A> {
+    /// Constructs a new, empty `MyVec<T>` with the specified capacity using a specified allocator.
     pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
         MyVec {
             buf: RawVec::with_capacity_in(capacity, alloc),
@@ -31,11 +52,18 @@ impl<T, A: Allocator> MyVec<T, A> {
         }
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.buf.ptr()
-    }
-
     /// Appends an element to the back of a collection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    ///
+    /// let mut vec = MyVec::new();
+    /// vec.push(1);
+    /// vec.push(2);
+    /// assert_eq!(vec, [1, 2]);
+    /// ```
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate more than `isize::MAX` bytes
         // or if the length increment would overflow for zero-sized types.
@@ -60,6 +88,27 @@ impl<T, A: Allocator> MyVec<T, A> {
                 Some(ptr::read(self.as_mut_ptr().add(self.len)))
             }
         }
+    }
+
+    /// Returns an unsafe mutable pointer to the vector's buffer, or a dangling raw pointer
+    /// valid for zero sized reads if the vector didn't allocate.
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self.buf.ptr()
+    }
+}
+
+impl<T, A: Allocator> ops::Deref for MyVec<T, A> {
+    type Target = [T];
+
+    #[inline]
+    fn deref(&self) -> &[T] {
+        unsafe { slice::from_raw_parts(self.as_ptr(), self.len) }
+    }
+}
+
+impl<T: fmt::Debug, A: Allocator> fmt::Debug for MyVec<T, A> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&**self, f)
     }
 }
 
