@@ -1,7 +1,7 @@
 pub fn alien_order(words: Vec<String>) -> String {
     let mut graph = vec![vec![]; 26];
-    let mut in_degree = vec![0; 26];
-    let mut seen = vec![false; 26];
+    let mut in_degree = [0; 26];
+    let mut seen = [false; 26];
     let mut result = String::new();
     let mut queue = Vec::new();
 
@@ -32,8 +32,8 @@ pub fn alien_order(words: Vec<String>) -> String {
         }
     }
 
-    while !queue.is_empty() {
-        let c = queue.pop().unwrap();
+    while let Some(c) = queue.pop() {
+        
         result.push((c as u8 + b'a') as char);
         for &next in &graph[c] {
             in_degree[next] -= 1;

@@ -129,6 +129,7 @@ mod q_0303_range_sum_query_immutable;
 mod q_0309_best_time_to_buy_and_sell_stock_with_cooldown;
 mod q_0322_coin_change;
 mod q_0323_number_of_connected_components_in_an_undirected_graph;
+mod q_0329_longest_increasing_path_in_a_matrix;
 mod q_0332_reconstruct_itinerary;
 mod q_0338_counting_bits;
 mod q_0347_top_k_frequent_elements;
