@@ -33,7 +33,6 @@ pub fn alien_order(words: Vec<String>) -> String {
     }
 
     while let Some(c) = queue.pop() {
-        
         result.push((c as u8 + b'a') as char);
         for &next in &graph[c] {
             in_degree[next] -= 1;
