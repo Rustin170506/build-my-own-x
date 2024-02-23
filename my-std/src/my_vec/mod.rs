@@ -115,6 +115,43 @@ impl<T, A: Allocator> MyVec<T, A> {
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.buf.ptr()
     }
+
+    pub fn capacity(&self) -> usize {
+        self.buf.capacity()
+    }
+
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        debug_assert!(new_len <= self.capacity());
+
+        self.len = new_len;
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.buf.reserve(self.len, additional);
+    }
+
+    pub fn insert(&mut self, index: usize, element: T) {
+        let len = self.len();
+
+        unsafe {
+            // infallible
+            // The spot to put the new value
+            {
+                let p = self.as_mut_ptr().add(index);
+                if index < len {
+                    // Shift everything over to make space.
+                    ptr::copy(p, p.add(1), len - index);
+                } else if index == len {
+                    // This is just a push
+                } else {
+                    panic!("insertion index (is {index}) should be <= len (is {len})");
+                }
+                // Write it in, overwriting the first copy of `index`th element.
+                ptr::write(p, element);
+            }
+            self.set_len(len + 1);
+        }
+    }
 }
 
 impl<T, A: Allocator> ops::Deref for MyVec<T, A> {
