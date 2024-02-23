@@ -66,6 +66,7 @@ mod q_0108_convert_sorted_array_to_binary_search_tree;
 mod q_0110_balanced_binary_tree;
 mod q_0111_minimum_depth_of_binary_tree;
 mod q_0112_path_sum;
+mod q_0115_num_distinct;
 mod q_0118_pascals_triangle;
 mod q_0119_pascals_triangle_ii;
 mod q_0121_best_time_to_buy_and_sell_stock;
