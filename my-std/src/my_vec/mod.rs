@@ -62,7 +62,8 @@ impl<T, A: Allocator> MyVec<T, A> {
     /// let mut vec = MyVec::new();
     /// vec.push(1);
     /// vec.push(2);
-    /// assert_eq!(vec, [1, 2]);
+    /// assert_eq!(vec[0], 1);
+    /// assert_eq!(vec[1], 2);
     /// ```
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate more than `isize::MAX` bytes
@@ -78,6 +79,19 @@ impl<T, A: Allocator> MyVec<T, A> {
     }
 
     /// Removes the last element from a vector and returns it, or [`None`] if it is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    ///
+    /// let mut vec = MyVec::new();
+    /// vec.push(1);
+    /// vec.push(2);
+    /// assert_eq!(vec.pop(), Some(2));
+    /// assert_eq!(vec.pop(), Some(1));
+    /// assert_eq!(vec.pop(), None);
+    /// ```
     pub fn pop(&mut self) -> Option<T> {
         if self.len == 0 {
             None
@@ -88,6 +102,12 @@ impl<T, A: Allocator> MyVec<T, A> {
                 Some(ptr::read(self.as_mut_ptr().add(self.len)))
             }
         }
+    }
+
+    /// Returns a raw pointer to the vector's buffer, or a dangling raw pointer
+    /// valid for zero sized reads if the vector didn't allocate.
+    pub fn as_ptr(&self) -> *const T {
+        self.buf.ptr()
     }
 
     /// Returns an unsafe mutable pointer to the vector's buffer, or a dangling raw pointer
