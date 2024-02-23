@@ -174,6 +174,16 @@ impl<T, A: Allocator> RawVec<T, A> {
         &self.alloc
     }
 
+    fn needs_to_grow(&self, len: usize, additional: usize) -> bool {
+        additional > self.capacity().wrapping_sub(len)
+    }
+
+    pub fn reserve(&mut self, len: usize, additional: usize) {
+        if self.needs_to_grow(len, additional) {
+            handle_reserve(self.grow_amortized(len, additional))
+        }
+    }
+
     /// A specialized version of `reserve()` used only by the hot and
     /// oft-instantiated `Vec::push()`, which does its own capacity check.
     pub fn reserve_for_push(&mut self, len: usize) {
