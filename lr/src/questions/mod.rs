@@ -5,6 +5,7 @@ mod q_0004_median_of_two_sorted_arrays;
 mod q_0005_longest_palindromic_substring;
 mod q_0007_reverse;
 mod q_0009_palindrome_number;
+mod q_0010_regular_expression_matching;
 mod q_0011_container_with_most_water;
 mod q_0013_roman_to_integer;
 mod q_0014_longest_common_prefix;
