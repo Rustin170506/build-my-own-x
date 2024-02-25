@@ -1,6 +1,6 @@
 use std::{
     alloc::{Allocator, Global},
-    fmt, ops, ptr, slice,
+    cmp, fmt, ops, ptr, slice,
 };
 
 use crate::raw_vec::RawVec;
@@ -131,6 +131,10 @@ impl<T, A: Allocator> MyVec<T, A> {
     }
 
     /// Forces the length of the vector to `new_len`.
+    ///
+    /// # Safety
+    ///
+    /// This is generally not safe, because it can lead to reading uninitialized memory.
     pub unsafe fn set_len(&mut self, new_len: usize) {
         debug_assert!(new_len <= self.capacity());
 
@@ -167,13 +171,17 @@ impl<T, A: Allocator> MyVec<T, A> {
             // The spot to put the new value
             {
                 let p = self.as_mut_ptr().add(index);
-                if index < len {
-                    // Shift everything over to make space.
-                    ptr::copy(p, p.add(1), len - index);
-                } else if index == len {
-                    // This is just a push
-                } else {
-                    panic!("insertion index (is {index}) should be <= len (is {len})");
+                match index.cmp(&len) {
+                    cmp::Ordering::Less => {
+                        // Shift everything over to make space.
+                        ptr::copy(p, p.add(1), len - index);
+                    }
+                    cmp::Ordering::Equal => {
+                        // This is just a push
+                    }
+                    cmp::Ordering::Greater => {
+                        panic!("insertion index (is {index}) should be <= len (is {len})");
+                    }
                 }
                 // Write it in, overwriting the first copy of `index`th element.
                 ptr::write(p, element);
