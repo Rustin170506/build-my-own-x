@@ -21,15 +21,47 @@ pub fn is_palindrome(s: String) -> bool {
     temp == rev_temp
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_palindrome() {
-        assert!(!is_palindrome("0P".to_string()));
-        assert!(is_palindrome(" ".to_string()));
-        assert!(is_palindrome("A man, a plan, a canal: Panama".to_string()));
-        assert!(!is_palindrome("race a car".to_string()));
+pub fn is_palindrome_two_pointers(s: String) -> bool {
+    if !s.is_ascii() {
+        return false;
     }
+
+    let s = s.chars().collect::<Vec<_>>();
+    let (mut i, mut j) = (0, s.len() - 1);
+
+    while i < j {
+        if !s[i].is_alphanumeric() {
+            i += 1;
+            continue;
+        }
+        if !s[j].is_alphanumeric() {
+            j -= 1;
+            continue;
+        }
+        if s[i].to_lowercase().to_string() != s[j].to_ascii_lowercase().to_string() {
+            return false;
+        }
+        i += 1;
+        j -= 1;
+    }
+
+    true
+}
+
+#[test]
+fn test_is_palindrome() {
+    assert!(!is_palindrome("0P".to_string()));
+    assert!(is_palindrome(" ".to_string()));
+    assert!(is_palindrome("A man, a plan, a canal: Panama".to_string()));
+    assert!(!is_palindrome("race a car".to_string()));
+}
+
+#[test]
+fn test_is_palindrome_two_pointers() {
+    assert!(!is_palindrome_two_pointers("0P".to_string()));
+    assert!(is_palindrome_two_pointers(" ".to_string()));
+    assert!(is_palindrome_two_pointers(
+        "A man, a plan, a canal: Panama".to_string()
+    ));
+    assert!(!is_palindrome_two_pointers("race a car".to_string()));
 }
