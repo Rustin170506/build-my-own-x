@@ -48,6 +48,25 @@ pub fn is_palindrome_two_pointers(s: String) -> bool {
     true
 }
 
+pub fn is_palindrome_queue(s: String) -> bool {
+    use std::collections::VecDeque;
+    let mut deque = VecDeque::new();
+
+    for c in s.chars() {
+        if c.is_alphanumeric() {
+            deque.push_back(c.to_ascii_lowercase());
+        }
+    }
+
+    while deque.len() > 1 {
+        if deque.pop_front() != deque.pop_back() {
+            return false;
+        }
+    }
+
+    true
+}
+
 #[test]
 fn test_is_palindrome() {
     assert!(!is_palindrome("0P".to_string()));
@@ -64,4 +83,14 @@ fn test_is_palindrome_two_pointers() {
         "A man, a plan, a canal: Panama".to_string()
     ));
     assert!(!is_palindrome_two_pointers("race a car".to_string()));
+}
+
+#[test]
+fn test_is_palindrome_quque() {
+    assert!(!is_palindrome_queue("0P".to_string()));
+    assert!(is_palindrome_queue(" ".to_string()));
+    assert!(is_palindrome_queue(
+        "A man, a plan, a canal: Panama".to_string()
+    ));
+    assert!(!is_palindrome_queue("race a car".to_string()));
 }
