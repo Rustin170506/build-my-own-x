@@ -178,6 +178,8 @@ impl<T, A: Allocator> RawVec<T, A> {
         additional > self.capacity().wrapping_sub(len)
     }
 
+    /// Ensures that the buffer contains at least enough space to hold `len + additional`
+    /// elements.
     pub fn reserve(&mut self, len: usize, additional: usize) {
         if self.needs_to_grow(len, additional) {
             handle_reserve(self.grow_amortized(len, additional))
