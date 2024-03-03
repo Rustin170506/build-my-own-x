@@ -189,6 +189,43 @@ impl<T, A: Allocator> MyVec<T, A> {
             self.set_len(len + 1);
         }
     }
+
+    /// Removes and returns the element at position `index` within the vector,
+    /// shifting all elements after it to the left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    ///
+    /// let mut v = MyVec::new();
+    /// v.push(1);
+    /// v.push(2);
+    /// v.push(3);
+    /// assert_eq!(v.remove(1), 2);
+    pub fn remove(&mut self, index: usize) -> T {
+        let len = self.len();
+        if index >= len {
+            panic!("removal index (is {index}) should be < len (is {len})");
+        }
+
+        unsafe {
+            // infalliable
+            let ret: T;
+            {
+                // the place we are taking from.
+                let ptr = self.as_mut_ptr().add(index);
+                // copy it out, unsafely having a copy of the value on
+                // the stack and in the vector at the same time.
+                ret = ptr::read(ptr);
+
+                // Shift everything down to fill in that spot.
+                ptr::copy(ptr.add(1), ptr, len - index - 1);
+            }
+            self.set_len(len - 1);
+            ret
+        }
+    }
 }
 
 impl<T, A: Allocator> ops::Deref for MyVec<T, A> {
