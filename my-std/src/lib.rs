@@ -7,5 +7,6 @@
     hint_assert_unchecked,
     dropck_eyepatch
 )]
+pub mod linked_list;
 pub mod my_vec;
 pub mod raw_vec;
