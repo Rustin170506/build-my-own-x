@@ -43,6 +43,12 @@ impl<T> MyVec<T> {
     }
 }
 
+impl Default for MyVec<u8> {
+    fn default() -> Self {
+        MyVec::new()
+    }
+}
+
 impl<T, A: Allocator> MyVec<T, A> {
     /// Constructs a new, empty `MyVec<T>` with the specified capacity using a specified allocator.
     pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
