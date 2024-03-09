@@ -67,6 +67,43 @@ impl<T: Clone> LinkedList<T> {
         Some(res)
     }
 
+    /// Insert an element at the given index.
+    /// Panics if the index is out of bounds.
+    ///
+    /// # Examples
+    /// ```
+    /// use my_std::linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push(1);
+    /// list.push(2);
+    /// list.insert(0, 3);
+    /// assert_eq!(list.pop(), Some(2));
+    /// assert_eq!(list.pop(), Some(3));
+    /// assert_eq!(list.pop(), Some(1));
+    /// ```
+    pub fn insert(&mut self, index: usize, elem: T) {
+        if index >= self.len() {
+            panic!(
+                "insertion index (is {index}) should be <= len (is {len})",
+                len = self.len()
+            );
+        }
+
+        let mut current = self.head.as_ref().unwrap().clone();
+        for _ in 0..index {
+            let next = current.borrow().next.as_ref().unwrap().clone();
+            current = next;
+        }
+
+        let new_node = Rc::new(RefCell::new(Node {
+            elem,
+            next: current.borrow().next.clone(),
+        }));
+
+        current.borrow_mut().next = Some(new_node);
+        self.len += 1;
+    }
+
     /// Return `true` if the list is empty.
     pub fn is_empty(&self) -> bool {
         self.len == 0
