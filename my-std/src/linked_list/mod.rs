@@ -104,6 +104,48 @@ impl<T: Clone> LinkedList<T> {
         self.len += 1;
     }
 
+    /// Remove an element at the given index.
+    /// Panics if the index is out of bounds.
+    /// Returns the removed element.
+    ///
+    /// # Examples
+    /// ```
+    /// use my_std::linked_list::LinkedList;
+    /// let mut list = LinkedList::new();
+    /// list.push(1);
+    /// list.push(2);
+    /// assert_eq!(list.remove(1), 1);
+    /// assert_eq!(list.remove(0), 2);
+    /// ```
+    pub fn remove(&mut self, index: usize) -> T {
+        if index >= self.len() {
+            panic!(
+                "removal index (is {index}) should be < len (is {len})",
+                index = index,
+                len = self.len()
+            );
+        }
+
+        let mut current = self.head.as_ref().unwrap().clone();
+        let mut prev = None;
+        for _ in 0..index {
+            prev = Some(current.clone());
+            let next = current.borrow().next.as_ref().unwrap().clone();
+            current = next;
+        }
+
+        let res = current.borrow().elem.clone();
+        let next = current.borrow_mut().next.take();
+        if let Some(prev) = prev {
+            prev.borrow_mut().next = next;
+        } else {
+            self.head = next;
+        }
+        self.len -= 1;
+
+        res
+    }
+
     /// Return `true` if the list is empty.
     pub fn is_empty(&self) -> bool {
         self.len == 0
