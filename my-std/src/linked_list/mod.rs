@@ -1,14 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 /// A node in a singly linked list.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node<T: Clone> {
     elem: T,
     next: Option<Rc<RefCell<Node<T>>>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 /// A singly linked list with a reference-counted `Node` type.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LinkedList<T: Clone> {
     head: Option<Rc<RefCell<Node<T>>>>,
     len: usize,
@@ -160,5 +160,48 @@ impl<T: Clone> LinkedList<T> {
 impl<T: Clone> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_push() {
+        let mut list = LinkedList::new();
+        list.push(1);
+        list.push(2);
+        assert_eq!(list.len(), 2);
+    }
+
+    #[test]
+    fn test_pop() {
+        let mut list = LinkedList::new();
+        list.push(1);
+        list.push(2);
+        assert_eq!(list.pop(), Some(2));
+        assert_eq!(list.pop(), Some(1));
+        assert_eq!(list.pop(), None);
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut list = LinkedList::new();
+        list.push(1);
+        list.push(2);
+        list.insert(0, 3);
+        assert_eq!(list.pop(), Some(2));
+        assert_eq!(list.pop(), Some(3));
+        assert_eq!(list.pop(), Some(1));
+    }
+
+    #[test]
+    fn test_remove() {
+        let mut list = LinkedList::new();
+        list.push(1);
+        list.push(2);
+        assert_eq!(list.remove(1), 1);
+        assert_eq!(list.remove(0), 2);
     }
 }
