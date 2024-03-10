@@ -32,12 +32,22 @@ impl<T: Clone> LinkedList<T> {
     /// assert_eq!(list.len(), 2);
     /// ```
     pub fn push(&mut self, elem: T) {
-        let new_node = Rc::new(RefCell::new(Node {
-            elem,
-            next: self.head.clone(),
-        }));
+        let new_node = Rc::new(RefCell::new(Node { elem, next: None }));
 
-        self.head = Some(new_node);
+        match self.head {
+            Some(ref head) => {
+                let mut current = head.clone();
+                while current.borrow().next.is_some() {
+                    let next = current.borrow().next.clone().unwrap();
+                    current = next;
+                }
+                current.borrow_mut().next = Some(new_node);
+            }
+            None => {
+                self.head = Some(new_node);
+            }
+        }
+
         self.len += 1;
     }
 
@@ -58,12 +68,25 @@ impl<T: Clone> LinkedList<T> {
         if self.is_empty() {
             return None;
         }
-        let next = self.head.as_mut().unwrap().borrow_mut().next.take();
-        let res = self.head.take().unwrap();
-        self.head = next;
+
+        let mut prev = self.head.as_ref().unwrap().clone();
+        let mut current = prev.borrow().next.clone();
+        for _ in 1..(self.len() - 1) {
+            let next = current.as_ref().unwrap().borrow().next.clone();
+            prev = current.unwrap();
+            current = next;
+        }
+
+        if current.is_none() {
+            self.head = None;
+            self.len -= 1;
+            return Some(prev.borrow().elem.clone());
+        }
+
+        let res = current.as_ref().unwrap().borrow().elem.clone();
+        prev.borrow_mut().next = None;
         self.len -= 1;
 
-        let res = res.borrow().elem.clone();
         Some(res)
     }
 
@@ -114,8 +137,8 @@ impl<T: Clone> LinkedList<T> {
     /// let mut list = LinkedList::new();
     /// list.push(1);
     /// list.push(2);
-    /// assert_eq!(list.remove(1), 1);
-    /// assert_eq!(list.remove(0), 2);
+    /// assert_eq!(list.remove(1), 2);
+    /// assert_eq!(list.remove(0), 1);
     /// ```
     pub fn remove(&mut self, index: usize) -> T {
         if index >= self.len() {
@@ -201,7 +224,7 @@ mod tests {
         let mut list = LinkedList::new();
         list.push(1);
         list.push(2);
-        assert_eq!(list.remove(1), 1);
-        assert_eq!(list.remove(0), 2);
+        assert_eq!(list.remove(1), 2);
+        assert_eq!(list.remove(0), 1);
     }
 }
