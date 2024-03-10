@@ -4,12 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hi-rustin/lg/src/utils"
 )
 
 func TestHasCycle(t *testing.T) {
 	tests := []struct {
 		testName string
-		head     *ListNode
+		head     *utils.ListNode
 		expected bool
 	}{
 		{

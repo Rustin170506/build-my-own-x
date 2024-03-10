@@ -1,4 +1,4 @@
-module lg
+module github.com/hi-rustin/lg
 
 go 1.21
 

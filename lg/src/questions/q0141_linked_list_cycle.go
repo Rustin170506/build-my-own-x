@@ -1,15 +1,12 @@
 package questions
 
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
+import "github.com/hi-rustin/lg/src/utils"
 
-func buildCycleList(arr []int, pos int) *ListNode {
-	var head, tail, cycleNode *ListNode
+func buildCycleList(arr []int, pos int) *utils.ListNode {
+	var head, tail, cycleNode *utils.ListNode
 
 	for i, val := range arr {
-		newNode := &ListNode{Val: val}
+		newNode := &utils.ListNode{Val: val}
 		if head == nil {
 			head = newNode
 		} else {
@@ -29,11 +26,11 @@ func buildCycleList(arr []int, pos int) *ListNode {
 	return head
 }
 
-func hasCycle(head *ListNode) bool {
+func hasCycle(head *utils.ListNode) bool {
 	if head == nil {
 		return false
 	}
-	nodeMap := make(map[*ListNode]struct{}, 2)
+	nodeMap := make(map[*utils.ListNode]struct{}, 2)
 	for head != nil {
 		if _, ok := nodeMap[head]; ok {
 			return true
