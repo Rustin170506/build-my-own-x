@@ -234,6 +234,27 @@ impl<T, A: Allocator> MyVec<T, A> {
     }
 }
 
+impl<T, A: Allocator> MyVec<T, A> {
+    pub fn bubble_sort(&mut self)
+    where
+        T: Ord,
+    {
+        let mut sorted = false;
+        while !sorted {
+            sorted = true;
+            for i in 1..self.len() {
+                if self[i] < self[i - 1] {
+                    // swap
+                    unsafe {
+                        self.as_mut_ptr().add(i).swap(self.as_mut_ptr().add(i - 1));
+                    }
+                    sorted = false;
+                }
+            }
+        }
+    }
+}
+
 impl<T, A: Allocator> ops::Deref for MyVec<T, A> {
     type Target = [T];
 
@@ -263,5 +284,17 @@ mod tests {
         assert_eq!(v.pop(), Some(2));
         assert_eq!(v.pop(), Some(1));
         assert_eq!(v.pop(), None);
+    }
+
+    #[test]
+    fn test_bubble_sort() {
+        let mut v = MyVec::new();
+        v.push(3);
+        v.push(2);
+        v.push(1);
+        v.bubble_sort();
+        assert_eq!(v[0], 1);
+        assert_eq!(v[1], 2);
+        assert_eq!(v[2], 3);
     }
 }
