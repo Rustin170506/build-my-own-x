@@ -11,7 +11,7 @@ func BuildTree(elements []int) *TreeNode {
 }
 
 func buildTree(elements []int, index int) *TreeNode {
-	if index >= len(elements) {
+	if index >= len(elements) || elements[index] == -1 {
 		return nil
 	}
 
