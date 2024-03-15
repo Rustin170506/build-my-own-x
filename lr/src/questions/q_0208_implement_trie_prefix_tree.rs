@@ -62,18 +62,87 @@ impl Trie {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug, Clone)]
+struct TrieNodeV2 {
+    children: Vec<Option<TrieNodeV2>>,
+    end_of_word: bool,
+}
 
-    #[test]
-    fn test_208() {
-        let mut trie = Trie::new();
-        trie.insert("apple".to_string());
-        assert!(trie.search("apple".to_string()));
-        assert!(!trie.search("app".to_string()));
-        assert!(trie.starts_with("app".to_string()));
-        trie.insert("app".to_string());
-        assert!(trie.search("app".to_string()));
+impl TrieNodeV2 {
+    fn new() -> Self {
+        TrieNodeV2 {
+            children: vec![None; 26],
+            end_of_word: false,
+        }
     }
+}
+
+struct TrieV2 {
+    root: TrieNodeV2,
+}
+
+impl TrieV2 {
+    fn new() -> Self {
+        TrieV2 {
+            root: TrieNodeV2::new(),
+        }
+    }
+
+    fn insert(&mut self, word: String) {
+        let mut cur = &mut self.root;
+        for c in word.chars() {
+            let index = c as usize - 'a' as usize;
+            if cur.children[index].is_none() {
+                cur.children[index] = Some(TrieNodeV2::new());
+            }
+            cur = cur.children[index].as_mut().unwrap();
+        }
+
+        cur.end_of_word = true;
+    }
+
+    fn search(&self, word: String) -> bool {
+        let mut cur = &self.root;
+        for c in word.chars() {
+            let index = c as usize - 'a' as usize;
+            if cur.children[index].is_none() {
+                return false;
+            }
+            cur = cur.children[index].as_ref().unwrap();
+        }
+
+        cur.end_of_word
+    }
+
+    fn starts_with(&self, prefix: String) -> bool {
+        let mut cur = &self.root;
+        for c in prefix.chars() {
+            let index = c as usize - 'a' as usize;
+            if cur.children[index].is_none() {
+                return false;
+            }
+            cur = cur.children[index].as_ref().unwrap();
+        }
+
+        true
+    }
+}
+
+#[test]
+fn test_trie() {
+    let mut trie = Trie::new();
+    trie.insert("apple".to_string());
+    assert!(trie.search("apple".to_string()));
+    assert!(!trie.search("app".to_string()));
+    assert!(trie.starts_with("app".to_string()));
+    trie.insert("app".to_string());
+    assert!(trie.search("app".to_string()));
+    // V2
+    let mut trie = TrieV2::new();
+    trie.insert("apple".to_string());
+    assert!(trie.search("apple".to_string()));
+    assert!(!trie.search("app".to_string()));
+    assert!(trie.starts_with("app".to_string()));
+    trie.insert("app".to_string());
+    assert!(trie.search("app".to_string()));
 }
