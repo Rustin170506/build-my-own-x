@@ -33,5 +33,6 @@ func TestNumIslands(t *testing.T) {
 
 	for _, test := range tests {
 		require.Equal(t, test.expect, numIslands(test.grid))
+		require.Equal(t, test.expect, numIslandsDFS(test.grid))
 	}
 }
