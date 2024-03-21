@@ -33,6 +33,8 @@ func TestCliimbingStairs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := climbStairs(tt.n)
 			require.Equal(t, tt.want, got)
+			got = climbStairsDP(tt.n)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
