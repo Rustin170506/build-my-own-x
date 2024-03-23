@@ -28,6 +28,8 @@ func TestMinCostClimbingStairs(t *testing.T) {
 		t.Run(test.testName, func(t *testing.T) {
 			got := minCostClimbingStairs(test.input)
 			require.Equal(t, test.expected, got)
+			got = minCostClimbingStairsDP(test.input)
+			require.Equal(t, test.expected, got)
 		})
 	}
 }

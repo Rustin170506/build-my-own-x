@@ -23,3 +23,12 @@ func minCostClimbingStairs(cost []int) int {
 
 	return min(dfs(0), dfs(1))
 }
+
+func minCostClimbingStairsDP(cost []int) int {
+	first, second := cost[0], cost[1]
+	for i := 2; i < len(cost); i++ {
+		first, second = second, cost[i]+min(first, second)
+	}
+
+	return min(first, second)
+}
