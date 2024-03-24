@@ -235,6 +235,27 @@ impl<T, A: Allocator> MyVec<T, A> {
 }
 
 impl<T, A: Allocator> MyVec<T, A> {
+    /// Use bubble sort to sort the vector.
+    /// This is a simple sorting algorithm that repeatedly steps through the list,
+    /// compares adjacent elements and swaps them if they are in the wrong order.
+    /// The pass through the list is repeated until the list is sorted.
+    /// This algorithm is not efficient for large lists.
+    /// It has a worst-case and average-case complexity of O(n^2).
+    /// It has a best-case complexity of O(n) when the list is already sorted.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    /// let mut v = MyVec::new();
+    /// v.push(3);
+    /// v.push(2);
+    /// v.push(1);
+    /// v.bubble_sort();
+    /// assert_eq!(v[0], 1);
+    /// assert_eq!(v[1], 2);
+    /// assert_eq!(v[2], 3);
+    /// ```
     pub fn bubble_sort(&mut self)
     where
         T: Ord,
@@ -250,6 +271,43 @@ impl<T, A: Allocator> MyVec<T, A> {
                     }
                     sorted = false;
                 }
+            }
+        }
+    }
+
+    /// Use insertion sort to sort the vector.
+    /// This is a simple sorting algorithm that builds the final sorted list one item at a time.
+    /// It has a worst-case and average-case complexity of O(n^2).
+    /// It has a best-case complexity of O(n) when the list is already sorted.
+    /// It is efficient for small lists.
+    /// It is more efficient than bubble sort.
+    /// It is stable, meaning that it preserves the order of equal elements..
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    /// let mut v = MyVec::new();
+    /// v.push(3);
+    /// v.push(2);
+    /// v.push(1);
+    /// v.insertion_sort();
+    /// assert_eq!(v[0], 1);
+    /// assert_eq!(v[1], 2);
+    /// assert_eq!(v[2], 3);
+    /// ```
+    pub fn insertion_sort(&mut self)
+    where
+        T: Ord,
+    {
+        for unsorted in 1..self.len() {
+            let mut i = unsorted;
+            while i > 0 && self[i - 1] > self[i] {
+                // swap
+                unsafe {
+                    self.as_mut_ptr().add(i).swap(self.as_mut_ptr().add(i - 1));
+                }
+                i -= 1;
             }
         }
     }
@@ -293,6 +351,18 @@ mod tests {
         v.push(2);
         v.push(1);
         v.bubble_sort();
+        assert_eq!(v[0], 1);
+        assert_eq!(v[1], 2);
+        assert_eq!(v[2], 3);
+    }
+
+    #[test]
+    fn test_insertion_sort() {
+        let mut v = MyVec::new();
+        v.push(3);
+        v.push(2);
+        v.push(1);
+        v.insertion_sort();
         assert_eq!(v[0], 1);
         assert_eq!(v[1], 2);
         assert_eq!(v[2], 3);
