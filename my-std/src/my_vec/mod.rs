@@ -216,7 +216,7 @@ impl<T, A: Allocator> MyVec<T, A> {
         }
 
         unsafe {
-            // infalliable
+            // infallible
             let ret: T;
             {
                 // the place we are taking from.
@@ -281,7 +281,7 @@ impl<T, A: Allocator> MyVec<T, A> {
     /// It has a best-case complexity of O(n) when the list is already sorted.
     /// It is efficient for small lists.
     /// It is more efficient than bubble sort.
-    /// It is stable, meaning that it preserves the order of equal elements..
+    /// It is stable, meaning that it preserves the order of equal elements.
     ///
     /// # Examples
     ///
