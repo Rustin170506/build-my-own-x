@@ -311,6 +311,45 @@ impl<T, A: Allocator> MyVec<T, A> {
             }
         }
     }
+
+    /// Use selection sort to sort the vector.
+    /// This is a simple sorting algorithm that repeatedly finds the minimum element from the unsorted part of the list
+    /// and swaps it with the first element of the unsorted part.
+    /// It has a worst-case, average-case, and best-case complexity of O(n^2).
+    /// It is not stable, meaning that it does not preserve the order of equal elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    /// let mut v = MyVec::new();
+    /// v.push(3);
+    /// v.push(2);
+    /// v.push(1);
+    /// v.selection_sort();
+    /// assert_eq!(v[0], 1);
+    /// assert_eq!(v[1], 2);
+    /// assert_eq!(v[2], 3);
+    /// ```
+    pub fn selection_sort(&mut self)
+    where
+        T: Ord,
+    {
+        for unsorted in 0..self.len() {
+            let mut min = unsorted;
+            for i in unsorted + 1..self.len() {
+                if self[i] < self[min] {
+                    min = i;
+                }
+            }
+            if min != unsorted {
+                // swap
+                unsafe {
+                    self.as_mut_ptr().add(unsorted).swap(self.as_mut_ptr().add(min));
+                }
+            }
+        }
+    }
 }
 
 impl<T, A: Allocator> ops::Deref for MyVec<T, A> {
