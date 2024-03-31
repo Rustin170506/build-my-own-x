@@ -406,4 +406,16 @@ mod tests {
         assert_eq!(v[1], 2);
         assert_eq!(v[2], 3);
     }
+
+    #[test]
+    fn test_selection_sort() {
+        let mut v = MyVec::new();
+        v.push(3);
+        v.push(2);
+        v.push(1);
+        v.selection_sort();
+        assert_eq!(v[0], 1);
+        assert_eq!(v[1], 2);
+        assert_eq!(v[2], 3);
+    }
 }
