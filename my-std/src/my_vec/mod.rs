@@ -345,10 +345,82 @@ impl<T, A: Allocator> MyVec<T, A> {
             if min != unsorted {
                 // swap
                 unsafe {
-                    self.as_mut_ptr().add(unsorted).swap(self.as_mut_ptr().add(min));
+                    self.as_mut_ptr()
+                        .add(unsorted)
+                        .swap(self.as_mut_ptr().add(min));
                 }
             }
         }
+    }
+
+    /// Use quick sort to sort the vector.
+    /// This is a fast sorting algorithm that uses divide and conquer to sort the list.
+    /// It has a worst-case complexity of O(n^2).
+    /// It has an average-case complexity of O(n log n).
+    /// It has a best-case complexity of O(n log n).
+    /// It is not stable, meaning that it does not preserve the order of equal elements.
+    /// It is efficient for large lists.
+    ///
+    /// # Examples
+    /// ```
+    /// use my_std::my_vec::MyVec;
+    /// let mut v = MyVec::new();
+    /// v.push(3);
+    /// v.push(2);
+    /// v.push(1);
+    /// v.quick_sort();
+    /// assert_eq!(v[0], 1);
+    /// assert_eq!(v[1], 2);
+    /// assert_eq!(v[2], 3);
+    /// ```
+    pub fn quick_sort(&mut self)
+    where
+        T: Ord,
+    {
+        self.quick_sort_helper(0, self.len() - 1);
+    }
+
+    /// Helper function for quick sort.
+    /// This function recursively sorts the vector using quick sort.
+    /// It selects a pivot element and partitions the vector into two sub-vectors
+    /// such that all elements in the left sub-vector are less than the pivot element
+    /// and all elements in the right sub-vector are greater than the pivot element.
+    fn quick_sort_helper(&mut self, low: usize, high: usize)
+    where
+        T: Ord,
+    {
+        if low < high {
+            let pivot = self.partition(low, high);
+            if pivot > 0 {
+                self.quick_sort_helper(low, pivot - 1);
+            }
+            self.quick_sort_helper(pivot + 1, high);
+        }
+    }
+
+    /// Partitions the vector into two sub-vectors such that all elements in the left sub-vector
+    /// are less than the pivot element and all elements in the right sub-vector are greater than the pivot element.
+    /// It returns the index of the pivot element.
+    fn partition(&mut self, low: usize, high: usize) -> usize
+    where
+        T: Ord,
+    {
+        let pivot = high;
+        let mut i = low;
+        for j in low..high {
+            if self[j] < self[pivot] {
+                if i != j {
+                    unsafe {
+                        self.as_mut_ptr().add(i).swap(self.as_mut_ptr().add(j));
+                    }
+                }
+                i += 1;
+            }
+        }
+        unsafe {
+            self.as_mut_ptr().add(i).swap(self.as_mut_ptr().add(pivot));
+        }
+        i
     }
 }
 
