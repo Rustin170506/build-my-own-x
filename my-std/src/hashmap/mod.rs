@@ -23,6 +23,58 @@ impl<K, V> HashMap<K, V> {
     }
 }
 
+pub struct OccupiedEntry<'a, K, V> {
+    element: &'a mut (K, V),
+}
+
+pub struct VacantEntry<'a, K, V> {
+    key: K,
+    map: &'a mut HashMap<K, V>,
+    bucket_index: usize,
+}
+
+impl<'a, K, V> VacantEntry<'a, K, V> {
+    pub fn insert(self, value: V) -> &'a mut V {
+        self.map.buckets[self.bucket_index].push((self.key, value));
+        self.map.items += 1;
+        &mut self.map.buckets[self.bucket_index].last_mut().unwrap().1
+    }
+}
+
+pub enum Entry<'a, K, V> {
+    Occupied(OccupiedEntry<'a, K, V>),
+    Vacant(VacantEntry<'a, K, V>),
+}
+
+impl<'a, K, V> Entry<'a, K, V> {
+    pub fn or_insert(self, value: V) -> &'a mut V {
+        match self {
+            Entry::Occupied(e) => &mut e.element.1,
+            Entry::Vacant(e) => e.insert(value),
+        }
+    }
+
+    pub fn or_insert_with<F>(self, maker: F) -> &'a mut V
+    where
+        F: FnOnce() -> V,
+    {
+        match self {
+            Entry::Occupied(e) => &mut e.element.1,
+            Entry::Vacant(e) => e.insert(maker()),
+        }
+    }
+
+    pub fn or_default(self) -> &'a mut V
+    where
+        V: Default,
+    {
+        match self {
+            Entry::Occupied(e) => &mut e.element.1,
+            Entry::Vacant(e) => e.insert(V::default()),
+        }
+    }
+}
+
 impl<K, V> HashMap<K, V>
 where
     K: Hash + Eq,
@@ -100,6 +152,27 @@ where
         self.get(key).is_some()
     }
 
+    pub fn entry(&mut self, key: K) -> Entry<K, V> {
+        if self.buckets.is_empty() || self.items > 3 * self.buckets.len() / 4 {
+            self.resize();
+        }
+
+        let bucket_index = self.key(&key);
+        match self.buckets[bucket_index]
+            .iter()
+            .position(|(k, _)| k == &key)
+        {
+            Some(index) => Entry::Occupied(OccupiedEntry {
+                element: &mut self.buckets[bucket_index][index],
+            }),
+            None => Entry::Vacant(VacantEntry {
+                key,
+                map: self,
+                bucket_index,
+            }),
+        }
+    }
+
     fn resize(&mut self) {
         let target_size = match self.buckets.len() {
             0 => INITIAL_BUCKETS,
@@ -127,6 +200,22 @@ impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
             .flat_map(|bucket| bucket.iter().map(|(k, v)| (k, v)))
             .collect::<Vec<_>>()
             .into_iter()
+    }
+}
+
+impl<K, V> FromIterator<(K, V)> for HashMap<K, V>
+where
+    K: Hash + Eq + Clone,
+{
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = (K, V)>,
+    {
+        let mut map = HashMap::new();
+        for (k, v) in iter {
+            map.insert(k, v);
+        }
+        map
     }
 }
 
@@ -169,5 +258,22 @@ mod tests {
         assert_eq!(iter.next(), Some((&"foo", &42)));
         assert_eq!(iter.next(), Some((&"bar", &43)));
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn entry() {
+        let mut map = HashMap::new();
+        assert_eq!(map.entry("foo").or_insert(42), &42);
+        assert_eq!(map.entry("foo").or_insert(43), &42);
+        assert_eq!(map.entry("bar").or_insert(44), &44);
+        assert_eq!(map.entry("bar").or_insert_with(|| 45), &44);
+        assert_eq!(map.entry("baz").or_default(), &0);
+    }
+
+    #[test]
+    fn from_iter() {
+        let map: HashMap<_, _> = vec![("foo", 42), ("bar", 43)].into_iter().collect();
+        assert_eq!(map.get("foo"), Some(&42));
+        assert_eq!(map.get("bar"), Some(&43));
     }
 }
