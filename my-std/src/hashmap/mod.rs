@@ -203,6 +203,19 @@ impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
     }
 }
 
+impl<K, V> IntoIterator for HashMap<K, V> {
+    type Item = (K, V);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.buckets
+            .into_iter()
+            .flat_map(|bucket| bucket.into_iter())
+            .collect::<Vec<_>>()
+            .into_iter()
+    }
+}
+
 impl<K, V> FromIterator<(K, V)> for HashMap<K, V>
 where
     K: Hash + Eq + Clone,
@@ -254,9 +267,17 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("foo", 42);
         map.insert("bar", 43);
+        let map = &map;
         let mut iter = map.into_iter();
         assert_eq!(iter.next(), Some((&"foo", &42)));
         assert_eq!(iter.next(), Some((&"bar", &43)));
+        assert_eq!(iter.next(), None);
+        let mut map = HashMap::new();
+        map.insert("foo", 42);
+        map.insert("bar", 43);
+        let mut iter = map.into_iter();
+        assert_eq!(iter.next(), Some(("foo", 42)));
+        assert_eq!(iter.next(), Some(("bar", 43)));
         assert_eq!(iter.next(), None);
     }
 
