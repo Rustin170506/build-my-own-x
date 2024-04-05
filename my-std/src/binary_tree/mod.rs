@@ -1,3 +1,5 @@
+#![allow(clippy::assigning_clones)]
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -8,6 +10,7 @@ pub struct Node<T> {
     right: Option<Rc<RefCell<Node<T>>>>,
 }
 
+#[derive(Default)]
 pub struct BinaryTree<T> {
     root: Option<Rc<RefCell<Node<T>>>>,
 }
@@ -43,14 +46,12 @@ where
                 } else {
                     current = node.borrow().left.clone();
                 }
+            } else if node.borrow().right.is_none() {
+                new_node.borrow_mut().parent = Some(node.clone());
+                node.borrow_mut().right = Some(new_node.clone());
+                break;
             } else {
-                if node.borrow().right.is_none() {
-                    new_node.borrow_mut().parent = Some(node.clone());
-                    node.borrow_mut().right = Some(new_node.clone());
-                    break;
-                } else {
-                    current = node.borrow().right.clone();
-                }
+                current = node.borrow().right.clone();
             }
         }
     }
