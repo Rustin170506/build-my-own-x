@@ -3,6 +3,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/// Node of a binary tree.
 #[derive(Eq, PartialEq, Debug)]
 pub struct Node<T> {
     value: T,
@@ -11,6 +12,9 @@ pub struct Node<T> {
     right: Option<Rc<RefCell<Node<T>>>>,
 }
 
+/// Binary search tree.
+/// It is a binary tree in which the left child of a node has a value less than the parent node,
+/// and the right child of a node has a value greater than the parent node.
 #[derive(Default)]
 pub struct BinarySearchTree<T> {
     root: Option<Rc<RefCell<Node<T>>>>,
@@ -20,10 +24,12 @@ impl<T> BinarySearchTree<T>
 where
     T: PartialOrd + Clone,
 {
+    /// Create a new binary search tree.
     pub fn new() -> Self {
         BinarySearchTree { root: None }
     }
 
+    /// Insert a value into the binary search tree.
     pub fn insert(&mut self, value: T) {
         let new_node = Rc::new(RefCell::new(Node {
             value,
@@ -57,11 +63,14 @@ where
         }
     }
 
+    /// Search for a value in the binary search tree.
     pub fn search(&self, value: T) -> Option<T> {
         let node = self.find_node(value)?;
         let value = node.borrow().value.clone();
         Some(value)
     }
+
+    /// Remove a value from the binary search tree.
     pub fn remove(&mut self, value: T) {
         let node = match self.find_node(value) {
             Some(node) => node,
@@ -115,6 +124,7 @@ where
         }
     }
 
+    // Find a node with the given value.
     fn find_node(&self, value: T) -> Option<Rc<RefCell<Node<T>>>> {
         let mut current = self.root.clone();
         while let Some(node) = current {
@@ -129,6 +139,7 @@ where
         None
     }
 
+    /// Get the minimum value in the binary search tree.
     pub fn min(&self) -> Option<T> {
         self.root.as_ref()?;
 
@@ -136,6 +147,7 @@ where
         min_node.map(|node| node.borrow().value.clone())
     }
 
+    /// Get the maximum value in the binary search tree.
     pub fn max(&self) -> Option<T> {
         self.root.as_ref()?;
 
@@ -143,6 +155,7 @@ where
         max_node.map(|node| node.borrow().value.clone())
     }
 
+    // Find the node with the minimum value.
     fn find_min_node(node: Option<Rc<RefCell<Node<T>>>>) -> Option<Rc<RefCell<Node<T>>>> {
         node.as_ref()?;
 
@@ -156,6 +169,7 @@ where
         None
     }
 
+    // Find the node with the maximum value.
     fn find_max_node(node: Option<Rc<RefCell<Node<T>>>>) -> Option<Rc<RefCell<Node<T>>>> {
         node.as_ref()?;
 
@@ -170,6 +184,7 @@ where
     }
 }
 
+/// Iterator for the binary search tree.
 pub struct BinaryTreeIterator<T> {
     current: Option<Rc<RefCell<Node<T>>>>,
     stack: Vec<Rc<RefCell<Node<T>>>>,
