@@ -12,16 +12,16 @@ pub struct Node<T> {
 }
 
 #[derive(Default)]
-pub struct BinaryTree<T> {
+pub struct BinarySearchTree<T> {
     root: Option<Rc<RefCell<Node<T>>>>,
 }
 
-impl<T> BinaryTree<T>
+impl<T> BinarySearchTree<T>
 where
     T: PartialOrd + Clone,
 {
     pub fn new() -> Self {
-        BinaryTree { root: None }
+        BinarySearchTree { root: None }
     }
 
     pub fn insert(&mut self, value: T) {
@@ -195,7 +195,7 @@ where
     }
 }
 
-impl<T> IntoIterator for BinaryTree<T>
+impl<T> IntoIterator for BinarySearchTree<T>
 where
     T: Clone,
 {
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn insert() {
-        let mut tree = BinaryTree::new();
+        let mut tree = BinarySearchTree::new();
         tree.insert(5);
         tree.insert(3);
         tree.insert(7);
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn search() {
-        let mut tree = BinaryTree::new();
+        let mut tree = BinarySearchTree::new();
         tree.insert(5);
         tree.insert(3);
         tree.insert(7);
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn min() {
-        let mut tree = BinaryTree::new();
+        let mut tree = BinarySearchTree::new();
         tree.insert(5);
         tree.insert(3);
         tree.insert(7);
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn max() {
-        let mut tree = BinaryTree::new();
+        let mut tree = BinarySearchTree::new();
         tree.insert(5);
         tree.insert(3);
         tree.insert(7);
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn remove() {
-        let mut tree = BinaryTree::new();
+        let mut tree = BinarySearchTree::new();
         tree.insert(5);
         tree.insert(3);
         tree.insert(7);
