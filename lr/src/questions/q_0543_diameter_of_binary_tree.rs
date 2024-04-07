@@ -23,14 +23,9 @@ fn diameter_of_binary_tree_helper(root: Option<Rc<RefCell<TreeNode>>>, result: &
     1 + i32::max(left, right)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_diameter_of_binary_tree() {
     use crate::tree;
-
-    #[test]
-    fn test_diameter_of_binary_tree() {
-        assert_eq!(diameter_of_binary_tree(tree!(1, 2)), 1);
-        assert_eq!(diameter_of_binary_tree(tree!(1, 2, 3, 4, 5)), 3);
-    }
+    assert_eq!(diameter_of_binary_tree(tree!(1, 2)), 1);
+    assert_eq!(diameter_of_binary_tree(tree!(1, 2, 3, 4, 5)), 3);
 }
