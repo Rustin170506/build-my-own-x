@@ -8,28 +8,39 @@ pub fn delete_node(root: Option<Rc<RefCell<TreeNode>>>, key: i32) -> Option<Rc<R
 
     let val = root.as_ref().unwrap().borrow().val;
     if key > val {
+        // Search in right side.
         let right = root.as_ref().unwrap().borrow().right.clone();
         root.as_mut().unwrap().borrow_mut().right = delete_node(right, key)
     } else if key < val {
+        // Search in left side.
         let left = root.as_ref().unwrap().borrow().left.clone();
         root.as_mut().unwrap().borrow_mut().left = delete_node(left, key)
     } else if root.as_ref().unwrap().borrow().left.is_none() {
+        // It only has one right child.
         return root.as_ref().unwrap().borrow().right.clone();
     } else if root.as_ref().unwrap().borrow().right.is_none() {
+        // It only has one left child.
         return root.as_ref().unwrap().borrow().left.clone();
     } else {
-        let mut cur = root.as_ref().unwrap().borrow().right.clone();
-        while cur.as_ref().unwrap().borrow().left.is_some() {
-            let left = cur.as_ref().unwrap().borrow().left.clone();
-            cur = left;
-        }
-        root.as_mut().unwrap().borrow_mut().val = cur.as_ref().unwrap().borrow().val;
-        let val = root.as_ref().unwrap().borrow().val;
+        // It has two children.
         let right = root.as_ref().unwrap().borrow().right.clone();
+        let min = find_min(right.clone());
+        let val = min.as_ref().unwrap().borrow().val;
         root.as_mut().unwrap().borrow_mut().right = delete_node(right, val);
+        root.as_mut().unwrap().borrow_mut().val = min.as_ref().unwrap().borrow().val;
     }
 
     root
+}
+
+fn find_min(current: Option<Rc<RefCell<TreeNode>>>) -> Option<Rc<RefCell<TreeNode>>> {
+    let mut cur = current;
+    while cur.as_ref().unwrap().borrow().left.is_some() {
+        let left = cur.as_ref().unwrap().borrow().left.clone();
+        cur = left;
+    }
+
+    cur
 }
 
 #[test]
