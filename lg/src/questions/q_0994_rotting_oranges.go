@@ -4,33 +4,25 @@ func orangesRotting(grid [][]int) int {
 	result := -1
 	rows := len(grid)
 	cols := len(grid[0])
-
-	hashFresh := false
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			if grid[i][j] == 1 {
-				hashFresh = true
-				break
-			}
-		}
-	}
-
-	if !hashFresh {
-		return 0
-	}
-
 	queue := make([][2]int, 0, 4)
 	visited := make([][]bool, rows)
 	for i := 0; i < rows; i++ {
 		visited[i] = make([]bool, cols)
 	}
+	hashFresh := false
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
+			if grid[i][j] == 1 {
+				hashFresh = true
+			}
 			if grid[i][j] == 2 {
 				queue = append(queue, [2]int{i, j})
 				visited[i][j] = true
 			}
 		}
+	}
+	if !hashFresh {
+		return 0
 	}
 
 	qLen := len(queue)
