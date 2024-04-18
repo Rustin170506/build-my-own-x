@@ -9,11 +9,11 @@ func orangesRotting(grid [][]int) int {
 	for i := 0; i < rows; i++ {
 		visited[i] = make([]bool, cols)
 	}
-	hashFresh := false
+	hasFresh := false
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			if grid[i][j] == 1 {
-				hashFresh = true
+				hasFresh = true
 			}
 			if grid[i][j] == 2 {
 				queue = append(queue, [2]int{i, j})
@@ -21,7 +21,7 @@ func orangesRotting(grid [][]int) int {
 			}
 		}
 	}
-	if !hashFresh {
+	if !hasFresh {
 		return 0
 	}
 
