@@ -4,25 +4,27 @@ func orangesRotting(grid [][]int) int {
 	result := -1
 	rows := len(grid)
 	cols := len(grid[0])
-	queue := make([][2]int, 0, 4)
-	visited := make([][]bool, rows)
-	for i := 0; i < rows; i++ {
-		visited[i] = make([]bool, cols)
+	queue := make([][2]int, 0, len(grid))
+	hasFresh := 0
+	visited := make([][]bool, len(grid))
+	for i := 0; i < len(grid); i++ {
+		visited[i] = make([]bool, len(grid[i]))
 	}
-	hasFresh := false
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			if grid[i][j] == 1 {
-				hasFresh = true
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			if grid[row][col] == 2 {
+				queue = append(queue, [2]int{row, col})
 			}
-			if grid[i][j] == 2 {
-				queue = append(queue, [2]int{i, j})
-				visited[i][j] = true
+			if grid[row][col] == 1 {
+				hasFresh += 1
 			}
 		}
 	}
-	if !hasFresh {
+	if hasFresh == 0 {
 		return 0
+	}
+	if len(queue) == 0 {
+		return -1
 	}
 
 	qLen := len(queue)
@@ -34,16 +36,20 @@ func orangesRotting(grid [][]int) int {
 			grid[row][col] = 2
 		}
 
-		directions := [][2]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+		directions := [][2]int{
+			{0, 1},
+			{0, -1},
+			{1, 0},
+			{-1, 0},
+		}
 		for _, direction := range directions {
-			r, c := direction[0], direction[1]
-			r = row + r
-			c = col + c
+			r, c := row+direction[0], col+direction[1]
 			if r < 0 || r >= rows || c < 0 || c >= cols || visited[r][c] {
 				continue
 			}
 			visited[r][c] = true
 			if grid[r][c] == 1 {
+				hasFresh -= 1
 				queue = append(queue, [2]int{r, c})
 			}
 		}
@@ -52,14 +58,10 @@ func orangesRotting(grid [][]int) int {
 			result += 1
 			qLen = len(queue)
 		}
-	}
 
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			if grid[i][j] == 1 {
-				return -1
-			}
-		}
+	}
+	if hasFresh != 0 {
+		return -1
 	}
 
 	return result
