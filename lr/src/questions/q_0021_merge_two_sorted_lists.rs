@@ -35,19 +35,14 @@ pub fn merge_two_lists(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::merge_two_lists;
+#[test]
+fn test_merge_two_lists() {
     use crate::list;
     use crate::utils::ListNode;
-
-    #[test]
-    fn test_merge_two_lists() {
-        assert_eq!(merge_two_lists(list!(), list!(1, 2, 3)), list!(1, 2, 3));
-        assert_eq!(merge_two_lists(list!(), list!()), list!());
-        assert_eq!(
-            merge_two_lists(list!(1, 2, 4), list!(1, 3, 4)),
-            list!(1, 1, 2, 3, 4, 4)
-        );
-    }
+    assert_eq!(merge_two_lists(list!(), list!(1, 2, 3)), list!(1, 2, 3));
+    assert_eq!(merge_two_lists(list!(), list!()), list!());
+    assert_eq!(
+        merge_two_lists(list!(1, 2, 4), list!(1, 3, 4)),
+        list!(1, 1, 2, 3, 4, 4)
+    );
 }
