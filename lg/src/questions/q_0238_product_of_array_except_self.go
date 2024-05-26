@@ -20,5 +20,5 @@ func productExceptSelf(nums []int) []int {
 	for i := 0; i < len(nums); i++ {
 		result[i] = prefix[i] * postfix[i]
 	}
-	return nil
+	return result
 }
