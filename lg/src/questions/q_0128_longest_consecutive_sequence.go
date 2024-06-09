@@ -8,7 +8,7 @@ func longestConsecutive(nums []int) int {
 	result := 0
 	for _, num := range nums {
 		if _, ok := numsMap[num-1]; !ok {
-			tempCount := 1
+			tempCount := 0
 			nextNum := num
 			for {
 				if _, ok := numsMap[nextNum]; ok {
