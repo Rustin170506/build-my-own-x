@@ -47,6 +47,7 @@ mod q_0070_climbing_stairs;
 mod q_0072_edit_distance;
 mod q_0073_set_matrix_zeroes;
 mod q_0074_search_a_2d_matrix;
+mod q_0075_sort_colors;
 mod q_0076_minimum_window_substring;
 mod q_0077_combinations;
 mod q_0078_subsets;
