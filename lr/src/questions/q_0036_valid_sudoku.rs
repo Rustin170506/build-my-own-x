@@ -14,12 +14,12 @@ pub fn is_valid_sudoku(board: Vec<Vec<char>>) -> bool {
 
     for i in 0..board.len() {
         for j in 0..board[0].len() {
-            if row_set.get(&board[i][j]).is_some() {
+            if row_set.contains(&board[i][j]) {
                 return false;
             } else if board[i][j] != '.' {
                 row_set.insert(board[i][j]);
             }
-            if column_set.get(&board[j][i]).is_some() {
+            if column_set.contains(&board[j][i]) {
                 return false;
             } else if board[j][i] != '.' {
                 column_set.insert(board[j][i]);

@@ -16,9 +16,7 @@ impl TrieNode {
     pub(crate) fn insert(&mut self, word: String) {
         let mut cur = self;
         for c in word.chars() {
-            if cur.children.get(&c).is_none() {
-                cur.children.insert(c, TrieNode::new());
-            }
+            cur.children.entry(c).or_insert_with(TrieNode::new);
             cur = cur.children.get_mut(&c).unwrap();
         }
 
@@ -53,10 +51,9 @@ pub fn find_words(board: Vec<Vec<char>>, words: Vec<String>) -> Vec<String> {
             || col < 0
             || row == rows
             || col == cols
-            || node
+            || !node
                 .children
-                .get(&board[row as usize][col as usize])
-                .is_none()
+                .contains_key(&board[row as usize][col as usize])
             || visted.get(&(row, col)).is_some()
         {
             return;

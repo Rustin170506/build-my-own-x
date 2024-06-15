@@ -28,9 +28,7 @@ impl WordDictionary {
     fn add_word(&mut self, word: String) {
         let mut cur = &mut self.root;
         for c in word.chars() {
-            if cur.children.get(&c).is_none() {
-                cur.children.insert(c, TrieNode::new());
-            }
+            cur.children.entry(c).or_insert_with(TrieNode::new);
             cur = cur.children.get_mut(&c).unwrap();
         }
 
@@ -50,7 +48,7 @@ impl WordDictionary {
                     }
                     return false;
                 } else {
-                    if cur.children.get(&c).is_none() {
+                    if !cur.children.contains_key(&c) {
                         return false;
                     }
                     cur = cur.children.get(&c).unwrap();

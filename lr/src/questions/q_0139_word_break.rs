@@ -59,7 +59,7 @@ pub fn word_break_max_len(s: String, word_dict: Vec<String>) -> bool {
     let word_dict: std::collections::HashSet<String> = word_dict.into_iter().collect();
     for i in 1..=n {
         for j in std::cmp::max(i as isize - max_len as isize - 1, 0) as usize..i {
-            if dp[j] && word_dict.contains(&s[j..i].to_string()) {
+            if dp[j] && word_dict.contains(&s[j..i]) {
                 dp[i] = true;
                 break;
             }

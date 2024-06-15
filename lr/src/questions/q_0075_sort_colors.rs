@@ -1,3 +1,4 @@
+#[allow(clippy::ptr_arg)]
 pub fn sort_colors(nums: &mut Vec<i32>) {
     let mut red_count = 0;
     let mut white_count = 0;
@@ -11,16 +12,18 @@ pub fn sort_colors(nums: &mut Vec<i32>) {
             _ => unreachable!(),
         }
     }
-
-    for index in 0..red_count {
-        nums[index] = 0
+    for num in nums.iter_mut().take(red_count) {
+        *num = 0;
     }
-    let new_index = red_count + white_count;
-    for index in red_count..new_index {
-        nums[index] = 1
+    for num in nums.iter_mut().skip(red_count).take(white_count) {
+        *num = 1;
     }
-    for index in new_index..new_index + blue_count {
-        nums[index] = 2
+    for num in nums
+        .iter_mut()
+        .skip(red_count + white_count)
+        .take(blue_count)
+    {
+        *num = 2;
     }
 }
 

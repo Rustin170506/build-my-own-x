@@ -30,7 +30,7 @@ impl TimeMap {
             let mid = (left + right) / 2;
 
             if values[mid as usize].1 <= timestamp {
-                res = values[mid as usize].0.clone();
+                res.clone_from(&values[mid as usize].0);
                 left = mid + 1;
             } else {
                 right = mid - 1;

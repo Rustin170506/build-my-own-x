@@ -34,8 +34,18 @@ impl LRUCache {
             right: Some(Rc::new(RefCell::new(Node::new(0, 0)))),
         };
 
-        lru.left.as_mut().unwrap().borrow_mut().next = lru.right.clone();
-        lru.right.as_mut().unwrap().borrow_mut().prev = lru.left.clone();
+        lru.left
+            .as_mut()
+            .unwrap()
+            .borrow_mut()
+            .next
+            .clone_from(&lru.right);
+        lru.right
+            .as_mut()
+            .unwrap()
+            .borrow_mut()
+            .prev
+            .clone_from(&lru.left);
 
         lru
     }
@@ -44,7 +54,7 @@ impl LRUCache {
         let prev = node.borrow().prev.clone();
         let next = node.borrow().next.clone();
 
-        prev.as_ref().unwrap().borrow_mut().next = next.clone();
+        prev.as_ref().unwrap().borrow_mut().next.clone_from(&next);
         next.as_ref().unwrap().borrow_mut().prev = prev;
     }
 
@@ -53,7 +63,7 @@ impl LRUCache {
         prev.as_ref().unwrap().borrow_mut().next = Some(node.clone());
         self.right.as_ref().unwrap().borrow_mut().prev = Some(node.clone());
         node.borrow_mut().prev = prev;
-        node.borrow_mut().next = self.right.clone();
+        node.borrow_mut().next.clone_from(&self.right)
     }
 
     fn get(&mut self, key: i32) -> i32 {

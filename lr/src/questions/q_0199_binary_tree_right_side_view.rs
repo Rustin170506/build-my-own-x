@@ -13,10 +13,10 @@ pub fn right_side_view(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<i32> {
 
         for _ in 0..q_len {
             let node = q.pop_front().unwrap();
-            if node.is_some() {
-                right_side = node.clone();
-                q.push_back(node.as_ref().unwrap().borrow().left.clone());
-                q.push_back(node.as_ref().unwrap().borrow().right.clone());
+            if let Some(node_ref) = node.as_ref() {
+                right_side.clone_from(&node);
+                q.push_back(node_ref.borrow().left.clone());
+                q.push_back(node_ref.borrow().right.clone());
             }
         }
 

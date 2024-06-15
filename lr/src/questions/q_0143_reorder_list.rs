@@ -117,7 +117,7 @@ pub fn reorder_list1(head: &mut Option<Rc<RefCell<ListNode1>>>) {
             second_half = second_node.borrow_mut().next.take();
             first_node.borrow_mut().next = Some(Rc::clone(&second_node));
             if first_half.is_some() {
-                second_node.borrow_mut().next = first_half.clone();
+                second_node.borrow_mut().next.clone_from(&first_half);
             } else {
                 second_node.borrow_mut().next = None;
             }

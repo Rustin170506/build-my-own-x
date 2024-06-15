@@ -34,7 +34,7 @@ pub fn remove_covered_intervals_v2(intervals: Vec<Vec<i32>>) -> i32 {
     });
 
     let mut count = 0;
-    let mut end = std::i32::MIN;
+    let mut end = i32::MIN;
     for interval in intervals {
         if interval[1] > end {
             end = interval[1];

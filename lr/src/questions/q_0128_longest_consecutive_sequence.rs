@@ -9,10 +9,10 @@ pub fn longest_consecutive(nums: Vec<i32>) -> i32 {
     let nums_set: HashSet<&i32> = HashSet::from_iter(nums.iter());
 
     for n in &nums {
-        if nums_set.get(&(n - 1)).is_none() {
+        if !nums_set.contains(&(n - 1)) {
             let mut temp_count = 1;
             let mut temp = *n;
-            while nums_set.get(&(temp + 1)).is_some() {
+            while nums_set.contains(&(temp + 1)) {
                 temp_count += 1;
                 temp += 1;
             }

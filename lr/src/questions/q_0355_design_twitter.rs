@@ -52,7 +52,7 @@ impl Twitter {
 
     fn get_news_feed(&mut self, user_id: i32) -> Vec<i32> {
         let mut posts = BinaryHeap::new();
-        if self.users.get(&user_id).is_none() {
+        if !self.users.contains_key(&user_id) {
             return Vec::new();
         }
 
