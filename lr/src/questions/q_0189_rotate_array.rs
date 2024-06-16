@@ -7,6 +7,13 @@ pub fn rotate(nums: &mut Vec<i32>, k: i32) {
     let _ = std::mem::replace(nums, result);
 }
 
+pub fn rotate_with_reverse(nums: &mut Vec<i32>, k: i32) {
+    let k = k as usize % nums.len();
+    nums.reverse();
+    nums[0..k].reverse();
+    nums[k..].reverse();
+}
+
 #[test]
 fn test_rotate() {
     let mut nums = vec![1, 2, 3, 4, 5, 6, 7];
