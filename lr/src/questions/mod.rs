@@ -163,6 +163,7 @@ mod q_0572_subtree_of_another_tree;
 mod q_0605_can_place_flowers;
 mod q_0621_task_scheduler;
 mod q_0647_palindromic_substrings;
+mod q_0658_find_k_closest_elements;
 mod q_0678_valid_parenthesis_string;
 mod q_0680_valid_palindrome_ii;
 mod q_0682_baseball_game;
