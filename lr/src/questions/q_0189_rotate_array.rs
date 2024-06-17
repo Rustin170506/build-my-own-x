@@ -1,3 +1,4 @@
+#[allow(clippy::ptr_arg)]
 pub fn rotate(nums: &mut Vec<i32>, k: i32) {
     let mut result = vec![0_i32; nums.len()];
     for (index, num) in nums.iter().enumerate() {
@@ -7,6 +8,7 @@ pub fn rotate(nums: &mut Vec<i32>, k: i32) {
     let _ = std::mem::replace(nums, result);
 }
 
+#[allow(clippy::ptr_arg)]
 pub fn rotate_with_reverse(nums: &mut Vec<i32>, k: i32) {
     let k = k as usize % nums.len();
     nums.reverse();
