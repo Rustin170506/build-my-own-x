@@ -29,6 +29,7 @@ mod q_0042_trapping_rain_water;
 mod q_0043_multiply_strings;
 mod q_0045_jump_game_ii;
 mod q_0046_permutations;
+mod q_0047_permutations_ii;
 mod q_0048_rotate_image;
 mod q_0049_group_anagrams;
 mod q_0050_pows_n;
