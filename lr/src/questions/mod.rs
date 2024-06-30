@@ -209,6 +209,7 @@ mod q_1669_merge_in_between_linked_lists;
 mod q_1768_merge_strings_alternately;
 mod q_1838_frequency_of_the_most_frequent_element;
 mod q_1851_minimum_interval_to_include_each_query;
+mod q_1863_sum_of_all_subset_xor_totals;
 mod q_1899_merge_triplets_to_form_target_triplet;
 mod q_1929_concatenation_of_array;
 mod q_2013_detect_squares;
