@@ -23,14 +23,17 @@ fn dfs(
         return;
     }
 
-    for (&n, &count) in counter.clone().iter() {
-        if count > 0 {
-            premute.push(n);
-            *counter.get_mut(&n).unwrap() -= 1;
-            dfs(counter, premute, result, total);
+    let keys: Vec<i32> = counter.keys().cloned().collect();
+    for &n in &keys {
+        if let Some(&count) = counter.get(&n) {
+            if count > 0 {
+                premute.push(n);
+                *counter.get_mut(&n).unwrap() -= 1;
+                dfs(counter, premute, result, total);
 
-            premute.pop();
-            *counter.get_mut(&n).unwrap() += 1;
+                premute.pop();
+                *counter.get_mut(&n).unwrap() += 1;
+            }
         }
     }
 }
