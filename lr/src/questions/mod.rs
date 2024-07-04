@@ -196,6 +196,7 @@ mod q_0953_verifying_an_alien_dictionary;
 mod q_0973_k_closest_points_to_origin;
 mod q_0981_time_based_key_value_store;
 mod q_0994_rotting_oranges;
+mod q_0997_find_the_town_judge;
 mod q_1046_last_stone_weight;
 mod q_1143_longest_common_subsequence;
 mod q_1189_maximum_number_of_balloons;
