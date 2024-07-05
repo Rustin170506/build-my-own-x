@@ -219,4 +219,5 @@ mod q_2130_maximum_twin_sum_of_a_linked_list;
 mod q_2390_removing_stars_from_a_string;
 mod q_2706_buy_two_chocolates;
 mod q_2707_extra_characters_in_a_string;
+mod q_2864_maximum_odd_binary_number;
 mod q_5791_count_sub_islands;
