@@ -194,6 +194,7 @@ mod q_0920_meeting_rooms;
 mod q_0929_unique_email_addresses;
 mod q_0953_verifying_an_alien_dictionary;
 mod q_0973_k_closest_points_to_origin;
+mod q_0978_longest_turbulent_subarray;
 mod q_0981_time_based_key_value_store;
 mod q_0994_rotting_oranges;
 mod q_0997_find_the_town_judge;
