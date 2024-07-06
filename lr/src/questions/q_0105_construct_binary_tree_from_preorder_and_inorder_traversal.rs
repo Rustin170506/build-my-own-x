@@ -7,8 +7,6 @@ pub fn build_tree(preorder: Vec<i32>, inorder: Vec<i32>) -> Option<Rc<RefCell<Tr
         if preorder.is_empty() || inorder.is_empty() {
             return None;
         }
-        println!("preorder: {preorder:?}");
-        println!("inorder: {inorder:?}");
 
         let first_value = *preorder.first().unwrap();
         let root = Some(Rc::new(RefCell::new(TreeNode::new(first_value))));
@@ -35,6 +33,6 @@ mod tests {
             build_tree(vec![3, 9, 20, 15, 7], vec![9, 3, 15, 20, 7]),
             tree!(3, 9, 20, None, None, 15, 7)
         );
-        // assert_eq!(build_tree(vec![1], vec![1]), tree!(1));
+        assert_eq!(build_tree(vec![1], vec![1]), tree!(1));
     }
 }
