@@ -26,15 +26,9 @@ pub fn kth_smallest(root: Option<Rc<RefCell<TreeNode>>>, k: i32) -> i32 {
     unreachable!()
 }
 
-#[cfg(test)]
-mod tests {
+#[test]
+fn test_kth_smallest() {
     use crate::tree;
-
-    use super::*;
-
-    #[test]
-    fn test_kth_smallest() {
-        assert_eq!(kth_smallest(tree!(3, 1, 4, None, 2), 1), 1);
-        assert_eq!(kth_smallest(tree!(5, 3, 6, 2, 4, None, None, 1), 3), 3);
-    }
+    assert_eq!(kth_smallest(tree!(3, 1, 4, None, 2), 1), 1);
+    assert_eq!(kth_smallest(tree!(5, 3, 6, 2, 4, None, None, 1), 3), 3);
 }
