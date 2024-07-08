@@ -15,7 +15,6 @@ func kthSmallest(root *utils.TreeNode, k int) int {
 		inorder(root.Left)
 		elements = append(elements, root.Val)
 		inorder(root.Right)
-
 	}
 	inorder(root)
 	return elements[k-1]
