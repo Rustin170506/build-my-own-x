@@ -7,19 +7,29 @@ type TreeNode struct {
 }
 
 func BuildTree(elements []int) *TreeNode {
-	return buildTree(elements, 0)
-}
-
-func buildTree(elements []int, index int) *TreeNode {
-	if index >= len(elements) || elements[index] == -1 {
+	if len(elements) == 0 {
 		return nil
 	}
 
-	node := &TreeNode{Val: elements[index]}
-	node.Left = buildTree(elements, 2*index+1)
-	node.Right = buildTree(elements, 2*index+2)
+	root := &TreeNode{Val: elements[0]}
+	queue := []*TreeNode{root}
 
-	return node
+	for i := 1; i < len(elements); i += 2 {
+		node := queue[0]
+		queue = queue[1:]
+
+		if elements[i] != -1 {
+			node.Left = &TreeNode{Val: elements[i]}
+			queue = append(queue, node.Left)
+		}
+
+		if i+1 < len(elements) && elements[i+1] != -1 {
+			node.Right = &TreeNode{Val: elements[i+1]}
+			queue = append(queue, node.Right)
+		}
+	}
+
+	return root
 }
 
 func TraverseTree(root *TreeNode) []int {
