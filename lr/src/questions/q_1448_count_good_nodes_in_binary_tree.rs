@@ -17,14 +17,9 @@ pub fn good_nodes(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
     dfs(root.clone(), root.as_ref().unwrap().borrow().val)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_good_nodes() {
     use crate::tree;
-
-    #[test]
-    fn test_good_nodes() {
-        assert_eq!(good_nodes(tree!(1, 2, 3)), 3);
-        assert_eq!(good_nodes(tree!(3, 1, 4, 3, None, 1, 5)), 4);
-    }
+    assert_eq!(good_nodes(tree!(1, 2, 3)), 3);
+    assert_eq!(good_nodes(tree!(3, 1, 4, 3, None, 1, 5)), 4);
 }
