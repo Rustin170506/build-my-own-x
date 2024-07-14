@@ -31,12 +31,12 @@ impl Codec {
         fn dfs(vals: &Vec<&str>, i: &mut usize) -> Option<Rc<RefCell<TreeNode>>> {
             let val = *vals.get(*i).unwrap();
             if val == "N" {
-                let _ = std::mem::replace(i, *i + 1);
+                *i = *i + 1;
                 return None;
             }
 
             let mut node = TreeNode::new(val.parse::<i32>().unwrap());
-            let _ = std::mem::replace(i, *i + 1);
+            *i = *i + 1;
             node.left = dfs(vals, i);
             node.right = dfs(vals, i);
 
@@ -47,18 +47,12 @@ impl Codec {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[test]
+fn test_297() {
     use crate::tree;
-
-    use super::*;
-
-    #[test]
-    fn test_297() {
-        let codec = Codec::new();
-        let root = tree!(1, 2, 3, 4, 5, 6, 7);
-        let serialized = codec.serialize(root.clone());
-        let deserialized = codec.deserialize(serialized);
-        assert_eq!(deserialized, root);
-    }
+    let codec = Codec::new();
+    let root = tree!(1, 2, 3, 4, 5, 6, 7);
+    let serialized = codec.serialize(root.clone());
+    let deserialized = codec.deserialize(serialized);
+    assert_eq!(deserialized, root);
 }
