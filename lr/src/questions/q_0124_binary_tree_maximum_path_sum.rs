@@ -15,7 +15,7 @@ pub fn max_path_sum(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
         right_max = i32::max(right_max, 0);
 
         let root_value = root.as_ref().unwrap().borrow().val;
-        let _ = std::mem::replace(result, i32::max(*result, root_value + left_max + right_max));
+        *result = i32::max(*result, root_value + left_max + right_max);
 
         root_value + i32::max(left_max, right_max)
     }
@@ -25,15 +25,9 @@ pub fn max_path_sum(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
     result
 }
 
-#[cfg(test)]
-mod tests {
+#[test]
+fn test_max_path_sum() {
     use crate::tree;
-
-    use super::*;
-
-    #[test]
-    fn test_max_path_sum() {
-        assert_eq!(max_path_sum(tree!(1, 2, 3)), 6);
-        assert_eq!(max_path_sum(tree!(-10, 9, 20, None, None, 15, 7)), 42);
-    }
+    assert_eq!(max_path_sum(tree!(1, 2, 3)), 6);
+    assert_eq!(max_path_sum(tree!(-10, 9, 20, None, None, 15, 7)), 42);
 }
