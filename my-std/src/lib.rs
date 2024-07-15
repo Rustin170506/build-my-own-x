@@ -2,7 +2,6 @@
     allocator_api,
     try_reserve_kind,
     sized_type_properties,
-    hint_assert_unchecked,
     dropck_eyepatch
 )]
 pub mod binary_tree;
