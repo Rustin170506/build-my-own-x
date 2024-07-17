@@ -25,7 +25,7 @@ where
     T: PartialOrd + Clone,
 {
     /// Create a new binary search tree.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         BinarySearchTree { root: None }
     }
 
