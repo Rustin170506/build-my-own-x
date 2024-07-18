@@ -203,6 +203,44 @@ impl<T> BinarySearchTree<T> {
         }
         inorder_helper(self.root.clone(), &mut visit);
     }
+
+    pub fn preorder<F>(&self, visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut visit = visit;
+        fn preorder_helper<T, F>(node: Option<Rc<RefCell<Node<T>>>>, visit: &mut F)
+        where
+            F: FnMut(&T),
+        {
+            if let Some(node) = node {
+                let node_borrowed = node.borrow();
+                visit(&node_borrowed.value);
+                preorder_helper(node_borrowed.left.clone(), visit);
+                preorder_helper(node_borrowed.right.clone(), visit);
+            }
+        }
+        preorder_helper(self.root.clone(), &mut visit);
+    }
+
+    pub fn postorder<F>(&self, visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut visit = visit;
+        fn postorder_helper<T, F>(node: Option<Rc<RefCell<Node<T>>>>, visit: &mut F)
+        where
+            F: FnMut(&T),
+        {
+            if let Some(node) = node {
+                let node_borrowed = node.borrow();
+                postorder_helper(node_borrowed.left.clone(), visit);
+                postorder_helper(node_borrowed.right.clone(), visit);
+                visit(&node_borrowed.value);
+            }
+        }
+        postorder_helper(self.root.clone(), &mut visit);
+    }
 }
 
 /// Iterator for the binary search tree.
@@ -344,5 +382,37 @@ mod tests {
         let mut res = Vec::new();
         tree.inorder(|value| res.push(*value));
         assert_eq!(res, vec![2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    #[test]
+    fn preorder() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.preorder(|value| res.push(*value));
+        assert_eq!(res, vec![5, 3, 2, 4, 7, 6, 8]);
+    }
+    
+    #[test]
+    fn postorder() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.postorder(|value| res.push(*value));
+        assert_eq!(res, vec![2, 4, 3, 6, 8, 7, 5]);
     }
 }
