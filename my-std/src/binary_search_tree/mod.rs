@@ -184,6 +184,27 @@ where
     }
 }
 
+impl<T> BinarySearchTree<T> {
+    pub fn inorder<F>(&self, visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut visit = visit;
+        fn inorder_helper<T, F>(node: Option<Rc<RefCell<Node<T>>>>, visit: &mut F)
+        where
+            F: FnMut(&T),
+        {
+            if let Some(node) = node {
+                let node_borrowed = node.borrow();
+                inorder_helper(node_borrowed.left.clone(), visit);
+                visit(&node_borrowed.value);
+                inorder_helper(node_borrowed.right.clone(), visit);
+            }
+        }
+        inorder_helper(self.root.clone(), &mut visit);
+    }
+}
+
 /// Iterator for the binary search tree.
 pub struct BinaryTreeIterator<T> {
     current: Option<Rc<RefCell<Node<T>>>>,
@@ -307,5 +328,21 @@ mod tests {
         tree.remove(5);
         let res = tree.into_iter().collect::<Vec<_>>();
         assert_eq!(res, vec![2, 3, 4, 6, 7, 8]);
+    }
+
+    #[test]
+    fn inorder() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.inorder(|value| res.push(*value));
+        assert_eq!(res, vec![2, 3, 4, 5, 6, 7, 8]);
     }
 }
