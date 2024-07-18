@@ -1,6 +1,7 @@
 #![allow(clippy::assigning_clones)]
 
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 /// Node of a binary tree.
@@ -241,6 +242,27 @@ impl<T> BinarySearchTree<T> {
         }
         postorder_helper(self.root.clone(), &mut visit);
     }
+
+    pub fn level_order<F>(&self, mut visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut queue = VecDeque::new();
+        if let Some(root) = &self.root {
+            queue.push_back(root.clone());
+        }
+
+        while let Some(node) = queue.pop_front() {
+            let node_borrowed = node.borrow();
+            visit(&node_borrowed.value);
+            if let Some(left) = &node_borrowed.left {
+                queue.push_back(left.clone());
+            }
+            if let Some(right) = &node_borrowed.right {
+                queue.push_back(right.clone());
+            }
+        }
+    }
 }
 
 /// Iterator for the binary search tree.
@@ -399,7 +421,7 @@ mod tests {
         tree.preorder(|value| res.push(*value));
         assert_eq!(res, vec![5, 3, 2, 4, 7, 6, 8]);
     }
-    
+
     #[test]
     fn postorder() {
         let mut tree = BinarySearchTree::new();
@@ -414,5 +436,21 @@ mod tests {
         let mut res = Vec::new();
         tree.postorder(|value| res.push(*value));
         assert_eq!(res, vec![2, 4, 3, 6, 8, 7, 5]);
+    }
+    
+    #[test]
+    fn level_order() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.level_order(|value| res.push(*value));
+        assert_eq!(res, vec![5, 3, 7, 2, 4, 6, 8]);
     }
 }
