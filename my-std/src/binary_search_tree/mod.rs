@@ -224,6 +224,27 @@ impl<T> BinarySearchTree<T> {
         preorder_helper(self.root.clone(), &mut visit);
     }
 
+    pub fn preorder_iterate<F>(&self, visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut visit = visit;
+        let mut stack = VecDeque::new();
+        let mut current = self.root.clone();
+        loop {
+            while let Some(node) = current {
+                let node_borrowed = node.borrow();
+                visit(&node_borrowed.value);
+                stack.push_back(node_borrowed.right.clone());
+                current = node_borrowed.left.clone();
+            }
+            if stack.is_empty() {
+                break;
+            }
+            current = stack.pop_back().expect("stack is not empty");
+        }
+    }
+
     pub fn postorder<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -423,6 +444,22 @@ mod tests {
     }
 
     #[test]
+    fn test_preorder_iterate() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.preorder_iterate(|value| res.push(*value));
+        assert_eq!(res, vec![5, 3, 2, 4, 7, 6, 8]);
+    }
+
+    #[test]
     fn postorder() {
         let mut tree = BinarySearchTree::new();
         tree.insert(5);
@@ -437,7 +474,7 @@ mod tests {
         tree.postorder(|value| res.push(*value));
         assert_eq!(res, vec![2, 4, 3, 6, 8, 7, 5]);
     }
-    
+
     #[test]
     fn level_order() {
         let mut tree = BinarySearchTree::new();
