@@ -214,6 +214,7 @@ where
 }
 
 impl<T> BinarySearchTree<T> {
+    /// Traverse the binary search tree in inorder.
     pub fn inorder<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -233,6 +234,7 @@ impl<T> BinarySearchTree<T> {
         inorder_helper(self.root.clone(), &mut visit);
     }
 
+    /// Traverse the binary search tree in inorder using an iterative approach.
     pub fn inorder_iterate<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -259,6 +261,7 @@ impl<T> BinarySearchTree<T> {
         }
     }
 
+    /// Traverse the binary search tree in preorder.
     pub fn preorder<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -278,6 +281,7 @@ impl<T> BinarySearchTree<T> {
         preorder_helper(self.root.clone(), &mut visit);
     }
 
+    /// Traverse the binary search tree in preorder using an iterative approach.
     pub fn preorder_iterate<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -299,6 +303,7 @@ impl<T> BinarySearchTree<T> {
         }
     }
 
+    /// Traverse the binary search tree in postorder.
     pub fn postorder<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -318,6 +323,7 @@ impl<T> BinarySearchTree<T> {
         postorder_helper(self.root.clone(), &mut visit);
     }
 
+    /// Traverse the binary search tree in postorder using an iterative approach.
     pub fn postorder_iterate<F>(&self, mut visit: F)
     where
         F: FnMut(&T),
@@ -345,6 +351,7 @@ impl<T> BinarySearchTree<T> {
         }
     }
 
+    /// Traverse the binary search tree in level order.
     pub fn level_order<F>(&self, mut visit: F)
     where
         F: FnMut(&T),
