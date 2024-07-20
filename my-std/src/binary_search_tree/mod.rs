@@ -201,7 +201,7 @@ where
         let mut current = Some(node);
         while let Some(curr_node) = current {
             if let Some(parent) = curr_node.borrow().parent.clone() {
-                if Rc::ptr_eq(&parent.borrow().left.as_ref().unwrap(), &curr_node) {
+                if Rc::ptr_eq(parent.borrow().left.as_ref().unwrap(), &curr_node) {
                     return Some(parent.borrow().value.clone());
                 }
                 current = Some(parent);
