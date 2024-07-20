@@ -318,6 +318,33 @@ impl<T> BinarySearchTree<T> {
         postorder_helper(self.root.clone(), &mut visit);
     }
 
+    pub fn postorder_iterate<F>(&self, mut visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut stack1 = VecDeque::new();
+        let mut stack2 = VecDeque::new();
+        if let Some(root) = self.root.clone() {
+            stack1.push_back(root);
+        }
+
+        while let Some(node) = stack1.pop_back() {
+            stack2.push_back(node.clone());
+
+            let node_borrowed = node.borrow();
+            if let Some(left) = node_borrowed.left.clone() {
+                stack1.push_back(left);
+            }
+            if let Some(right) = node_borrowed.right.clone() {
+                stack1.push_back(right);
+            }
+        }
+
+        while let Some(node) = stack2.pop_back() {
+            visit(&node.borrow().value);
+        }
+    }
+
     pub fn level_order<F>(&self, mut visit: F)
     where
         F: FnMut(&T),
@@ -542,6 +569,22 @@ mod tests {
 
         let mut res = Vec::new();
         tree.postorder(|value| res.push(*value));
+        assert_eq!(res, vec![2, 4, 3, 6, 8, 7, 5]);
+    }
+
+    #[test]
+    fn test_postorder_iterate() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.postorder_iterate(|value| res.push(*value));
         assert_eq!(res, vec![2, 4, 3, 6, 8, 7, 5]);
     }
 
