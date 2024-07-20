@@ -183,6 +183,34 @@ where
         }
         None
     }
+
+    /// Find the successor of a value in the binary search tree.
+    pub fn find_successor(&self, value: T) -> Option<T> {
+        let node = self.find_node(value)?;
+        // If right subtree exists, the successor is the minimum of that subtree.
+        if let Some(right) = node.borrow().right.clone() {
+            return Some(
+                Self::find_min_node(Some(right))
+                    .unwrap()
+                    .borrow()
+                    .value
+                    .clone(),
+            );
+        }
+        // Otherwise, traverse up until we find a node that is a left child of its parent.
+        let mut current = Some(node);
+        while let Some(curr_node) = current {
+            if let Some(parent) = curr_node.borrow().parent.clone() {
+                if Rc::ptr_eq(&parent.borrow().left.as_ref().unwrap(), &curr_node) {
+                    return Some(parent.borrow().value.clone());
+                }
+                current = Some(parent);
+            } else {
+                break;
+            }
+        }
+        None
+    }
 }
 
 impl<T> BinarySearchTree<T> {
@@ -531,5 +559,24 @@ mod tests {
         let mut res = Vec::new();
         tree.level_order(|value| res.push(*value));
         assert_eq!(res, vec![5, 3, 7, 2, 4, 6, 8]);
+    }
+
+    #[test]
+    fn test_find_successor() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(20);
+        tree.insert(8);
+        tree.insert(22);
+        tree.insert(4);
+        tree.insert(12);
+        tree.insert(10);
+        tree.insert(14);
+
+        assert_eq!(tree.find_successor(8), Some(10));
+        assert_eq!(tree.find_successor(10), Some(12));
+        assert_eq!(tree.find_successor(12), Some(14));
+        assert_eq!(tree.find_successor(14), Some(20));
+        assert_eq!(tree.find_successor(20), Some(22));
+        assert_eq!(tree.find_successor(22), None);
     }
 }
