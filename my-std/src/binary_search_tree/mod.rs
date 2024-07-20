@@ -205,6 +205,32 @@ impl<T> BinarySearchTree<T> {
         inorder_helper(self.root.clone(), &mut visit);
     }
 
+    pub fn inorder_iterate<F>(&self, visit: F)
+    where
+        F: FnMut(&T),
+    {
+        let mut visit = visit;
+        let mut stack = VecDeque::new();
+        let mut current = self.root.clone();
+        loop {
+            while let Some(node) = current {
+                let node_borrowed = node.borrow();
+                stack.push_back(Some(node.clone()));
+                current = node_borrowed.left.clone();
+            }
+            if stack.is_empty() {
+                break;
+            }
+            let node = stack
+                .pop_back()
+                .expect("stack is not empty")
+                .expect("node is not None");
+            let node_borrowed = node.borrow();
+            visit(&node_borrowed.value);
+            current = node_borrowed.right.clone();
+        }
+    }
+
     pub fn preorder<F>(&self, visit: F)
     where
         F: FnMut(&T),
@@ -424,6 +450,22 @@ mod tests {
 
         let mut res = Vec::new();
         tree.inorder(|value| res.push(*value));
+        assert_eq!(res, vec![2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    #[test]
+    fn test_inorder_iterate() {
+        let mut tree = BinarySearchTree::new();
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(7);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(8);
+
+        let mut res = Vec::new();
+        tree.inorder_iterate(|value| res.push(*value));
         assert_eq!(res, vec![2, 3, 4, 5, 6, 7, 8]);
     }
 
