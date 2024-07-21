@@ -258,19 +258,19 @@ impl<T> BinarySearchTree<T> {
         F: FnMut(&T),
     {
         let mut visit = visit;
-        let mut stack = VecDeque::new();
+        let mut stack = Vec::new();
         let mut current = self.root.clone();
         loop {
             while let Some(node) = current {
                 let node_borrowed = node.borrow();
-                stack.push_back(Some(node.clone()));
+                stack.push(Some(node.clone()));
                 current = node_borrowed.left.clone();
             }
             if stack.is_empty() {
                 break;
             }
             let node = stack
-                .pop_back()
+                .pop()
                 .expect("stack is not empty")
                 .expect("node is not None");
             let node_borrowed = node.borrow();
@@ -305,19 +305,19 @@ impl<T> BinarySearchTree<T> {
         F: FnMut(&T),
     {
         let mut visit = visit;
-        let mut stack = VecDeque::new();
+        let mut stack = Vec::new();
         let mut current = self.root.clone();
         loop {
             while let Some(node) = current {
                 let node_borrowed = node.borrow();
                 visit(&node_borrowed.value);
-                stack.push_back(node_borrowed.right.clone());
+                stack.push(node_borrowed.right.clone());
                 current = node_borrowed.left.clone();
             }
             if stack.is_empty() {
                 break;
             }
-            current = stack.pop_back().expect("stack is not empty");
+            current = stack.pop().expect("stack is not empty");
         }
     }
 
@@ -333,6 +333,7 @@ impl<T> BinarySearchTree<T> {
         {
             if let Some(node) = node {
                 let node_borrowed = node.borrow();
+                postorder_helper(node_borrowed.left.clone(), visit);
                 postorder_helper(node_borrowed.right.clone(), visit);
                 visit(&node_borrowed.value);
             }
