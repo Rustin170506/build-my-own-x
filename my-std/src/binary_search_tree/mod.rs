@@ -341,52 +341,35 @@ impl<T> BinarySearchTree<T> {
     }
 
     /// Traverse the binary search tree in postorder using an iterative approach.
-    pub fn postorder_iterate<F>(&self, visit: F)
+    pub fn postorder_iterate<F>(&self, mut visit: F)
     where
         F: FnMut(&T),
     {
-        let mut visit = visit;
-        let mut stack = VecDeque::new();
-        if self.root.is_some() {
-            stack.push_back(self.root.clone());
-        }
+        let mut stack = Vec::new();
+        let mut last_visited = None;
         let mut current = self.root.clone();
-        let push_children_to_stack = |stack: &mut VecDeque<Option<Rc<RefCell<Node<T>>>>>| {
-            while let Some(top) = stack.back().cloned() {
-                if let Some(top) = top {
-                    if top.borrow().has_left_child() {
-                        if top.borrow().has_right_child() {
-                            stack.push_back(top.borrow().right.clone());
-                        }
-                        stack.push_back(top.borrow().left.clone());
-                    } else {
-                        stack.push_back(top.borrow().right.clone());
-                    }
-                } else {
-                    break;
-                }
-            }
-            stack.pop_back();
-        };
 
-        while !stack.is_empty() {
-            if let Some(node) = current {
-                let top = stack
-                    .back()
-                    .cloned()
-                    .expect("stack is not empty")
-                    .expect("node is not None");
-                if let Some(parent) = &node.borrow().parent {
-                    if !Rc::ptr_eq(&top, parent) {
-                        push_children_to_stack(&mut stack);
-                    }
+        while !stack.is_empty() || current.is_some() {
+            while let Some(node) = current {
+                stack.push(node.clone());
+                current = node.borrow().left.clone();
+            }
+
+            if let Some(node) = stack.last() {
+                let node = node.clone();
+                if node.borrow().right.is_some()
+                    && (last_visited.is_none()
+                        || !Rc::ptr_eq(
+                            node.borrow().right.as_ref().unwrap(),
+                            last_visited.as_ref().unwrap(),
+                        ))
+                {
+                    current = node.borrow().right.clone();
                 } else {
-                    push_children_to_stack(&mut stack);
+                    let node = stack.pop().unwrap();
+                    visit(&node.borrow().value);
+                    last_visited = Some(node);
                 }
-                current = stack.pop_back().expect("stack is not empty");
-                let node = current.clone().expect("node is not None");
-                let node_borrowed = node.borrow();
-                visit(&node_borrowed.value);
             }
         }
     }
