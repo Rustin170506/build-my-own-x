@@ -13,6 +13,24 @@ pub struct Node<T> {
     right: Option<Rc<RefCell<Node<T>>>>,
 }
 
+impl<T> Node<T> {
+    pub fn has_left_child(&self) -> bool {
+        self.left.is_some()
+    }
+
+    pub fn has_right_child(&self) -> bool {
+        self.right.is_some()
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.parent.is_none()
+    }
+
+    pub fn is_leaf(&self) -> bool {
+        self.left.is_none() && self.right.is_none()
+    }
+}
+
 /// Binary search tree.
 /// It is a binary tree in which the left child of a node has a value less than the parent node,
 /// and the right child of a node has a value greater than the parent node.
@@ -315,7 +333,6 @@ impl<T> BinarySearchTree<T> {
         {
             if let Some(node) = node {
                 let node_borrowed = node.borrow();
-                postorder_helper(node_borrowed.left.clone(), visit);
                 postorder_helper(node_borrowed.right.clone(), visit);
                 visit(&node_borrowed.value);
             }
@@ -324,30 +341,53 @@ impl<T> BinarySearchTree<T> {
     }
 
     /// Traverse the binary search tree in postorder using an iterative approach.
-    pub fn postorder_iterate<F>(&self, mut visit: F)
+    pub fn postorder_iterate<F>(&self, visit: F)
     where
         F: FnMut(&T),
     {
-        let mut stack1 = VecDeque::new();
-        let mut stack2 = VecDeque::new();
-        if let Some(root) = self.root.clone() {
-            stack1.push_back(root);
+        let mut visit = visit;
+        let mut stack = VecDeque::new();
+        if self.root.is_some() {
+            stack.push_back(self.root.clone());
         }
-
-        while let Some(node) = stack1.pop_back() {
-            stack2.push_back(node.clone());
-
-            let node_borrowed = node.borrow();
-            if let Some(left) = node_borrowed.left.clone() {
-                stack1.push_back(left);
+        let mut current = self.root.clone();
+        let push_children_to_stack = |stack: &mut VecDeque<Option<Rc<RefCell<Node<T>>>>>| {
+            while let Some(top) = stack.back().cloned() {
+                if let Some(top) = top {
+                    if top.borrow().has_left_child() {
+                        if top.borrow().has_right_child() {
+                            stack.push_back(top.borrow().right.clone());
+                        }
+                        stack.push_back(top.borrow().left.clone());
+                    } else {
+                        stack.push_back(top.borrow().right.clone());
+                    }
+                } else {
+                    break;
+                }
             }
-            if let Some(right) = node_borrowed.right.clone() {
-                stack1.push_back(right);
-            }
-        }
+            stack.pop_back();
+        };
 
-        while let Some(node) = stack2.pop_back() {
-            visit(&node.borrow().value);
+        while !stack.is_empty() {
+            if let Some(node) = current {
+                let top = stack
+                    .back()
+                    .cloned()
+                    .expect("stack is not empty")
+                    .expect("node is not None");
+                if let Some(parent) = &node.borrow().parent {
+                    if !Rc::ptr_eq(&top, parent) {
+                        push_children_to_stack(&mut stack);
+                    }
+                } else {
+                    push_children_to_stack(&mut stack);
+                }
+                current = stack.pop_back().expect("stack is not empty");
+                let node = current.clone().expect("node is not None");
+                let node_borrowed = node.borrow();
+                visit(&node_borrowed.value);
+            }
         }
     }
 
