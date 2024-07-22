@@ -11,7 +11,7 @@ pub fn is_subsequence(s: String, t: String) -> bool {
     i == s.len()
 }
 
-#[cfg(tets)]
+#[cfg(test)]
 mod tests {
     use super::*;
 

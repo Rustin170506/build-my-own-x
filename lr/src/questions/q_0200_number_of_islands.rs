@@ -1,85 +1,62 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashMap;
 
 pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
-    if grid.is_empty() {
-        return 0;
-    }
-
-    let (rows, cols) = (grid.len(), grid[0].len());
-    let mut visited = HashSet::new();
-    let mut islands = 0;
-
-    for r in 0..rows {
-        for c in 0..cols {
-            if grid[r][c] == '1' && !visited.contains(&(r as isize, c as isize)) {
-                bfs(
-                    r as isize,
-                    c as isize,
-                    &grid,
-                    &mut visited,
-                    rows as isize,
-                    cols as isize,
-                );
-                islands += 1;
-            }
+    let (rows, cols) = (grid.len(), grid[1].len());
+    let mut result = 0;
+    let mut vistied = HashMap::new();
+    fn dfs(
+        i: isize,
+        j: isize,
+        rows: usize,
+        cols: usize,
+        visited: &mut HashMap<(usize, usize), bool>,
+        grid: &[Vec<char>],
+    ) {
+        if i as usize >= rows
+            || i < 0
+            || j as usize >= cols
+            || j < 0
+            || visited.contains_key(&(i as usize, j as usize))
+            || grid[i as usize][j as usize] == '0'
+        {
+            return;
         }
-    }
-
-    islands
-}
-
-fn bfs(
-    r: isize,
-    c: isize,
-    grid: &[Vec<char>],
-    visited: &mut HashSet<(isize, isize)>,
-    rows: isize,
-    cols: isize,
-) {
-    let mut q = VecDeque::new();
-    visited.insert((r, c));
-    q.push_back((r, c));
-
-    while !q.is_empty() {
-        let (row, col) = q.pop_front().unwrap();
+        let (i, j) = (i as usize, j as usize);
+        visited.insert((i, j), true);
         let directions: Vec<(isize, isize)> = vec![(1, 0), (-1, 0), (0, 1), (0, -1)];
-        for (dr, dc) in directions {
-            let (r, c) = (row + dr, col + dc);
-            if (r >= 0 && r < rows)
-                && (c >= 0 && c < cols)
-                && grid[r as usize][c as usize] == '1'
-                && !visited.contains(&(r, c))
-            {
-                q.push_back((r, c));
-                visited.insert((r, c));
+        for (x, y) in directions {
+            dfs(i as isize + x, j as isize + y, rows, cols, visited, grid);
+        }
+    }
+    for i in 0..rows {
+        for j in 0..cols {
+            if grid[i][j] == '1' && !vistied.contains_key(&(i, j)) {
+                dfs(i as isize, j as isize, rows, cols, &mut vistied, &grid);
+                result += 1;
             }
         }
     }
+    result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_num_islands() {
-        assert_eq!(
-            num_islands(vec![
-                vec!['1', '1', '1', '1', '0'],
-                vec!['1', '1', '0', '1', '0'],
-                vec!['1', '1', '0', '0', '0'],
-                vec!['0', '0', '0', '0', '0']
-            ]),
-            1
-        );
-        assert_eq!(
-            num_islands(vec![
-                vec!['1', '1', '0', '0', '0'],
-                vec!['1', '1', '0', '0', '0'],
-                vec!['0', '0', '1', '0', '0'],
-                vec!['0', '0', '0', '1', '1']
-            ]),
-            3
-        );
-    }
+#[test]
+fn test_num_islands() {
+    assert_eq!(
+        num_islands(vec![
+            vec!['1', '1', '1', '1', '0'],
+            vec!['1', '1', '0', '1', '0'],
+            vec!['1', '1', '0', '0', '0'],
+            vec!['0', '0', '0', '0', '0']
+        ]),
+        1
+    );
+    assert_eq!(
+        num_islands(vec![
+            vec!['1', '1', '0', '0', '0'],
+            vec!['1', '1', '0', '0', '0'],
+            vec!['0', '0', '1', '0', '0'],
+            vec!['0', '0', '0', '1', '1']
+        ]),
+        3
+    );
 }

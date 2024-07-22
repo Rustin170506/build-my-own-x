@@ -31,12 +31,12 @@ impl Codec {
         fn dfs(vals: &Vec<&str>, i: &mut usize) -> Option<Rc<RefCell<TreeNode>>> {
             let val = *vals.get(*i).unwrap();
             if val == "N" {
-                *i = *i + 1;
+                *i += 1;
                 return None;
             }
 
             let mut node = TreeNode::new(val.parse::<i32>().unwrap());
-            *i = *i + 1;
+            *i += 1;
             node.left = dfs(vals, i);
             node.right = dfs(vals, i);
 
