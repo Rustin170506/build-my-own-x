@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
     let (rows, cols) = (grid.len(), grid[1].len());
@@ -38,6 +38,40 @@ pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
     }
     result
 }
+pub fn num_islands_with_bfs(grid: Vec<Vec<char>>) -> i32 {
+    let (rows, cols) = (grid.len(), grid[0].len());
+    let mut visited = HashMap::new();
+    let mut result = 0;
+    let directions = vec![(0, 1), (0, -1), (1, 0), (-1, 0)];
+
+    for i in 0..rows {
+        for j in 0..cols {
+            if grid[i][j] == '1' && !visited.contains_key(&(i, j)) {
+                result += 1;
+                let mut queue = VecDeque::new();
+                queue.push_back((i, j));
+                visited.insert((i, j), true);
+
+                while let Some((x, y)) = queue.pop_front() {
+                    for (dx, dy) in &directions {
+                        let nx = x as isize + dx;
+                        let ny = y as isize + dy;
+                        if nx >= 0 && nx < rows as isize && ny >= 0 && ny < cols as isize {
+                            let nx = nx as usize;
+                            let ny = ny as usize;
+                            if grid[nx][ny] == '1' && !visited.contains_key(&(nx, ny)) {
+                                queue.push_back((nx, ny));
+                                visited.insert((nx, ny), true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    result
+}
 
 #[test]
 fn test_num_islands() {
@@ -52,6 +86,28 @@ fn test_num_islands() {
     );
     assert_eq!(
         num_islands(vec![
+            vec!['1', '1', '0', '0', '0'],
+            vec!['1', '1', '0', '0', '0'],
+            vec!['0', '0', '1', '0', '0'],
+            vec!['0', '0', '0', '1', '1']
+        ]),
+        3
+    );
+}
+
+#[test]
+fn test_num_islands_with_bfs() {
+    assert_eq!(
+        num_islands_with_bfs(vec![
+            vec!['1', '1', '1', '1', '0'],
+            vec!['1', '1', '0', '1', '0'],
+            vec!['1', '1', '0', '0', '0'],
+            vec!['0', '0', '0', '0', '0']
+        ]),
+        1
+    );
+    assert_eq!(
+        num_islands_with_bfs(vec![
             vec!['1', '1', '0', '0', '0'],
             vec!['1', '1', '0', '0', '0'],
             vec!['0', '0', '1', '0', '0'],
