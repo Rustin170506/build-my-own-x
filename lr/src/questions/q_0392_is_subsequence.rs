@@ -17,6 +17,6 @@ mod tests {
 
     #[test]
     fn test_is_subsequence() {
-        assert!(is_subsequence("abc".to_string(), "acbd".to_string()))
+        assert!(is_subsequence("abc".to_string(), "abcd".to_string()))
     }
 }
