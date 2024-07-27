@@ -31,3 +31,25 @@ func cloneGraph(node *Node) *Node {
 
 	return dfs(node)
 }
+
+func cloneGraphBfs(node *Node) *Node {
+	if node == nil {
+		return nil
+	}
+
+	result := &Node{Val: node.Val, Neighbors: make([]*Node, 0)}
+	cloned := map[*Node]*Node{node: result}
+	queue := []*Node{node}
+	for len(queue) > 0 {
+		n := queue[0]
+		queue = queue[1:]
+		for _, neighbor := range n.Neighbors {
+			if _, ok := cloned[neighbor]; !ok {
+				cloned[neighbor] = &Node{Val: neighbor.Val, Neighbors: make([]*Node, 0)}
+				queue = append(queue, neighbor)
+			}
+			cloned[n].Neighbors = append(cloned[n].Neighbors, cloned[neighbor])
+		}
+	}
+	return result
+}

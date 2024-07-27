@@ -77,6 +77,8 @@ func TestCloneGraph(t *testing.T) {
 				}
 			}
 			dfs(tt.node, clone)
+			clone1 := cloneGraphBfs(tt.node)
+			dfs(tt.node, clone1)
 		})
 	}
 }
