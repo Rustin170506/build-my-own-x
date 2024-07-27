@@ -10,21 +10,20 @@ func cloneGraph(node *Node) *Node {
 		return nil
 	}
 
-	nodeMap := make(map[*Node]*Node, 4)
-	var dfs func(node *Node) *Node
-	dfs = func(node *Node) *Node {
-		if n, ok := nodeMap[node]; ok {
-			return n
+	cloned := make(map[*Node]struct{}, 4)
+	var dfs func(n *Node) *Node
+	dfs = func(n1 *Node) *Node {
+		if n1 == nil {
+			return nil
+		}
+		if _, ok := cloned[n1]; ok {
+			return nil
 		}
 
-		newNode := &Node{
-			Val:       node.Val,
-			Neighbors: make([]*Node, 0, len(node.Neighbors)),
-		}
-		nodeMap[node] = newNode
-
-		for _, n := range node.Neighbors {
-			newNode.Neighbors = append(newNode.Neighbors, dfs(n))
+		cloned[n1] = struct{}{}
+		newNode := &Node{Val: n1.Val, Neighbors: make([]*Node, 0)}
+		for _, neighbor := range n1.Neighbors {
+			newNode.Neighbors = append(newNode.Neighbors, dfs(neighbor))
 		}
 
 		return newNode
