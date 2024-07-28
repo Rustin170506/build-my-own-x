@@ -7,9 +7,9 @@ pub fn oranges_rotting(grid: Vec<Vec<i32>>) -> i32 {
     let mut fresh = 0;
     let (rows, cols) = (grid.len(), grid[0].len());
     let directions = vec![(1, 0), (-1, 0), (0, 1), (0, -1)];
-    for i in 0..rows {
-        for j in 0..cols {
-            match grid[i][j] {
+    for (i, row) in grid.iter().enumerate().take(rows) {
+        for (j, &cell) in row.iter().enumerate().take(cols) {
+            match cell {
                 1 => fresh += 1,
                 2 => queue.push_back((i, j)),
                 _ => {}
@@ -29,13 +29,10 @@ pub fn oranges_rotting(grid: Vec<Vec<i32>>) -> i32 {
                 }
                 let i = i as usize;
                 let j = j as usize;
-                match grid[i][j] {
-                    1 => {
-                        grid[i][j] = 2;
-                        fresh -= 1;
-                        queue.push_back((i, j));
-                    }
-                    _ => {}
+                if grid[i][j] == 1 {
+                    grid[i][j] = 2;
+                    fresh -= 1;
+                    queue.push_back((i, j));
                 }
             }
         }
