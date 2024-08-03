@@ -1,27 +1,27 @@
 package questions
 
 func canFinish(numCourses int, prerequisites [][]int) bool {
-	visited := make(map[int]struct{})
+	cycle := make(map[int]struct{})
 	preMap := make(map[int][]int)
 	for _, pre := range prerequisites {
-		preMap[pre[1]] = append(preMap[pre[1]], pre[0])
+		preMap[pre[0]] = append(preMap[pre[0]], pre[1])
 	}
 
 	var dfs func(course int) bool
 	dfs = func(course int) bool {
-		if _, ok := visited[course]; ok {
+		if _, ok := cycle[course]; ok {
 			return false
 		}
 		if pres := preMap[course]; len(pres) == 0 {
 			return true
 		}
-		visited[course] = struct{}{}
+		cycle[course] = struct{}{}
 		for _, pre := range preMap[course] {
 			if !dfs(pre) {
 				return false
 			}
 		}
-		delete(visited, course)
+		delete(cycle, course)
 		preMap[course] = nil
 		return true
 	}
