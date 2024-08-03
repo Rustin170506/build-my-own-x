@@ -46,17 +46,12 @@ fn dfs(
     true
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_find_order() {
-        assert_eq!(find_order(2, vec![vec![1, 0]]), vec![0, 1]);
-        assert_eq!(
-            find_order(4, vec![vec![1, 0], vec![2, 0], vec![3, 1], vec![3, 2]]),
-            vec![0, 1, 2, 3]
-        );
-        assert_eq!(find_order(1, vec![]), vec![0]);
-    }
+#[test]
+fn test_find_order() {
+    assert_eq!(find_order(2, vec![vec![1, 0]]), vec![0, 1]);
+    assert_eq!(
+        find_order(4, vec![vec![1, 0], vec![2, 0], vec![3, 1], vec![3, 2]]),
+        vec![0, 1, 2, 3]
+    );
+    assert_eq!(find_order(1, vec![]), vec![0]);
 }
