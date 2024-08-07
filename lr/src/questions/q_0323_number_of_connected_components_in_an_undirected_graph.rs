@@ -37,19 +37,14 @@ fn find(n: i32, par: &mut [i32]) -> i32 {
     res
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_323() {
-        assert_eq!(
-            2,
-            count_components(5, vec![vec![0, 1], vec![1, 2], vec![3, 4]])
-        );
-        assert_eq!(
-            1,
-            count_components(5, vec![vec![0, 1], vec![1, 2], vec![2, 3], vec![3, 4]])
-        );
-    }
+#[test]
+fn test_323() {
+    assert_eq!(
+        2,
+        count_components(5, vec![vec![0, 1], vec![1, 2], vec![3, 4]])
+    );
+    assert_eq!(
+        1,
+        count_components(5, vec![vec![0, 1], vec![1, 2], vec![2, 3], vec![3, 4]])
+    );
 }
