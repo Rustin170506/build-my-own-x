@@ -29,19 +29,14 @@ fn dfs(graph: &Vec<Vec<i32>>, visited: &mut Vec<bool>, node: i32, parent: i32) -
     true
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_261() {
-        assert!(valid_tree(
-            5,
-            vec![vec![0, 1], vec![0, 2], vec![0, 3], vec![1, 4]]
-        ));
-        assert!(!valid_tree(
-            5,
-            vec![vec![0, 1], vec![1, 2], vec![2, 3], vec![1, 3], vec![1, 4]]
-        ));
-    }
+#[test]
+fn test_261() {
+    assert!(valid_tree(
+        5,
+        vec![vec![0, 1], vec![0, 2], vec![0, 3], vec![1, 4]]
+    ));
+    assert!(!valid_tree(
+        5,
+        vec![vec![0, 1], vec![1, 2], vec![2, 3], vec![1, 3], vec![1, 4]]
+    ));
 }
