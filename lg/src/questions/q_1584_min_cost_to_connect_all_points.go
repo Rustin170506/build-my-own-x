@@ -1,35 +1,10 @@
 package questions
 
 import (
-	"container/heap"
 	"math"
+
+	"github.com/emirpasic/gods/v2/trees/binaryheap"
 )
-
-type intHeap [][]int
-
-func (h intHeap) Len() int {
-	return len(h)
-}
-
-func (h intHeap) Less(i int, j int) bool {
-	return h[i][0] < h[j][0]
-}
-
-func (h intHeap) Swap(i int, j int) {
-	h[i], h[j] = h[j], h[i]
-}
-
-func (h *intHeap) Push(x any) {
-	*h = append(*h, x.([]int))
-}
-
-func (h *intHeap) Pop() any {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
-}
 
 func minCostConnectPoints(points [][]int) int {
 	adj := make(map[int][][]int, len(points))
@@ -52,11 +27,14 @@ func minCostConnectPoints(points [][]int) int {
 
 	res := 0
 	visited := make(map[int]struct{})
-	minHeap := &intHeap{[]int{0, 0}}
+	minHeap := binaryheap.NewWith(func(x, y [2]int) int {
+		return x[0] - y[0]
+	})
+	minHeap.Push([2]int{0, 0})
 
-	for minHeap.Len() > 0 {
-		min := heap.Pop(minHeap).([]int)
-		distance, node := min[0], min[1]
+	for !minHeap.Empty() {
+		minValue, _ := minHeap.Pop()
+		distance, node := minValue[0], minValue[1]
 		if _, ok := visited[node]; ok {
 			continue
 		}
@@ -69,7 +47,7 @@ func minCostConnectPoints(points [][]int) int {
 				continue
 			}
 
-			heap.Push(minHeap, []int{nei[0], nei[1]})
+			minHeap.Push([2]int{nei[0], nei[1]})
 		}
 	}
 
