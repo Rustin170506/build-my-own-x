@@ -1,26 +1,27 @@
 pub fn find_cheapest_price(n: i32, flights: Vec<Vec<i32>>, src: i32, dst: i32, k: i32) -> i32 {
-    let mut prices = vec![i32::MAX; n as usize];
+    let mut prices = vec![usize::MAX; n as usize];
     prices[src as usize] = 0;
 
     for _ in 0..k + 1 {
         let mut tmp = prices.clone();
 
         for flight in &flights {
-            let (s, d, p) = (flight[0], flight[1], flight[2]);
-            if prices[s as usize] == i32::MAX {
+            let (src, dst, price) = (flight[0] as usize, flight[1] as usize, flight[2] as usize);
+            if prices[src] == usize::MAX {
                 continue;
             }
-            if prices[s as usize] + p < tmp[d as usize] {
-                tmp[d as usize] = prices[s as usize] + p;
+
+            if prices[src] + price < tmp[dst] {
+                tmp[dst] = prices[src] + price
             }
         }
         prices = tmp;
     }
 
-    if prices[dst as usize] == i32::MAX {
+    if prices[dst as usize] == usize::MAX {
         -1
     } else {
-        prices[dst as usize]
+        prices[dst as usize] as i32
     }
 }
 
