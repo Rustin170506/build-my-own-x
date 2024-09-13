@@ -1,59 +1,39 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub fn find_itinerary(tickets: Vec<Vec<String>>) -> Vec<String> {
-    let mut tickets = tickets;
-    tickets.sort_by(|a, b| {
-        if a[0] == b[0] {
-            a[1].cmp(&b[1])
+    let mut graph: BTreeMap<String, Vec<String>> = BTreeMap::new();
+
+    // Build the graph
+    for ticket in tickets {
+        graph
+            .entry(ticket[0].clone())
+            .or_default()
+            .push(ticket[1].clone());
+    }
+
+    // Sort destinations in reverse order
+    for destinations in graph.values_mut() {
+        destinations.sort_by(|a, b| b.cmp(a));
+    }
+
+    let mut route = Vec::new();
+    let mut stack = vec!["JFK".to_string()];
+
+    // Hierholzer's algorithm
+    while let Some(airport) = stack.last() {
+        if let Some(destinations) = graph.get_mut(airport) {
+            if destinations.is_empty() {
+                route.push(stack.pop().unwrap());
+            } else {
+                let next = destinations.pop().unwrap();
+                stack.push(next);
+            }
         } else {
-            a[0].cmp(&b[0])
+            route.push(stack.pop().unwrap());
         }
-    });
-
-    let mut adj: HashMap<String, Vec<String>> = HashMap::new();
-    for ticket in &tickets {
-        let src = ticket[0].clone();
-        let dst = ticket[1].clone();
-        adj.entry(src)
-            .and_modify(|v| v.push(dst.clone()))
-            .or_insert(vec![dst.clone()]);
-    }
-    let mut res = vec!["JFK".to_owned()];
-    dfs("JFK".to_owned(), &tickets, &mut adj, &mut res);
-
-    res
-}
-
-fn dfs(
-    src: String,
-    tickets: &Vec<Vec<String>>,
-    adj: &mut HashMap<String, Vec<String>>,
-    res: &mut Vec<String>,
-) -> bool {
-    if res.len() == tickets.len() + 1 {
-        return true;
     }
 
-    if !adj.contains_key(&src) {
-        return false;
-    }
-
-    let mut i = 0;
-    while let Some(v) = adj
-        .get_mut(&src)
-        .and_then(|neighbors| neighbors.get(i).cloned())
-    {
-        adj.get_mut(&src).unwrap().remove(i);
-        res.push(v.clone());
-        if dfs(v.clone(), tickets, adj, res) {
-            return true;
-        }
-        adj.get_mut(&src).unwrap().insert(i, v);
-        res.pop();
-        i += 1;
-    }
-
-    false
+    route.into_iter().rev().collect()
 }
 
 #[test]
