@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 pub fn find_itinerary(tickets: Vec<Vec<String>>) -> Vec<String> {
     let mut graph: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
-    // Build the graph
     for ticket in tickets {
         graph
             .entry(ticket[0].clone())
@@ -11,29 +10,22 @@ pub fn find_itinerary(tickets: Vec<Vec<String>>) -> Vec<String> {
             .push(ticket[1].clone());
     }
 
-    // Sort destinations in reverse order
     for destinations in graph.values_mut() {
-        destinations.sort_by(|a, b| b.cmp(a));
+        destinations.sort_by(|a, b| b.cmp(a)); // Sort in reverse order
     }
 
     let mut route = Vec::new();
-    let mut stack = vec!["JFK".to_string()];
 
-    // Hierholzer's algorithm
-    while let Some(airport) = stack.last() {
-        if let Some(destinations) = graph.get_mut(airport) {
-            if destinations.is_empty() {
-                route.push(stack.pop().unwrap());
-            } else {
-                let next = destinations.pop().unwrap();
-                stack.push(next);
-            }
-        } else {
-            route.push(stack.pop().unwrap());
+    fn dfs(graph: &mut BTreeMap<String, Vec<String>>, airport: &str, route: &mut Vec<String>) {
+        while let Some(destination) = graph.get_mut(airport).and_then(|dests| dests.pop()) {
+            dfs(graph, &destination, route);
         }
+        route.push(airport.to_string());
     }
 
-    route.into_iter().rev().collect()
+    dfs(&mut graph, "JFK", &mut route);
+    route.reverse();
+    route
 }
 
 #[test]
