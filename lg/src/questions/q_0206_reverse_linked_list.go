@@ -6,7 +6,6 @@ func reverseList(head *utils.ListNode) *utils.ListNode {
 	if head == nil {
 		return nil
 	}
-
 	prev := head
 	current := head.Next
 	prev.Next = nil
