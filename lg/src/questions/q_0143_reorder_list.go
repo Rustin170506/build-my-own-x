@@ -7,26 +7,26 @@ import (
 func reorderList(head *utils.ListNode) {
 	n := 0
 
-	// Get the total length.
+	// Calculate the list length.
 	current := head
 	for current != nil {
 		current = current.Next
-		n += 1
+		n++
 	}
 
 	if n == 1 {
-		return // No need to reorder.
+		return
 	}
 
-	// FInd the middle position.
-	middle := n / 2
-	current = head
-	for i := 0; i < middle; i++ {
-		current = current.Next
+	// Find the middle position of the list.
+	secondHalfHead := head
+	for i := 0; i < n/2; i++ {
+		secondHalfHead = secondHalfHead.Next
 	}
 
-	// Revert the second half.
+	// Reverse the second half.
 	var prev *utils.ListNode
+	current = secondHalfHead
 	for current != nil {
 		next := current.Next
 		current.Next = prev
@@ -34,7 +34,7 @@ func reorderList(head *utils.ListNode) {
 		current = next
 	}
 
-	// Merge the two halves
+	// Merge two halves.
 	first, second := head, prev
 	for second.Next != nil {
 		tmp := first.Next
