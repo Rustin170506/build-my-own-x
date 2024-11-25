@@ -30,13 +30,16 @@ func hasCycle(head *utils.ListNode) bool {
 	if head == nil {
 		return false
 	}
-	nodeMap := make(map[*utils.ListNode]struct{}, 2)
-	for head != nil {
-		if _, ok := nodeMap[head]; ok {
+
+	cycleMap := make(map[*utils.ListNode]struct{})
+	current := head
+	for current != nil {
+		if _, ok := cycleMap[current]; ok {
 			return true
 		}
-		nodeMap[head] = struct{}{}
-		head = head.Next
+		cycleMap[current] = struct{}{}
+		current = current.Next
 	}
+
 	return false
 }
