@@ -28,3 +28,11 @@ func maxDepth(root *utils.TreeNode) int {
 
 	return level
 }
+
+func maxDepthDFS(root *utils.TreeNode) int {
+	if root == nil {
+		return 0
+	}
+
+	return 1 + max(maxDepthDFS(root.Left), maxDepthDFS(root.Right))
+}

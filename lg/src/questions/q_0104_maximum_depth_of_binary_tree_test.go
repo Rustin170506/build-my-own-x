@@ -10,4 +10,5 @@ import (
 
 func TestMaxDepth(t *testing.T) {
 	require.Equal(t, maxDepth(utils.BuildTree([]int{3, 9, 20, -1, -1, 15, 7})), 3)
+	require.Equal(t, maxDepthDFS(utils.BuildTree([]int{3, 9, 20, -1, -1, 15, 7})), 3)
 }
