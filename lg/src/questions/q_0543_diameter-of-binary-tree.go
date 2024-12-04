@@ -8,11 +8,11 @@ func diameterOfBinaryTree(root *utils.TreeNode) int {
 	var dfs func(node *utils.TreeNode) int
 	dfs = func(node *utils.TreeNode) int {
 		if node == nil {
-			return -1
+			return 0
 		}
 		left := dfs(node.Left)
 		right := dfs(node.Right)
-		res = max(res, 2+left+right)
+		res = max(res, left+right)
 		return 1 + max(left, right)
 	}
 
