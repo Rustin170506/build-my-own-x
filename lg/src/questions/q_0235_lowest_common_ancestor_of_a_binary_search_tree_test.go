@@ -31,5 +31,6 @@ func Test_lowestCommonAncestor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.want.Val, lowestCommonAncestor(tt.args.root, tt.args.p, tt.args.q).Val)
+		require.Equal(t, tt.want.Val, lowestCommonAncestorRecursive(tt.args.root, tt.args.p, tt.args.q).Val)
 	}
 }

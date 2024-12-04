@@ -21,3 +21,16 @@ func lowestCommonAncestor(root, p, q *utils.TreeNode) *utils.TreeNode {
 
 	panic("unreachable")
 }
+
+func lowestCommonAncestorRecursive(root, p, q *utils.TreeNode) *utils.TreeNode {
+	if root == nil {
+		return nil
+	}
+	if p.Val < root.Val && q.Val < root.Val {
+		return lowestCommonAncestorRecursive(root.Left, p, q)
+	}
+	if p.Val > root.Val && q.Val > root.Val {
+		return lowestCommonAncestorRecursive(root.Right, p, q)
+	}
+	return root
+}
