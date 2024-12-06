@@ -8,24 +8,25 @@ func levelOrder(root *utils.TreeNode) [][]int {
 	}
 
 	result := make([][]int, 0)
-
-	q := make([]*utils.TreeNode, 0)
-	q = append(q, root)
-	for len(q) != 0 {
-		qLen := len(q)
-		levelNodes := make([]int, 0)
-		for i := 0; i < qLen; i++ {
-			node := q[0]
-			levelNodes = append(levelNodes, node.Val)
-			q = q[1:]
+	queue := make([]*utils.TreeNode, 0)
+	queue = append(queue, root)
+	for len(queue) > 0 {
+		queueLen := len(queue)
+		level := make([]int, 0, queueLen)
+		for queueLen > 0 {
+			node := queue[0]
+			level = append(level, node.Val)
+			queue = queue[1:]
 			if node.Left != nil {
-				q = append(q, node.Left)
+				queue = append(queue, node.Left)
 			}
 			if node.Right != nil {
-				q = append(q, node.Right)
+				queue = append(queue, node.Right)
 			}
+			queueLen -= 1
 		}
-		result = append(result, levelNodes)
+		result = append(result, level)
 	}
+
 	return result
 }
