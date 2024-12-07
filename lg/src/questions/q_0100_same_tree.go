@@ -5,7 +5,11 @@ import "github.com/hi-rustin/lg/src/utils"
 func isSameTree(p *utils.TreeNode, q *utils.TreeNode) bool {
 	if p == nil && q == nil {
 		return true
-	} else if p == nil || q == nil || p.Val != q.Val {
+	}
+	if p == nil || q == nil {
+		return false
+	}
+	if p.Val != q.Val {
 		return false
 	}
 
