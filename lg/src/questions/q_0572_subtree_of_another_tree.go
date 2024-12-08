@@ -14,11 +14,10 @@ func isSubtree(root *utils.TreeNode, subRoot *utils.TreeNode) bool {
 		if root1.Val != root2.Val {
 			return false
 		}
-
 		return isSameTree(root1.Left, root2.Left) && isSameTree(root1.Right, root2.Right)
 	}
 
-	found := false
+	result := false
 	var dfs func(node *utils.TreeNode)
 	dfs = func(node *utils.TreeNode) {
 		if node == nil {
@@ -26,8 +25,8 @@ func isSubtree(root *utils.TreeNode, subRoot *utils.TreeNode) bool {
 		}
 
 		if node.Val == subRoot.Val {
-			if !found {
-				found = isSameTree(node, subRoot)
+			if !result {
+				result = isSameTree(node, subRoot)
 			}
 		}
 		dfs(node.Left)
@@ -35,5 +34,5 @@ func isSubtree(root *utils.TreeNode, subRoot *utils.TreeNode) bool {
 	}
 
 	dfs(root)
-	return found
+	return result
 }
