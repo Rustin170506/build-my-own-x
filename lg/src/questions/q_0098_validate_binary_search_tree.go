@@ -7,18 +7,22 @@ import (
 )
 
 func isValidBST(root *utils.TreeNode) bool {
-	var helper func(root *utils.TreeNode, minVal int, maxVal int) bool
-	helper = func(root *utils.TreeNode, left int, right int) bool {
-		if root == nil {
+	if root == nil {
+		return false
+	}
+
+	var dfs func(node *utils.TreeNode, left, right int) bool
+	dfs = func(node *utils.TreeNode, left, right int) bool {
+		if node == nil {
 			return true
 		}
 
-		rootVal := root.Val
-		if rootVal <= left || rootVal >= right {
+		if node.Val <= left || node.Val >= right {
 			return false
 		}
 
-		return helper(root.Left, left, rootVal) && helper(root.Right, rootVal, right)
+		return dfs(node.Left, left, node.Val) && dfs(node.Right, node.Val, right)
 	}
-	return helper(root, math.MinInt, math.MaxInt)
+
+	return dfs(root, math.MinInt, math.MaxInt)
 }
