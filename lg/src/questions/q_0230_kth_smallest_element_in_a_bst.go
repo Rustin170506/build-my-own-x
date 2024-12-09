@@ -7,16 +7,16 @@ import (
 
 func kthSmallest(root *utils.TreeNode, k int) int {
 	elements := make([]int, 0)
-	var inorder func(root *utils.TreeNode)
-	inorder = func(root *utils.TreeNode) {
-		if root == nil {
+	var inoder func(node *utils.TreeNode)
+	inoder = func(node *utils.TreeNode) {
+		if node == nil {
 			return
 		}
-		inorder(root.Left)
-		elements = append(elements, root.Val)
-		inorder(root.Right)
+		inoder(node.Left)
+		elements = append(elements, node.Val)
+		inoder(node.Right)
 	}
-	inorder(root)
+	inoder(root)
 	return elements[k-1]
 }
 
