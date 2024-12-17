@@ -5,18 +5,7 @@ func WallsAndGates(rooms [][]int) {
 	visited := make(map[[2]int]bool)
 	queue := make([][2]int, 0)
 
-	add := func(row, col int) {
-		if row < 0 || row == rows || col < 0 || col == cols || rooms[row][col] == -1 {
-			return
-		}
-		index := [2]int{row, col}
-		if _, ok := visited[index]; ok {
-			return
-		}
-		visited[index] = true
-		queue = append(queue, index)
-	}
-
+	// Find all gates and start BFS from them simultaneously.
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			if rooms[i][j] == 0 {
@@ -31,6 +20,17 @@ func WallsAndGates(rooms [][]int) {
 	}
 
 	distance := 0
+	add := func(row, col int) {
+		if row < 0 || row == rows || col < 0 || col == cols || rooms[row][col] == -1 {
+			return
+		}
+		index := [2]int{row, col}
+		if _, ok := visited[index]; ok {
+			return
+		}
+		visited[index] = true
+		queue = append(queue, index)
+	}
 	for len(queue) > 0 {
 		qLen := len(queue)
 		for i := 0; i < qLen; i++ {
