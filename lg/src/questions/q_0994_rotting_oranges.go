@@ -1,65 +1,64 @@
 package questions
 
+import "fmt"
+
 func orangesRotting(grid [][]int) int {
 	result := -1
 	rows := len(grid)
 	cols := len(grid[0])
-	queue := make([][2]int, 0, len(grid))
+	queue := make([][2]int, 0)
+	visited := make(map[string]bool)
 	hasFresh := 0
-	visited := make([][]bool, len(grid))
-	for i := 0; i < len(grid); i++ {
-		visited[i] = make([]bool, len(grid[i]))
-	}
-	for row := 0; row < rows; row++ {
-		for col := 0; col < cols; col++ {
-			if grid[row][col] == 2 {
-				queue = append(queue, [2]int{row, col})
-			}
-			if grid[row][col] == 1 {
-				hasFresh += 1
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if grid[i][j] == 2 {
+				queue = append(queue, [2]int{i, j})
+			} else if grid[i][j] == 1 {
+				hasFresh++
 			}
 		}
 	}
 	if hasFresh == 0 {
 		return 0
 	}
-	if len(queue) == 0 {
-		return -1
+
+	directions := [][2]int{
+		{1, 0},
+		{-1, 0},
+		{0, 1},
+		{0, -1},
 	}
 
 	qLen := len(queue)
-	for qLen != 0 {
-		node := queue[0]
+	for qLen > 0 {
+		orange := queue[0]
 		queue = queue[1:]
-		row, col := node[0], node[1]
+		row, col := orange[0], orange[1]
 		if grid[row][col] == 1 {
-			grid[row][col] = 2
+			grid[row][col]++
 		}
 
-		directions := [][2]int{
-			{0, 1},
-			{0, -1},
-			{1, 0},
-			{-1, 0},
-		}
 		for _, direction := range directions {
-			r, c := row+direction[0], col+direction[1]
-			if r < 0 || r >= rows || c < 0 || c >= cols || visited[r][c] {
+			newRow := row + direction[0]
+			newCol := col + direction[1]
+			idx := fmt.Sprintf("%d-%d", newRow, newCol)
+			if newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols || visited[idx] {
 				continue
 			}
-			visited[r][c] = true
-			if grid[r][c] == 1 {
-				hasFresh -= 1
-				queue = append(queue, [2]int{r, c})
+			visited[idx] = true
+			if grid[newRow][newCol] == 1 {
+				hasFresh--
+				queue = append(queue, [2]int{newRow, newCol})
 			}
 		}
-		qLen -= 1
+
+		qLen--
 		if qLen == 0 {
 			result += 1
 			qLen = len(queue)
 		}
-
 	}
+
 	if hasFresh != 0 {
 		return -1
 	}
