@@ -4,85 +4,95 @@ pub fn pacific_atlantic(heights: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     if heights.is_empty() {
         return vec![];
     }
-    let (rows, cols) = (heights.len(), heights[0].len());
-    let mut result = vec![];
+
+    let (rows, cols) = (heights.len() as i32, heights[0].len() as i32);
     let mut pacific = HashSet::new();
     let mut atlantic = HashSet::new();
 
-    fn dfs(
-        rows: usize,
-        cols: usize,
-        r: isize,
-        c: isize,
-        heights: &[Vec<i32>],
-        visited: &mut HashSet<(usize, usize)>,
-        prev_height: i32,
+    fn dsf(
+        heights: &Vec<Vec<i32>>,
+        row: i32,
+        col: i32,
+        rows: i32,
+        cols: i32,
+        visited: &mut HashSet<(i32, i32)>,
+        previous_height: i32,
     ) {
-        if r < 0
-            || r >= rows as isize
-            || c < 0
-            || c >= cols as isize
-            || visited.contains(&(r as usize, c as usize))
-            || heights[r as usize][c as usize] < prev_height
+        if row < 0
+            || row >= rows
+            || col < 0
+            || col >= cols
+            || visited.contains(&(row, col))
+            || heights[row as usize][col as usize] < previous_height
         {
             return;
         }
-        let (r, c) = (r as usize, c as usize);
-        visited.insert((r, c));
-        let directions = vec![(1, 0), (-1, 0), (0, 1), (0, -1)];
-        for (x, y) in directions {
-            let (i, j) = (r as isize + x, c as isize + y);
-            dfs(rows, cols, i, j, heights, visited, heights[r][c]);
+
+        visited.insert((row, col));
+        let directions = vec![vec![1, 0], vec![-1, 0], vec![0, 1], vec![0, -1]];
+        for direction in directions {
+            let (r, c) = (row + direction[0], col + direction[1]);
+            dsf(
+                heights,
+                r,
+                c,
+                rows,
+                cols,
+                visited,
+                heights[row as usize][col as usize],
+            );
         }
     }
 
-    for c in 0..cols {
-        dfs(
-            rows,
-            cols,
+    for row in 0..rows {
+        dsf(
+            &heights,
+            row,
             0,
-            c as isize,
-            &heights,
-            &mut pacific,
-            heights[0][c],
-        );
-        dfs(
             rows,
             cols,
-            rows as isize - 1,
-            c as isize,
+            &mut pacific,
+            heights[row as usize][0],
+        );
+
+        dsf(
             &heights,
+            row,
+            cols - 1,
+            rows,
+            cols,
             &mut atlantic,
-            heights[rows - 1][c],
+            heights[row as usize][(cols - 1) as usize],
         );
     }
 
-    for r in 0..rows {
-        dfs(
-            rows,
-            cols,
-            r as isize,
+    for col in 0..cols {
+        dsf(
+            &heights,
             0,
-            &heights,
-            &mut pacific,
-            heights[r][0],
-        );
-        dfs(
+            col,
             rows,
             cols,
-            r as isize,
-            cols as isize - 1,
+            &mut pacific,
+            heights[0][col as usize],
+        );
+
+        dsf(
             &heights,
+            rows - 1,
+            col,
+            rows,
+            cols,
             &mut atlantic,
-            heights[r][cols - 1],
+            heights[(rows - 1) as usize][col as usize],
         );
     }
 
+    let mut result = vec![];
     for i in 0..rows {
         for j in 0..cols {
-            let index = &(i, j);
-            if pacific.contains(index) && atlantic.contains(index) {
-                result.push(vec![i as i32, j as i32])
+            if pacific.contains(&(i, j)) && atlantic.contains(&(i, j)) {
+                result.push(vec![i, j]);
             }
         }
     }
@@ -109,5 +119,19 @@ fn test_pacific_atlantic() {
             vec![6, 7, 1, 4, 5],
             vec![5, 1, 1, 2, 4]
         ])
+    );
+
+    assert_eq!(
+        vec![
+            vec![0, 0],
+            vec![0, 1],
+            vec![1, 0],
+            vec![1, 1],
+            vec![2, 0],
+            vec![2, 1],
+            vec![3, 0],
+            vec![3, 1],
+        ],
+        pacific_atlantic(vec![vec![1, 1], vec![1, 1], vec![1, 1], vec![1, 1],])
     );
 }
