@@ -11,13 +11,10 @@ pub fn preorder_traversal(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<i32> {
 }
 
 fn traversal(root: &Option<Rc<RefCell<TreeNode>>>, result: &mut Vec<i32>) {
-    match root {
-        Some(node) => {
-            result.push(node.as_ref().borrow().val);
-            traversal(&node.as_ref().borrow().left, result);
-            traversal(&node.as_ref().borrow().right, result);
-        }
-        None => {}
+    if let Some(node) = root {
+        result.push(node.as_ref().borrow().val);
+        traversal(&node.as_ref().borrow().left, result);
+        traversal(&node.as_ref().borrow().right, result);
     }
 }
 

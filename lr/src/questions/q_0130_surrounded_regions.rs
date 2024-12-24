@@ -1,65 +1,66 @@
 #[allow(clippy::ptr_arg)]
 pub fn solve(board: &mut Vec<Vec<char>>) {
-    let (rows, cols) = (board.len(), board[0].len());
+    let (rows, cols) = (board.len() as i32, board[0].len() as i32);
 
-    for r in 0..rows {
-        for c in 0..cols {
-            if board[r][c] == 'O' && ((r == 0 || r == rows - 1) || (c == 0 || c == cols - 1)) {
-                capture(rows as isize, cols as isize, board, r as isize, c as isize)
+    fn dfs(rows: i32, cols: i32, board: &mut [Vec<char>], row: i32, col: i32) {
+        if row < 0
+            || row >= rows
+            || col < 0
+            || col >= cols
+            || board[row as usize][col as usize] != 'O'
+        {
+            return;
+        }
+
+        board[row as usize][col as usize] = 'F';
+        dfs(rows, cols, board, row, col + 1);
+        dfs(rows, cols, board, row, col - 1);
+        dfs(rows, cols, board, row + 1, col);
+        dfs(rows, cols, board, row - 1, col);
+    }
+    for row in 0..rows {
+        for col in 0..cols {
+            if board[row as usize][col as usize] == 'O'
+                && (row == 0 || col == 0 || row == rows - 1 || col == cols - 1)
+            {
+                dfs(rows, cols, board, row, col)
             }
         }
     }
 
-    for rows in board.iter_mut() {
-        for c in rows.iter_mut() {
-            if *c == 'O' {
-                *c = 'X';
+    for row in 0..rows {
+        for col in 0..cols {
+            if board[row as usize][col as usize] == 'O' {
+                board[row as usize][col as usize] = 'X';
             }
         }
     }
 
-    for rows in board.iter_mut() {
-        for c in rows.iter_mut() {
-            if *c == 'F' {
-                *c = 'O';
+    for row in 0..rows {
+        for col in 0..cols {
+            if board[row as usize][col as usize] == 'F' {
+                board[row as usize][col as usize] = 'O';
             }
         }
     }
 }
 
-fn capture(rows: isize, cols: isize, board: &mut [Vec<char>], r: isize, c: isize) {
-    if r < 0 || r == rows || c < 0 || c == cols || board[r as usize][c as usize] != 'O' {
-        return;
-    }
-
-    board[r as usize][c as usize] = 'F';
-    capture(rows, cols, board, r + 1, c);
-    capture(rows, cols, board, r - 1, c);
-    capture(rows, cols, board, r, c + 1);
-    capture(rows, cols, board, r, c - 1);
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_solve() {
-        let mut board = vec![
+#[test]
+fn test_solve() {
+    let mut board = vec![
+        vec!['X', 'X', 'X', 'X'],
+        vec!['X', 'O', 'O', 'X'],
+        vec!['X', 'X', 'O', 'X'],
+        vec!['X', 'O', 'X', 'X'],
+    ];
+    solve(&mut board);
+    assert_eq!(
+        board,
+        vec![
             vec!['X', 'X', 'X', 'X'],
-            vec!['X', 'O', 'O', 'X'],
-            vec!['X', 'X', 'O', 'X'],
+            vec!['X', 'X', 'X', 'X'],
+            vec!['X', 'X', 'X', 'X'],
             vec!['X', 'O', 'X', 'X'],
-        ];
-        solve(&mut board);
-        assert_eq!(
-            board,
-            vec![
-                vec!['X', 'X', 'X', 'X'],
-                vec!['X', 'X', 'X', 'X'],
-                vec!['X', 'X', 'X', 'X'],
-                vec!['X', 'O', 'X', 'X'],
-            ]
-        );
-    }
+        ]
+    );
 }
