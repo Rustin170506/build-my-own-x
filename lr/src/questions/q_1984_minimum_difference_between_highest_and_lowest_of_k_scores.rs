@@ -15,10 +15,7 @@ pub fn minimum_difference(nums: Vec<i32>, k: i32) -> i32 {
 
 #[test]
 fn test_minimum_difference() {
-    let test_cases = vec![
-        (vec![90], 1, 0),
-        (vec![9, 4, 1, 7], 2, 2),
-    ];
+    let test_cases = vec![(vec![90], 1, 0), (vec![9, 4, 1, 7], 2, 2)];
     for (nums, k, expected) in test_cases {
         assert_eq!(minimum_difference(nums, k), expected);
     }

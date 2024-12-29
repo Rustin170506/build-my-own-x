@@ -39,4 +39,3 @@ fn test_codec() {
     let long_url = codec.decode(short_url);
     assert_eq!(url, long_url);
 }
-
