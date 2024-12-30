@@ -118,6 +118,7 @@ mod q_0219_contains_duplicate_ii;
 mod q_0225_implement_stack_using_queues;
 mod q_0226_invert_binary_tree;
 mod q_0230_kth_smallest_element_in_a_bst;
+mod q_0232_implement_queue_using_stacks;
 mod q_0234_palindrome_linked_list;
 mod q_0235_lowest_common_ancestor_of_a_binary_search_tree;
 mod q_0238_product_of_array_except_self;
