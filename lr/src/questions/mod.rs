@@ -226,3 +226,5 @@ mod q_2707_extra_characters_in_a_string;
 mod q_2864_maximum_odd_binary_number;
 mod q_535_encode_and_decode_tinyurl;
 mod q_5791_count_sub_islands;
+
+mod q_0977_squares_of_a_sorted_array;
