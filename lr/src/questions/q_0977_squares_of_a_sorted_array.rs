@@ -8,7 +8,7 @@ pub fn sorted_squares(nums: Vec<i32>) -> Vec<i32> {
             if *left > *right {
                 return None;
             }
-            
+
             if nums[*left].abs() > nums[*right].abs() {
                 let val = nums[*left] * nums[*left];
                 *left += 1;
