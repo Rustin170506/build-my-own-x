@@ -7,15 +7,17 @@ impl UnionFind {
     pub fn new(n: usize) -> Self {
         Self {
             parent: (0..n).collect(),
-            rank: vec![0; n],
+            rank: vec![1; n],
         }
     }
 
     pub fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] != x {
-            self.parent[x] = self.find(self.parent[x]);
+        let mut x = x;
+        while x != self.parent[x] {
+            self.parent[x] = self.parent[self.parent[x]];
+            x = self.parent[x];
         }
-        self.parent[x]
+        x
     }
 
     pub fn union(&mut self, x: usize, y: usize) -> bool {
@@ -24,22 +26,15 @@ impl UnionFind {
         if root_x == root_y {
             return false;
         }
-
-        match self.rank[root_x].cmp(&self.rank[root_y]) {
-            std::cmp::Ordering::Less => self.parent[root_x] = root_y,
-            std::cmp::Ordering::Greater => self.parent[root_y] = root_x,
-            std::cmp::Ordering::Equal => {
-                self.parent[root_y] = root_x;
-                self.rank[root_x] += 1;
-            }
+        if self.rank[root_x] > self.rank[root_y] {
+            self.parent[root_y] = root_x;
+            self.rank[root_x] += self.rank[root_y];
+        } else {
+            self.parent[root_x] = root_y;
+            self.rank[root_y] += self.rank[root_x];
         }
 
         true
-    }
-
-    pub fn reset(&mut self, n: usize) {
-        self.parent = (0..n).collect();
-        self.rank = vec![0; n];
     }
 }
 
@@ -48,57 +43,51 @@ pub fn find_critical_and_pseudo_critical_edges(n: i32, edges: Vec<Vec<i32>>) -> 
     let mut edges = edges
         .iter()
         .enumerate()
-        .map(|(i, edge)| (edge.clone(), i as i32))
+        .map(|(i, edge)| {
+            let mut edge = edge.clone();
+            edge.push(i as i32);
+            edge
+        })
         .collect::<Vec<_>>();
-    edges.sort_unstable_by_key(|(edge, _)| edge[2]);
+    edges.sort_unstable_by_key(|edge| edge[2]);
 
+    // Calculate MST weight first
     let mut uf = UnionFind::new(n);
     let mut mst_weight = 0;
 
-    for (edge, _) in &edges {
+    for edge in &edges {
         if uf.union(edge[0] as usize, edge[1] as usize) {
             mst_weight += edge[2];
         }
     }
 
     let (mut critical, mut pseudo_critical) = (Vec::new(), Vec::new());
-
-    for (edge, i) in &edges {
-        // Check if this edge is critical
-        let mut uf = UnionFind::new(n);
+    for edge in &edges {
+        let (n1, n2, e_weight, i) = (edge[0], edge[1], edge[2], edge[3]);
         let mut weight = 0;
-        let mut edges_used = 0;
-
-        for (other_edge, _) in &edges {
-            if other_edge == edge {
-                continue;
-            }
-            if uf.union(other_edge[0] as usize, other_edge[1] as usize) {
-                weight += other_edge[2];
-                edges_used += 1;
+        let mut uf = UnionFind::new(n);
+        for edge in &edges {
+            let (v1, v2, w, j) = (edge[0], edge[1], edge[2], edge[3]);
+            if i != j && uf.union(v1 as usize, v2 as usize) {
+                weight += w;
             }
         }
-
-        if edges_used == n - 1 && weight != mst_weight {
-            critical.push(*i);
+        if *uf.rank.iter().max().unwrap() != n || weight > mst_weight {
+            critical.push(i);
             continue;
         }
 
-        // Check if this edge is pseudo-critical
         let mut uf = UnionFind::new(n);
-        uf.union(edge[0] as usize, edge[1] as usize);
-        weight = edge[2];
-        edges_used = 1;
-
-        for (other_edge, _) in &edges {
-            if uf.union(other_edge[0] as usize, other_edge[1] as usize) {
-                weight += other_edge[2];
-                edges_used += 1;
+        weight = e_weight;
+        uf.union(n1 as usize, n2 as usize);
+        for edge in &edges {
+            let (v1, v2, w, j) = (edge[0], edge[1], edge[2], edge[3]);
+            if i != j && uf.union(v1 as usize, v2 as usize) {
+                weight += w;
             }
         }
-
-        if edges_used == n - 1 && weight == mst_weight {
-            pseudo_critical.push(*i);
+        if weight == mst_weight {
+            pseudo_critical.push(i);
         }
     }
 
@@ -107,16 +96,16 @@ pub fn find_critical_and_pseudo_critical_edges(n: i32, edges: Vec<Vec<i32>>) -> 
 
 #[test]
 fn test_find_critical_and_pseudo_critical_edges() {
-    let n = 5;
+    let n = 6;
     let edges = vec![
         vec![0, 1, 1],
         vec![1, 2, 1],
-        vec![2, 3, 2],
-        vec![0, 3, 2],
-        vec![0, 4, 3],
-        vec![3, 4, 3],
-        vec![1, 4, 6],
+        vec![0, 2, 1],
+        vec![2, 3, 4],
+        vec![3, 4, 2],
+        vec![3, 5, 2],
+        vec![4, 5, 2],
     ];
-    let res = find_critical_and_pseudo_critical_edges(n, edges);
-    assert_eq!(res, vec![vec![0, 1], vec![2, 3, 4, 5]]);
+    let res = vec![vec![3], vec![0, 1, 2, 4, 5, 6]];
+    assert_eq!(find_critical_and_pseudo_critical_edges(n, edges), res);
 }
