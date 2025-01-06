@@ -230,5 +230,6 @@ mod q_5791_count_sub_islands;
 mod q_0473_matchsticks_to_square;
 mod q_0752_open_the_lock;
 mod q_0977_squares_of_a_sorted_array;
+mod q_1137_n_th_tribonacci_number;
 mod q_1489_find_critical_and_pseudo_critical_edges_in_minimum_spanning_tree;
 mod q_1834_single_threaded_cpu;
