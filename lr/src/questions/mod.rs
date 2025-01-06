@@ -41,6 +41,7 @@ mod q_0056_merge_intervals;
 mod q_0057_insert_interval;
 mod q_0058_length_of_last_word;
 mod q_0062_unique_paths;
+mod q_0063_unique_paths_ii;
 mod q_0066_plus_one;
 mod q_0067_add_binary;
 mod q_0069_sqrtx;
