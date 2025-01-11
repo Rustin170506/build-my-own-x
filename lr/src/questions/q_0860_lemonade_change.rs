@@ -31,13 +31,13 @@ pub fn lemonade_change(bills: Vec<i32>) -> bool {
 fn test_lemonade_change() {
     let bills = vec![5, 5, 5, 10, 20];
     let result = lemonade_change(bills);
-    assert_eq!(result, true);
+    assert!(result);
 
     let bills = vec![5, 5, 10];
     let result = lemonade_change(bills);
-    assert_eq!(result, true);
+    assert!(result);
 
     let bills = vec![10, 10];
     let result = lemonade_change(bills);
-    assert_eq!(result, false);
+    assert!(!result);
 }

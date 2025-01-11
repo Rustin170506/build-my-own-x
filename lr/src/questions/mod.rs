@@ -235,3 +235,4 @@ mod q_0977_squares_of_a_sorted_array;
 mod q_1137_n_th_tribonacci_number;
 mod q_1489_find_critical_and_pseudo_critical_edges_in_minimum_spanning_tree;
 mod q_1834_single_threaded_cpu;
+mod q_2402_maximum_distance_between_a_pair_of_values;
