@@ -229,6 +229,7 @@ mod q_535_encode_and_decode_tinyurl;
 mod q_5791_count_sub_islands;
 
 mod q_0201_bitwise_and_of_numbers_range;
+mod q_0304_range_sum_query_2d_immutable;
 mod q_0473_matchsticks_to_square;
 mod q_0752_open_the_lock;
 mod q_0860_lemonade_change;
