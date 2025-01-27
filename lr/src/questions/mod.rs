@@ -228,6 +228,7 @@ mod q_2864_maximum_odd_binary_number;
 mod q_535_encode_and_decode_tinyurl;
 mod q_5791_count_sub_islands;
 
+mod q_0122_best_time_to_buy_and_sell_stock_ii;
 mod q_0201_bitwise_and_of_numbers_range;
 mod q_0304_range_sum_query_2d_immutable;
 mod q_0473_matchsticks_to_square;
