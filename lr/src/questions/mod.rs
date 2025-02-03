@@ -25,6 +25,7 @@ mod q_0035_search_insert_position;
 mod q_0036_valid_sudoku;
 mod q_0039_combination_sum;
 mod q_0040_combination_sum_ii;
+mod q_0041_first_missing_positive;
 mod q_0042_trapping_rain_water;
 mod q_0043_multiply_strings;
 mod q_0045_jump_game_ii;
