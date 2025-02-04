@@ -149,6 +149,7 @@ mod q_0323_number_of_connected_components_in_an_undirected_graph;
 mod q_0329_longest_increasing_path_in_a_matrix;
 mod q_0332_reconstruct_itinerary;
 mod q_0338_counting_bits;
+mod q_0344_reverse_string;
 mod q_0347_top_k_frequent_elements;
 mod q_0355_design_twitter;
 mod q_0371_sum_of_two_integers;
