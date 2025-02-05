@@ -11,6 +11,7 @@ mod q_0013_roman_to_integer;
 mod q_0014_longest_common_prefix;
 mod q_0015_3sum;
 mod q_0017_letter_combinations_of_a_phone_number;
+mod q_0018_4sum;
 mod q_0019_remove_nth_node_from_end_of_list;
 mod q_0020_valid_parentheses;
 mod q_0021_merge_two_sorted_lists;
