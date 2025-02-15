@@ -113,6 +113,7 @@ mod q_0205_isomorphic_strings;
 mod q_0206_reverse_linked_list;
 mod q_0207_course_schedule;
 mod q_0208_implement_trie_prefix_tree;
+mod q_0209_minimum_size_subarray_sum;
 mod q_0210_course_schedule_ii;
 mod q_0211_design_add_and_search_words_data_structure;
 mod q_0212_word_search_ii;
