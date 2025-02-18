@@ -204,6 +204,7 @@ mod q_0860_lemonade_change;
 mod q_0875_koko_eating_bananas;
 mod q_0876_middle_of_the_linked_list;
 mod q_0881_boats_to_save_people;
+mod q_0901_online_stock_span;
 mod q_0904_fruit_into_baskets;
 mod q_0912_sort_an_array;
 mod q_0918_maximum_sum_circular_subarray;
