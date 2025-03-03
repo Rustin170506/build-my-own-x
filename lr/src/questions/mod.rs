@@ -219,6 +219,7 @@ mod q_0978_longest_turbulent_subarray;
 mod q_0981_time_based_key_value_store;
 mod q_0994_rotting_oranges;
 mod q_0997_find_the_town_judge;
+mod q_1011_capacity_to_ship_packages_within_d_days;
 mod q_1046_last_stone_weight;
 mod q_1071_greatest_common_divisor_of_strings;
 mod q_1137_n_th_tribonacci_number;
