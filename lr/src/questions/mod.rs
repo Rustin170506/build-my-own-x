@@ -57,6 +57,7 @@ mod q_0076_minimum_window_substring;
 mod q_0077_combinations;
 mod q_0078_subsets;
 mod q_0079_word_search;
+mod q_0081_search_in_rotated_sorted_array_ii;
 mod q_0083_remove_duplicates_from_sorted_list;
 mod q_0084_largest_rectangle_in_histogram;
 mod q_0088_merge_sorted_array;
