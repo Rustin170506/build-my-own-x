@@ -159,6 +159,7 @@ mod q_0371_sum_of_two_integers;
 mod q_0374_guess_number_higher_or_lower;
 mod q_0392_is_subsequence;
 mod q_0394_decode_string;
+mod q_0410_split_array_largest_sum;
 mod q_0416_partition_equal_subset_sum;
 mod q_0417_pacific_atlantic_water_flow;
 mod q_0424_longest_repeating_character_replacement;
