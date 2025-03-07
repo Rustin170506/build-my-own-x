@@ -224,6 +224,7 @@ mod q_0997_find_the_town_judge;
 mod q_1011_capacity_to_ship_packages_within_d_days;
 mod q_1046_last_stone_weight;
 mod q_1071_greatest_common_divisor_of_strings;
+mod q_1095_find_in_mountain_array;
 mod q_1137_n_th_tribonacci_number;
 mod q_1143_longest_common_subsequence;
 mod q_1189_maximum_number_of_balloons;
