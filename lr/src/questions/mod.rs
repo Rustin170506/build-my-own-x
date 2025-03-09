@@ -63,6 +63,7 @@ mod q_0084_largest_rectangle_in_histogram;
 mod q_0088_merge_sorted_array;
 mod q_0090_subsets_ii;
 mod q_0091_decode_ways;
+mod q_0092_reverse_linked_list_ii;
 mod q_0094_binary_tree_inorder_traversal;
 mod q_0097_interleaving_string;
 mod q_0098_validate_binary_search_tree;
