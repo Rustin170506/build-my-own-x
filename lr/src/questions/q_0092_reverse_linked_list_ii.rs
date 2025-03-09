@@ -52,7 +52,6 @@ pub fn reverse_between(
     dummy.unwrap().next
 }
 
-
 #[test]
 fn test_reverse_between() {
     use crate::list;
