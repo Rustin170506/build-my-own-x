@@ -36,6 +36,7 @@ mod q_0048_rotate_image;
 mod q_0049_group_anagrams;
 mod q_0050_pows_n;
 mod q_0051_n_queens;
+mod q_0052_n_queens_ii;
 mod q_0053_maximum_subarray;
 mod q_0054_spiral_matrix;
 mod q_0055_jump_game;
