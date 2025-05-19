@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
       - name: setup rust toolchain
@@ -33,7 +33,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.repository == 'skyzh/mini-lsm'
     steps:
       - name: Deploy to GitHub Pages
