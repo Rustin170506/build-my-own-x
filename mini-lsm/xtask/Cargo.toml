@@ -12,4 +12,4 @@ publish = false
 anyhow = "1"
 console = "0.15"
 clap = { version = "4", features = ["derive"] }
-duct = "0.13"
+duct = "1.0"
